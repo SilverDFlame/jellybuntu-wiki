@@ -72,13 +72,14 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 #### Monitoring Infrastructure
 
 - **Monitoring** (VMID 500)
-  - Resources: 2 cores, 6GB RAM, 64GB disk
+  - Resources: 2 cores, 4GB RAM, 64GB disk
   - IP: 192.168.0.16
   - Stack: Rootless Podman with Quadlet
-  - Services: Prometheus, Grafana, Uptime Kuma, SNMP Exporter, Blackbox Exporter
+  - Services: Prometheus, Alertmanager, Grafana, SNMP Exporter, Blackbox Exporter
   - Priority: Medium (cpu_units: 1024)
-  - Purpose: Comprehensive infrastructure monitoring and alerting
+  - Purpose: Internal infrastructure monitoring with Discord alerting
   - Deployment: Phase 5 (optional, standalone)
+  - Note: Uptime Kuma moved to external monitoring (Oracle Cloud)
 
 #### CI/CD Infrastructure
 
@@ -303,10 +304,10 @@ unpackerr.container
 | Jellyfin         | 400  | 4      | 8GB      | 80GB    | High     | 2048      |
 | Media Services   | 401  | 4      | 8GB      | 50GB    | Medium   | 1024      |
 | Download Clients | 402  | 2      | 6GB      | 60GB    | Medium   | 1024      |
-| Monitoring       | 500  | 2      | 6GB      | 64GB    | Medium   | 1024      |
+| Monitoring       | 500  | 2      | 4GB      | 64GB    | Medium   | 1024      |
 | Woodpecker CI    | 600  | 2      | 2GB      | 30GB    | Low      | 512       |
 | Lancache         | 700  | 2      | 4GB      | 20GB*** | Low      | 512       |
-| **Total**        |      | **24** | **50GB** |         |          |           |
+| **Total**        |      | **24** | **48GB** |         |          |           |
 
 *Satisfactory cores are pinned to physical cores 4-7 (was 2-3)
 **NAS has 3x 6TB drives in Btrfs RAID1 (~9TB usable)
