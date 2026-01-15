@@ -1,0 +1,138 @@
+site_name: Jellybuntu Infrastructure Wiki
+site_description: Homelab infrastructure automation documentation - Ansible, Proxmox, and Podman
+site_author: Jellybuntu Project
+site_url: http://nas.discus-moth.ts.net:8082
+
+repo_name: SilverDFlame/jellybuntu-wiki
+repo_url: https://github.com/SilverDFlame/jellybuntu-wiki
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant       # Instant loading
+    - navigation.tracking      # Anchor tracking
+    - navigation.tabs          # Top-level navigation tabs
+    - navigation.sections      # Collapsible sections
+    - navigation.expand        # Expand all sections by default
+    - navigation.indexes       # Section index pages
+    - navigation.top           # Back to top button
+    - search.suggest           # Search suggestions
+    - search.highlight         # Highlight search terms
+    - content.code.copy        # Copy code button
+    - content.code.annotate    # Code annotations
+
+plugins:
+  - search:
+      separator: '[\s\-\_\.]+'  # Better search tokenization
+  - mermaid2:  # Mermaid diagram support (requires installation)
+      version: 10.6.1
+      arguments:
+        theme: |
+          ^(JSON.parse(__md_get("__palette").index == 1)) ? 'dark' : 'light'
+
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      permalink_title: Anchor link to this section
+  # PyMdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quickstart Guide: quickstart.md
+      - Architecture Overview: architecture.md
+  - Deployment:
+      - Initial Setup: deployment/initial-setup.md
+      - Phase-Based Deployment: deployment/phase-based-deployment.md
+      - Golden Image Workflow: deployment/golden-image-workflow.md
+  - Configuration:
+      - Service Endpoints: configuration/service-endpoints.md
+      - Networking: configuration/networking.md
+      - Security: configuration/security.md
+  - Maintenance:
+      - Updates: maintenance/updates.md
+      - Backup & Recovery: maintenance/backup-recovery.md
+      - Power Management: maintenance/power-management.md
+      - SOPS Key Rotation: maintenance/sops-rotation.md
+      - State Encryption Rotation: maintenance/state-encryption-rotation.md
+  - Troubleshooting:
+      - Common Issues: troubleshooting/common-issues.md
+      - Packer Issues: troubleshooting/packer.md
+      - Service-Specific:
+          - Jellyfin: troubleshooting/jellyfin.md
+          - Download Clients: troubleshooting/download-clients.md
+  - Reference:
+      - Playbooks: reference/playbooks.md
+      - Terraform Modules: reference/terraform-modules.md
+      - Proxmox API: reference/proxmox-api-permissions.md
+      - SSH Bastion: reference/ssh-bastion.md
+      - Tailscale Auto-Approval: reference/tailscale-auto-approval.md
+  - Development:
+      - Pre-commit Hooks: development/pre-commit.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/SilverDFlame/jellybuntu
+      name: Main Jellybuntu Repository
+    - icon: fontawesome/brands/github
+      link: https://github.com/SilverDFlame/jellybuntu-wiki
+      name: Documentation Wiki
+
+copyright: Copyright &copy; 2024-2025 Jellybuntu Project
+
+# Link validation (MkDocs 1.6+)
+# These settings cause warnings to become errors with --strict flag
+validation:
+  omitted_files: info  # Many files intentionally not in nav (research, plans, etc.)
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# MkDocs build output
+site/
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+*.backup
+
+# Logs
+*.log
+
+# Pre-commit
+.pre-commit-config.local.yaml
+
+# Node (if using npm-based tools)
+node_modules/

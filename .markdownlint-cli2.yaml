@@ -1,0 +1,33 @@
+---
+# Markdown linting configuration for Jellybuntu Wiki
+# https://github.com/DavidAnson/markdownlint-cli2
+
+config:
+  # Line length - allow up to 120 characters
+  MD013:
+    line_length: 120
+    code_blocks: false
+    tables: false
+
+  # Multiple headings with same content allowed (common in documentation)
+  MD024:
+    siblings_only: true
+
+  # Allow inline HTML (sometimes needed for complex tables/formatting)
+  MD033: false
+
+  # Bare URLs allowed (useful for reference links)
+  MD034: false
+
+  # First line doesn't need to be top-level heading
+  MD041: false
+
+# Files to ignore
+ignores:
+  - node_modules/
+  - .venv/
+  - __pycache__/
+  - .git/
+  - CHANGELOG.md
+  - site/
+  - "**/archive/**"

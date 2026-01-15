@@ -1,0 +1,53 @@
+---
+# YAML linting configuration for Jellybuntu Wiki
+# https://yamllint.readthedocs.io/
+
+extends: default
+
+rules:
+  # Line length - allow up to 120 characters
+  line-length:
+    max: 120
+    level: warning
+
+  # Comments - require at least 1 space from content
+  comments:
+    min-spaces-from-content: 1
+
+  # Comments indentation
+  comments-indentation: true
+
+  # Indentation - 2 spaces
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Document start - not required
+  document-start: disable
+
+  # Truthy values - standard YAML only
+  truthy:
+    allowed-values: ['true', 'false']
+    check-keys: false
+
+  # Brackets
+  brackets:
+    max-spaces-inside: 1
+    min-spaces-inside: 0
+
+  # Braces
+  braces:
+    max-spaces-inside: 1
+    min-spaces-inside: 0
+
+  # Empty values
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+
+# Files to ignore
+ignore: |
+  .venv/
+  __pycache__/
+  .git/
+  site/

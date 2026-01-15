@@ -1,0 +1,45 @@
+---
+# Pre-commit hooks for Jellybuntu Wiki (Documentation Only)
+# https://pre-commit.com/
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+        files: ^(mkdocs\.yml|\..*\.ya?ml)$
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=1024']
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: mixed-line-ending
+        name: Check for mixed line endings
+        args: ['--fix=lf']
+
+  # YAML linting (for mkdocs.yml)
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        name: Lint YAML files
+        files: ^(mkdocs\.yml|\.yamllint\.yml)$
+
+  # Markdown linting
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.16.0
+    hooks:
+      - id: markdownlint-cli2
+        name: Lint Markdown files
+
+# Global configuration
+default_install_hook_types: [pre-commit]
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: "3.0.0"

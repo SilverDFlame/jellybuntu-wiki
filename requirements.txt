@@ -1,0 +1,7 @@
+# MkDocs Documentation Dependencies
+# Install with: pip install -r requirements.txt
+
+mkdocs~=1.6.0
+mkdocs-material~=9.5.0
+mkdocs-mermaid2-plugin~=1.1.1
+pymdown-extensions~=10.7

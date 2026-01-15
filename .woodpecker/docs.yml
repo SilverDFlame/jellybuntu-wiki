@@ -1,0 +1,67 @@
+# Documentation Pipeline - Build and Deploy MkDocs
+# Triggered on pushes to main when docs or mkdocs.yml change
+# PR builds validate only, main branch builds deploy to NAS
+#
+# Image Selection:
+#   - python:3.12-alpine: Official Python image for MkDocs build
+#   - alpine:3.21: Lightweight base for rsync deployment
+#
+# Secrets required:
+#   - ssh_ci_private_key: CI SSH private key for rsync to NAS
+#
+# Deployment:
+#   - Built site rsync'd to nas:/opt/docs/site/
+#   - Served by nginx at http://nas.discus-moth.ts.net:8082
+
+when:
+  - event: push
+    branch: main
+    path:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "requirements.txt"
+      - ".woodpecker/docs.yml"
+  - event: pull_request
+    path:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "requirements.txt"
+      - ".woodpecker/docs.yml"
+
+steps:
+  # Build documentation with strict mode to catch broken links
+  - name: build-docs
+    image: nas.discus-moth.ts.net:5001/python:3.12-alpine
+    commands:
+      - pip install --quiet -r requirements.txt
+      - mkdocs build --strict
+      - echo "Documentation built successfully"
+      - ls -la site/
+
+  # Deploy to NAS (push to main only, not PRs)
+  - name: deploy-docs
+    image: nas.discus-moth.ts.net:5001/alpine:3.21
+    environment:
+      SSH_CI_PRIVATE_KEY:
+        from_secret: ssh_ci_private_key
+    commands:
+      - |
+        # Install rsync and openssh
+        apk add --no-cache rsync openssh-client
+
+        # Setup SSH key
+        mkdir -p /root/.ssh
+        echo "$SSH_CI_PRIVATE_KEY" > /root/.ssh/ansible_ci
+        chmod 600 /root/.ssh/ansible_ci
+
+        # Deploy to NAS
+        echo "Deploying documentation to NAS..."
+        rsync -avz --delete \
+          -e "ssh -i /root/.ssh/ansible_ci -o StrictHostKeyChecking=no" \
+          site/ \
+          ansible@nas.discus-moth.ts.net:/opt/docs/site/
+
+        echo "Documentation deployed to http://nas.discus-moth.ts.net:8082"
+    when:
+      - event: push
+        branch: main
