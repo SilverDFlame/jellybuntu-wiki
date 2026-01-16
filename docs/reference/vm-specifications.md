@@ -80,7 +80,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **CPU Units:** 1024 (medium priority)
 - **Memory:** 6GB (6144MB)
 - **Boot Disk:** 32GB (local-zfs)
-- **Storage Disks:** 2x 500GB (passthrough for Btrfs RAID1)
+- **Storage Disks:** 3x 6TB (passthrough for Btrfs RAID1)
 - **Network:** virtio bridge (vmbr0)
 
 **Network:**
@@ -361,7 +361,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 |----|------|-------|---------|----------|-----------|----------|-----|------|---------------|
 | Home Assistant | 100 | 2 | No | host | 1024 | Medium | 2GB | 40GB | - |
 | Satisfactory | 200 | 4 | 4-7 | host | 2048 | High | 8GB | 60GB | numa=0 |
-| NAS (Btrfs RAID1) | 300 | 2 | No | host | 1024 | Medium | 6GB | 32GB + 6TB | - |
+| NAS (Btrfs RAID1) | 300 | 2 | No | host | 1024 | Medium | 6GB | 32GB + 3x6TB | - |
 | Jellyfin | 400 | 4 | No | host | 2048 | High | 8GB | 80GB | +aes |
 | Media Services | 401 | 4 | No | host | 1024 | Medium | 8GB | 50GB | - |
 | Download Clients | 402 | 4 | No | host | 1024 | Medium | 6GB | 60GB | - |
@@ -411,7 +411,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **NFS Server:** Btrfs NAS (192.168.0.15)
 
-- Pool: `storage` (Btrfs RAID1, 2x 500GB mirror)
+- Pool: `storage` (Btrfs RAID1, 3x 6TB mirror, ~9TB usable)
 - Export: `/mnt/storage/data`
 - Permissions: 770 (UID/GID 3000)
 - Snapshots: Automatic via systemd timers
