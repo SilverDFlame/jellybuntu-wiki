@@ -3,13 +3,16 @@
 FlareSolverr is a proxy service that bypasses Cloudflare and DDoS-GUARD protection, allowing Prowlarr to access indexers
 that would otherwise be blocked.
 
+> **IMPORTANT**: FlareSolverr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Overview
 
 - **VM**: media-services (192.168.0.13)
 - **Port**: 8191
 - **Container**: flaresolverr
 - **Purpose**: Bypass Cloudflare protection for torrent indexers
-- **Image**: ghcr.io/flaresolverr/flaresolverr:v3.3.21
+- **Deployment**: Rootless Podman with Quadlet
 
 ## Access
 
@@ -22,14 +25,17 @@ that would otherwise be blocked.
 # SSH to media-services VM
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
-# Check if container is running
-docker ps | grep flaresolverr
+# Check service status
+systemctl --user status flaresolverr
 
 # View logs
-docker logs flaresolverr --tail 100
+journalctl --user -u flaresolverr -f
+
+# Check if container is running
+podman ps | grep flaresolverr
 
 # Check resource usage
-docker stats flaresolverr --no-stream
+podman stats flaresolverr --no-stream
 
 # Test endpoint
 curl http://localhost:8191/
@@ -96,7 +102,7 @@ curl http://localhost:8191/
 3. **Check FlareSolverr Logs**:
 
    ```bash
-   docker logs flaresolverr -f
+   journalctl --user -u flaresolverr -f
    ```
 
    - Should show requests when Prowlarr uses it
@@ -114,11 +120,11 @@ curl http://localhost:8191/
 **Diagnosis**:
 
 ```bash
-# Check if running
-docker ps | grep flaresolverr
+# Check service status
+systemctl --user status flaresolverr
 
 # Check logs for errors
-docker logs flaresolverr
+journalctl --user -u flaresolverr -n 100
 
 # Test endpoint directly
 curl http://localhost:8191/
@@ -127,11 +133,11 @@ curl http://localhost:8191/
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose up -d flaresolverr
+   systemctl --user start flaresolverr
+   systemctl --user enable flaresolverr
    ```
 
 2. **Port conflict**:
@@ -147,13 +153,13 @@ curl http://localhost:8191/
 
    ```bash
    # Test from Prowlarr container
-   docker exec prowlarr curl http://localhost:8191/
+   podman exec prowlarr curl http://localhost:8191/
    ```
 
 4. **Restart FlareSolverr**:
 
    ```bash
-   docker restart flaresolverr
+   systemctl --user restart flaresolverr
    ```
 
 ### 2. Indexer Still Being Blocked
@@ -167,7 +173,7 @@ curl http://localhost:8191/
 
 ```bash
 # Check FlareSolverr logs during indexer test
-docker logs flaresolverr -f
+journalctl --user -u flaresolverr -f
 
 # Then test indexer in Prowlarr
 ```
@@ -203,10 +209,10 @@ docker logs flaresolverr -f
 
 ```bash
 # Check resource usage
-docker stats flaresolverr --no-stream
+podman stats flaresolverr --no-stream
 
 # Check for memory leaks
-docker logs flaresolverr | grep -i memory
+journalctl --user -u flaresolverr | grep -i memory
 ```
 
 **Explanation**:
@@ -226,8 +232,8 @@ docker logs flaresolverr | grep -i memory
 2. **Memory leak** (if memory keeps growing):
 
    ```bash
-   # Restart container to reclaim memory
-   docker restart flaresolverr
+   # Restart service to reclaim memory
+   systemctl --user restart flaresolverr
    ```
 
 3. **Consider dedicated VM** (if persistent issues):
@@ -279,11 +285,11 @@ docker logs flaresolverr | grep -i memory
 **Diagnosis**:
 
 ```bash
-# Check container restart count
-docker ps -a | grep flaresolverr
+# Check service restart count
+systemctl --user status flaresolverr
 
 # Check for crash logs
-docker logs flaresolverr | grep -i "error\|crash\|fatal"
+journalctl --user -u flaresolverr | grep -i "error\|crash\|fatal"
 
 # Check system resources
 free -h
@@ -298,8 +304,8 @@ df -h
    # Check available memory
    free -h
 
-   # If low, restart container
-   docker restart flaresolverr
+   # If low, restart service
+   systemctl --user restart flaresolverr
 
    # Consider increasing VM RAM if persistent
    ```
@@ -308,10 +314,10 @@ df -h
 
    ```bash
    # Check disk space
-   df -h /opt/media-stack
+   df -h ~/.local/share/containers
 
    # Clean up if needed
-   docker system prune -a
+   podman system prune -a
    ```
 
 3. **Chrome crash**:
@@ -322,9 +328,8 @@ df -h
 4. **Update FlareSolverr**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose pull flaresolverr
-   docker compose up -d flaresolverr
+   podman pull ghcr.io/flaresolverr/flaresolverr:latest
+   systemctl --user restart flaresolverr
    ```
 
 ### 6. Can't Solve Captcha/Challenge
@@ -338,7 +343,7 @@ df -h
 
 ```bash
 # Check logs for challenge details
-docker logs flaresolverr | grep -i "challenge\|captcha"
+journalctl --user -u flaresolverr | grep -i "challenge\|captcha"
 ```
 
 **Solutions**:
@@ -389,7 +394,7 @@ curl -X POST http://localhost:8191/v1 \
 
 1. Find a Cloudflare-protected indexer in Prowlarr
 2. Run a search in Prowlarr
-3. Watch FlareSolverr logs: `docker logs flaresolverr -f`
+3. Watch FlareSolverr logs: `journalctl --user -u flaresolverr -f`
 4. Should see request, challenge solving, and response
 
 ## Performance Optimization
@@ -403,7 +408,7 @@ environment:
   - CHROME_ARGS=--no-sandbox,--disable-dev-shm-usage
 ```
 
-- `--no-sandbox`: Allows Chrome to run in Docker
+- `--no-sandbox`: Allows Chrome to run in containers
 - `--disable-dev-shm-usage`: Prevents shared memory issues
 
 ### Additional Tuning (Optional)
@@ -433,7 +438,7 @@ environment:
   - LOG_HTML=true  # Log HTML responses (very verbose!)
 ```
 
-Restart: `docker restart flaresolverr`
+Restart: `systemctl --user restart flaresolverr`
 
 ### Log Patterns
 
@@ -495,12 +500,13 @@ If FlareSolverr doesn't work:
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # Pull latest image
-cd /opt/media-stack
-docker compose pull flaresolverr
-docker compose up -d flaresolverr
+podman pull ghcr.io/flaresolverr/flaresolverr:latest
+
+# Restart service
+systemctl --user restart flaresolverr
 
 # Verify version
-docker logs flaresolverr | grep "version"
+journalctl --user -u flaresolverr | grep "version"
 ```
 
 ## See Also

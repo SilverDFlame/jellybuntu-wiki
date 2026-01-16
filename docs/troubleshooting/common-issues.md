@@ -2,6 +2,9 @@
 
 Cross-service problems and general troubleshooting guidance.
 
+> **IMPORTANT**: Most services run as **rootless Podman containers with Quadlet**. Use `systemctl --user` and `podman`
+> commands, NOT `docker` commands. Native services (Jellyfin, Satisfactory) use regular `systemctl`.
+
 ## Quick Diagnostic Commands
 
 ```bash
@@ -10,15 +13,16 @@ free -h
 df -h
 top
 sudo systemctl --failed
+systemctl --user --failed
 
 # Network
 ping 8.8.8.8
 tailscale status
 sudo ufw status
 
-# Docker
-docker ps
-docker stats
+# Podman containers (rootless)
+podman ps
+podman stats
 
 # NFS
 df -h /mnt/data
@@ -32,14 +36,15 @@ mount | grep /mnt/data
 **Symptoms**:
 
 - Services were working, now nothing accessible
-- Docker containers not running
+- Podman containers not running
 - NFS mounts missing
 
 **Diagnosis**:
 
 ```bash
 # Check what's running
-docker ps
+systemctl --user list-units --type=service --state=running
+podman ps
 sudo systemctl --failed
 df -h /mnt/data
 
@@ -56,19 +61,19 @@ sudo journalctl -b | grep -i error
    # Check /etc/fstab has _netdev option
    ```
 
-2. **Docker containers not started**:
+2. **Quadlet services not started**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose up -d
+   # Enable lingering for user services to start at boot
+   loginctl enable-linger $(whoami)
 
-   cd /opt/download-clients
-   docker compose up -d
+   # Start services
+   systemctl --user start sonarr radarr prowlarr
    ```
 
 3. **Services in wrong order**:
-   - NFS must mount before Docker containers start
-   - Check systemd service dependencies
+   - NFS must mount before Podman containers start
+   - Check systemd service dependencies in Quadlet .container files
 
 ### 2. Permission Denied Errors Everywhere
 
@@ -119,8 +124,8 @@ id nfsuser
 3. **Check container PUID/PGID**:
 
    ```bash
-   # Should be 3000:3000 in docker-compose.yml
-   docker exec sonarr env | grep -E "PUID|PGID"
+   # Should be 3000:3000 in Quadlet .container files
+   podman exec sonarr env | grep -E "PUID|PGID"
    ```
 
 ### 3. Can't Access Anything Remotely
@@ -175,29 +180,31 @@ sudo ufw status
 
 ```bash
 # Check all services are up
-docker ps | grep -E "sonarr|radarr|prowlarr|qbittorrent|sabnzbd"
+systemctl --user status sonarr radarr prowlarr
+podman ps | grep -E "sonarr|radarr|prowlarr|qbittorrent|sabnzbd"
 
-# Test connectivity
-docker exec sonarr ping prowlarr
-docker exec prowlarr ping download-clients.discus-moth.ts.net
+# Test connectivity (from media-services VM)
+curl http://localhost:8989  # Sonarr
+curl http://localhost:9696  # Prowlarr
+curl http://download-clients.discus-moth.ts.net:8080  # qBittorrent
 ```
 
 **Solutions**:
 
 1. **Use correct hostnames**:
-   - **Between containers**: Use container names (`http://prowlarr:9696`)
+   - **Within same VM**: Use `localhost` (services on media-services VM can reach each other)
    - **To download clients**: Use Tailscale or IP (`download-clients.discus-moth.ts.net:8080`)
-   - **Never use**: `localhost` or `127.0.0.1` (wrong context)
+   - **From browser**: Use Tailscale hostnames
 
 2. **Common hostname patterns**:
 
    ```text
-   # Within docker compose stack (media-services)
-   Sonarr → Prowlarr: http://prowlarr:9696
-   Sonarr → Radarr: http://radarr:7878
-   Prowlarr → Sonarr: http://sonarr:8989
+   # Within media-services VM (all services use host networking)
+   Sonarr → Prowlarr: http://localhost:9696
+   Sonarr → Radarr: http://localhost:7878
+   Prowlarr → Sonarr: http://localhost:8989
 
-   # From media-services to download-clients
+   # From media-services to download-clients (different VM)
    Sonarr → qBittorrent: http://download-clients.discus-moth.ts.net:8080
    Prowlarr → SABnzbd: http://download-clients.discus-moth.ts.net:8081
 
@@ -224,8 +231,8 @@ htop  # if installed
 # On Proxmox
 qm config VMID | grep cores
 
-# Check Docker resource usage
-docker stats
+# Check Podman container resource usage
+podman stats
 
 # Check for runaway processes
 ps aux --sort=-%cpu | head -10
@@ -239,14 +246,14 @@ ps aux --sort=-%mem | head -10
    - Normal behavior, has high priority
    - Consider limiting concurrent transcodes
 
-2. **Docker container runaway**:
+2. **Container runaway**:
 
    ```bash
    # Check which container
-   docker stats
+   podman stats
 
-   # Restart problematic container
-   docker compose restart CONTAINER_NAME
+   # Restart problematic service
+   systemctl --user restart CONTAINER_NAME
    ```
 
 3. **Memory leak**:
@@ -256,7 +263,7 @@ ps aux --sort=-%mem | head -10
    free -h
 
    # Restart services
-   docker compose restart
+   systemctl --user restart sonarr radarr prowlarr
    ```
 
 ### 6. Disk Space Full
@@ -275,7 +282,7 @@ df -h
 
 # Check what's using space
 du -sh /mnt/data/*
-du -sh /var/lib/docker/*
+du -sh ~/.local/share/containers/*
 
 # Check for large files
 find /mnt/data -type f -size +10G -exec ls -lh {} \;
@@ -294,14 +301,14 @@ find /mnt/data -type f -size +10G -exec ls -lh {} \;
    # Or increase NAS storage
    ```
 
-2. **Docker using too much space**:
+2. **Podman using too much space**:
 
    ```bash
-   # Check Docker usage
-   docker system df
+   # Check Podman usage
+   podman system df
 
    # Clean up
-   docker system prune -a
+   podman system prune -a
    ```
 
 3. **Logs too large**:
@@ -309,10 +316,11 @@ find /mnt/data -type f -size +10G -exec ls -lh {} \;
    ```bash
    # Check log sizes
    sudo du -sh /var/log/*
-   sudo du -sh /var/lib/docker/containers/*/*-json.log
+   du -sh ~/.local/share/containers/storage/
 
    # Clear old logs
    sudo journalctl --vacuum-time=7d
+   journalctl --user --vacuum-time=7d
    ```
 
 ### 7. Playbook Execution Failures
@@ -358,17 +366,20 @@ sops -d group_vars/all.sops.yaml
 
 ## After Major Changes
 
-### After Updating Docker Compose Files
+### After Updating Quadlet Container Files
 
 ```bash
-# Pull new images if needed
-docker compose pull
+# Reload systemd to pick up changes
+systemctl --user daemon-reload
 
-# Recreate containers
-docker compose up -d --force-recreate
+# Pull new images if needed
+podman pull <image>
+
+# Restart services
+systemctl --user restart sonarr radarr prowlarr
 
 # Check logs
-docker compose logs -f
+journalctl --user -u sonarr -f
 ```
 
 ### After Changing Network Config
@@ -379,9 +390,6 @@ sudo netplan apply
 
 # Restart Tailscale
 sudo systemctl restart tailscaled
-
-# Restart Docker
-sudo systemctl restart docker
 ```
 
 ### After Firewall Changes
@@ -402,15 +410,23 @@ sudo ufw status numbered
 1. **Check service status**:
 
    ```bash
-   systemctl status SERVICE_NAME
-   docker ps
+   # For Quadlet services (most containers)
+   systemctl --user status SERVICE_NAME
+   podman ps
+
+   # For native services (Jellyfin, Satisfactory)
+   sudo systemctl status SERVICE_NAME
    ```
 
 2. **View logs**:
 
    ```bash
-   journalctl -u SERVICE_NAME -f
-   docker logs CONTAINER_NAME -f
+   # For Quadlet services
+   journalctl --user -u SERVICE_NAME -f
+   podman logs CONTAINER_NAME -f
+
+   # For native services
+   sudo journalctl -u SERVICE_NAME -f
    ```
 
 3. **Test connectivity**:
@@ -438,12 +454,9 @@ sudo ufw status numbered
 ### Restart Everything
 
 ```bash
-# Stop all services
-cd /opt/media-stack && docker compose down
-cd /opt/download-clients && docker compose down
-
-# Restart Docker
-sudo systemctl restart docker
+# Stop all Quadlet services
+systemctl --user stop sonarr radarr prowlarr jellyseerr
+systemctl --user stop qbittorrent sabnzbd gluetun
 
 # Restart networking
 sudo systemctl restart systemd-networkd
@@ -454,8 +467,8 @@ sudo umount /mnt/data
 sudo mount -a
 
 # Start services
-cd /opt/media-stack && docker compose up -d
-cd /opt/download-clients && docker compose up -d
+systemctl --user start gluetun qbittorrent sabnzbd
+systemctl --user start sonarr radarr prowlarr jellyseerr
 ```
 
 ### Re-run Relevant Playbook
@@ -484,14 +497,14 @@ Refer to service-specific troubleshooting:
    ```bash
    # Create debug bundle
    mkdir -p /tmp/debug
-   docker ps -a > /tmp/debug/docker-ps.txt
+   podman ps -a > /tmp/debug/podman-ps.txt
    df -h > /tmp/debug/disk-usage.txt
    free -h > /tmp/debug/memory.txt
    sudo ufw status > /tmp/debug/firewall.txt
    tailscale status > /tmp/debug/tailscale.txt
 
    # Collect all logs
-   docker compose -f /opt/media-stack/docker-compose.yml logs > /tmp/debug/media-logs.txt
+   journalctl --user -n 500 > /tmp/debug/user-services.txt
    sudo journalctl -n 500 > /tmp/debug/system-logs.txt
    ```
 

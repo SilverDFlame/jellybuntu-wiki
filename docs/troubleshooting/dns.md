@@ -2,23 +2,32 @@
 
 Troubleshooting guide for AdGuard Home DNS service and DNS resolution issues.
 
+> **IMPORTANT**: AdGuard Home runs as a **rootless Podman container with Quadlet** on the NAS VM (192.168.0.15).
+> Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Quick Checks
 
 ```bash
+# SSH to NAS VM
+ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
+
+# Check service status
+systemctl --user status adguard-home
+
+# View logs
+journalctl --user -u adguard-home -f
+
+# Check container is running
+podman ps | grep adguard
+
 # Test DNS resolution
 dig @nas.discus-moth.ts.net google.com
 
 # Test MagicDNS (.ts.net domains)
 dig @nas.discus-moth.ts.net jellyfin.discus-moth.ts.net
 
-# Check AdGuard Home container status
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net docker ps | grep adguard
-
-# Check container logs
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net docker logs adguardhome --tail 50
-
 # Check firewall rules
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net sudo ufw status | grep -E "(53|80)"
+sudo ufw status | grep -E "(53|80)"
 ```
 
 ## Common Issues
@@ -41,24 +50,22 @@ dig @nas.discus-moth.ts.net google.com
 dig @nas.discus-moth.ts.net cloudflare.com
 
 # Check if AdGuard Home container is running
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net docker ps | grep adguard
+podman ps | grep adguard
 
 # Check container logs for errors
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net docker logs adguardhome --tail 100
+podman logs adguard-home --tail 100
 
 # Test upstream DNS servers
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  "docker exec adguardhome nslookup google.com 9.9.9.9"
+podman exec adguard-home nslookup google.com 9.9.9.9
 ```
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-   cd /opt/adguard-home
-   docker compose up -d
+   systemctl --user start adguard-home
+   systemctl --user enable adguard-home
    ```
 
 2. **Upstream DNS servers unreachable**:
@@ -83,8 +90,6 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 4. **systemd-resolved conflict**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-
    # Check if systemd-resolved is using port 53
    sudo lsof -i :53
 
@@ -93,8 +98,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
    sudo systemctl restart systemd-resolved
 
    # Restart AdGuard Home
-   cd /opt/adguard-home
-   docker compose restart
+   systemctl --user restart adguard-home
    ```
 
 ---
@@ -117,8 +121,7 @@ dig @nas.discus-moth.ts.net google.com +stats | grep "Query time"
 # Web UI → Dashboard → Average processing time
 
 # Check container resource usage
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  docker stats adguardhome --no-stream
+podman stats adguard-home --no-stream
 ```
 
 **Solutions**:
@@ -177,8 +180,7 @@ dig @nas.discus-moth.ts.net jellyfin.discus-moth.ts.net
 dig @100.100.100.100 jellyfin.discus-moth.ts.net
 
 # Check AdGuard Home upstream config
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  cat /opt/adguard-home/conf/AdGuardHome.yaml | grep -A 5 "upstream_dns"
+cat ~/.config/adguard-home/conf/AdGuardHome.yaml | grep -A 5 "upstream_dns"
 ```
 
 **Solutions**:
@@ -225,13 +227,13 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 
 ```bash
 # Check if container is running
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net docker ps | grep adguard
+podman ps | grep adguard
 
 # Check firewall rules for port 80
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net sudo ufw status | grep 80
+sudo ufw status | grep 80
 
 # Test local access
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net curl -I http://localhost:80
+curl -I http://localhost:80
 
 # Test Tailscale access
 curl -I http://nas.discus-moth.ts.net:80
@@ -239,19 +241,16 @@ curl -I http://nas.discus-moth.ts.net:80
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-   cd /opt/adguard-home
-   docker compose up -d
+   systemctl --user start adguard-home
+   systemctl --user enable adguard-home
    ```
 
 2. **Firewall blocking port 80**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-
    # Add firewall rule
    sudo ufw allow from 100.64.0.0/10 to any port 80 comment 'AdGuard Home Web UI (Tailscale)'
    sudo ufw reload
@@ -263,8 +262,6 @@ curl -I http://nas.discus-moth.ts.net:80
 3. **Port 80 conflict with another service**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-
    # Check what's using port 80
    sudo lsof -i :80
 
@@ -274,15 +271,14 @@ curl -I http://nas.discus-moth.ts.net:80
    sudo systemctl stop apache2
 
    # Restart AdGuard Home
-   cd /opt/adguard-home
-   docker compose restart
+   systemctl --user restart adguard-home
    ```
 
 4. **Wrong Tailscale IP configured**:
 
    ```bash
    # Get current Tailscale IP
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net tailscale ip -4
+   tailscale ip -4
 
    # Access using IP directly
    curl -I http://<tailscale-ip>:80
@@ -290,27 +286,27 @@ curl -I http://nas.discus-moth.ts.net:80
 
 ---
 
-### 5. AdGuard Home Container Keeps Restarting
+### 5. AdGuard Home Service Keeps Restarting
 
 **Symptoms**:
 
-- Container restarts every few seconds or minutes
-- `docker ps` shows "Restarting" status
+- Service restarts every few seconds or minutes
+- `podman ps` shows "Restarting" status
 
 **Diagnosis**:
 
 ```bash
-# Check container status
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  docker ps -a | grep adguard
+# Check service status
+systemctl --user status adguard-home
 
 # Check recent logs for errors
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  docker logs adguardhome --tail 200
+journalctl --user -u adguard-home -n 200 --no-pager
+
+# Check container status
+podman ps -a | grep adguard
 
 # Check for port conflicts
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  sudo lsof -i :53 -i :80
+sudo lsof -i :53 -i :80
 ```
 
 **Solutions**:
@@ -318,14 +314,11 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 1. **Corrupted configuration**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-   cd /opt/adguard-home
-
    # Backup config
-   sudo cp conf/AdGuardHome.yaml conf/AdGuardHome.yaml.bak
+   cp ~/.config/adguard-home/conf/AdGuardHome.yaml ~/.config/adguard-home/conf/AdGuardHome.yaml.bak
 
-   # Check for syntax errors
-   docker compose config
+   # Check Quadlet file
+   cat ~/.config/containers/systemd/adguard-home.container
 
    # If config is invalid, restore from backup or re-deploy
    # Run playbook: ./bin/runtime/ansible-run.sh playbooks/14-configure-adguard-home-role.yml
@@ -334,8 +327,6 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 2. **Out of memory**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-
    # Check available memory
    free -h
 
@@ -348,14 +339,11 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 3. **Disk full**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net
-
    # Check disk space
-   df -h /opt/adguard-home
+   df -h ~/.config/adguard-home
 
    # If low, clean up old query logs
-   cd /opt/adguard-home/work
-   sudo rm -rf querylog.json.*
+   rm -rf ~/.config/adguard-home/work/querylog.json.*
    ```
 
 ---
@@ -372,14 +360,13 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 
 ```bash
 # Check AdGuard Home logs
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  docker logs adguardhome --tail 100 | grep -i "filter"
+journalctl --user -u adguard-home | grep -i "filter"
 
 # Test blocklist URL manually
 curl -I https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
 
 # Check if NAS has internet access
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net ping -c 3 google.com
+ping -c 3 google.com
 ```
 
 **Solutions**:
@@ -388,11 +375,10 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net ping -c 3 google.co
 
    ```bash
    # Test DNS resolution from container
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-     docker exec adguardhome nslookup google.com
+   podman exec adguard-home nslookup google.com
 
    # If fails, check if NAS can resolve DNS
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net nslookup google.com
+   nslookup google.com
    ```
 
 2. **Blocklist URL changed or removed**:
@@ -409,10 +395,10 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net ping -c 3 google.co
 
    ```bash
    # Check container time (should match real time)
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net docker exec adguardhome date
+   podman exec adguard-home date
 
    # If wrong, sync NAS time
-   ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net sudo timedatectl set-ntp true
+   sudo timedatectl set-ntp true
    ```
 
 ---
@@ -462,60 +448,51 @@ dig @nas.discus-moth.ts.net google.com +trace
 dig @nas.discus-moth.ts.net -x 192.168.0.15
 ```
 
-### Container Management
+### Service Management
 
 ```bash
 # View real-time logs
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  docker logs adguardhome -f
+journalctl --user -u adguard-home -f
 
 # Check container resource usage
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  docker stats adguardhome
+podman stats adguard-home
 
-# Restart container
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  "cd /opt/adguard-home && docker compose restart"
+# Restart service
+systemctl --user restart adguard-home
 
-# Rebuild container from scratch
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  "cd /opt/adguard-home && docker compose down && docker compose up -d"
+# Force recreate container
+systemctl --user stop adguard-home
+podman rm -f adguard-home
+systemctl --user start adguard-home
 ```
 
 ### Network Diagnostics
 
 ```bash
 # Check DNS port availability
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  sudo lsof -i :53
+sudo lsof -i :53
 
 # Check web UI port availability
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  sudo lsof -i :80
+sudo lsof -i :80
 
 # Test connectivity from NAS to upstream DNS
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  nc -zv 9.9.9.9 53
+nc -zv 9.9.9.9 53
 
 # Test DoT connectivity
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  openssl s_client -connect dns.quad9.net:853 -servername dns.quad9.net
+openssl s_client -connect dns.quad9.net:853 -servername dns.quad9.net
 ```
 
 ### Configuration Inspection
 
 ```bash
 # View current AdGuard Home config
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  cat /opt/adguard-home/conf/AdGuardHome.yaml
+cat ~/.config/adguard-home/conf/AdGuardHome.yaml
 
 # View upstream DNS config
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  cat /opt/adguard-home/conf/AdGuardHome.yaml | grep -A 10 "upstream_dns"
+cat ~/.config/adguard-home/conf/AdGuardHome.yaml | grep -A 10 "upstream_dns"
 
-# Check Docker Compose config
-ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
-  cat /opt/adguard-home/docker-compose.yml
+# Check Quadlet container file
+cat ~/.config/containers/systemd/adguard-home.container
 ```
 
 ---
