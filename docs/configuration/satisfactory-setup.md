@@ -276,30 +276,133 @@ grep "Version" ~/.config/Epic/FactoryGame/Saved/Logs/FactoryGame.log
 
 ## Performance Tuning
 
+Satisfactory server performance is optimized at three levels: infrastructure (Proxmox VM), service (systemd), and
+application (game settings).
+
+### Infrastructure-Level Optimization
+
+The Satisfactory VM is provisioned with dedicated resources via OpenTofu:
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| CPU Cores | 4 | Factory simulation is CPU-intensive |
+| CPU Affinity | Cores 4-7 | Dedicated cores prevent contention |
+| Memory | 8GB | Large factories need substantial RAM |
+| CPU Priority | 2048 units | High priority scheduling |
+
+These settings are defined in `infrastructure/terraform/vms.tf` and applied at VM creation.
+
+### Service-Level Optimization
+
+The Ansible role configures systemd with performance tuning:
+
+```ini
+# /etc/systemd/system/satisfactory.service
+[Service]
+# CPU affinity matches Proxmox VM pinning
+CPUAffinity=4-7
+Nice=-10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=0
+LimitNOFILE=65536
+```
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| `CPUAffinity` | 4-7 | Reinforces Proxmox CPU pinning at process level |
+| `Nice` | -10 | High scheduling priority (-20 to 19, lower = higher priority) |
+| `IOSchedulingClass` | best-effort | Balanced I/O scheduling |
+| `IOSchedulingPriority` | 0 | Highest priority within class (0-7) |
+| `LimitNOFILE` | 65536 | Increased file descriptor limit |
+
 ### Memory Configuration
 
-Satisfactory server is memory-intensive. Recommended VM specs:
+Satisfactory server is memory-intensive. Current VM allocation:
 
-- **Minimum**: 8GB RAM
-- **Recommended**: 12-16GB RAM
-- **CPU**: 4+ cores
+- **Allocated**: 8GB RAM
+- **Recommended for large factories**: 12-16GB RAM
+- **CPU**: 4 cores (dedicated via pinning)
 
-### Process Priority
-
-For better performance:
+Monitor memory usage:
 
 ```bash
-# Start with higher priority (add to service file)
-ExecStart=/usr/bin/nice -n -5 %h/SatisfactoryDedicatedServer/FactoryServer.sh -unattended
+# Check current memory usage
+free -h
+
+# Watch memory over time
+watch -n 5 free -h
+
+# Check if swapping (bad for performance)
+vmstat 1 5
 ```
 
 ### Network Optimization
 
+For optimal multiplayer performance, configure Engine.ini:
+
 ```ini
-# In Engine.ini
+# ~/.config/Epic/FactoryGame/Saved/Config/LinuxServer/Engine.ini
 [/Script/OnlineSubsystemUtils.IpNetDriver]
 MaxNetTickRate=120
 NetServerMaxTickRate=120
+```
+
+**Remote player considerations:**
+
+- Tailscale adds latency (~10-50ms depending on distance)
+- For players far from the server, consider port forwarding UDP 7777 for direct connection
+- High factory complexity increases network traffic
+
+### Monitoring & Diagnostics
+
+Verify performance settings are applied:
+
+```bash
+# Check CPU affinity of server process
+taskset -cp $(pgrep -f FactoryServer)
+
+# Check process priority (NI column)
+ps -o pid,ni,comm -p $(pgrep -f FactoryServer)
+
+# Monitor CPU usage by core
+htop  # Press F2 → Display options → Show CPU usage
+
+# Check file descriptor limits
+cat /proc/$(pgrep -f FactoryServer)/limits | grep "open files"
+
+# Real-time resource monitoring
+htop -p $(pgrep -f FactoryServer)
+```
+
+### Factory Design Best Practices
+
+Large factories can strain server performance. Optimize in-game:
+
+| Practice | Benefit |
+|----------|---------|
+| Use trains/trucks for long distances | Reduces belt entity count |
+| Minimize belt density | Fewer entities to simulate |
+| Use manifolds over load balancers | Simpler logic, less CPU |
+| Consolidate power networks | Fewer power calculations |
+| Build vertically | Reduces render complexity |
+| Limit conveyor lifts | Each lift is multiple entities |
+
+### Verifying Optimization
+
+After deploying the role, verify all optimizations are active:
+
+```bash
+# SSH to server
+ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net
+
+# Check systemd service settings
+systemctl show satisfactory | grep -E "Nice|CPU|Limit"
+
+# Verify CPU affinity
+taskset -cp $(pgrep -f FactoryServer)
+
+# Check system limits
+grep satisfactory /etc/security/limits.conf
 ```
 
 ## Admin Commands
