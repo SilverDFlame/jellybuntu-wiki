@@ -117,6 +117,14 @@ nav:
       - Tailscale Auto-Approval: reference/tailscale-auto-approval.md
   - Development:
       - Pre-commit Hooks: development/pre-commit.md
+  - Archive:
+      - Changelog 2025 Q3: archive/changelog-2025-q3.md
+      - Legacy Documentation:
+          - Docker Troubleshooting: archive/docker-troubleshooting.md
+          - TrueNAS Setup: archive/truenas-setup.md
+          - Portainer Setup: archive/portainer-setup.md
+          - Homepage Setup: archive/homepage-setup.md
+          - Memory Alerts Analysis: archive/memory-alerts-analysis-20251031.md
 
 extra:
   social:
