@@ -252,16 +252,15 @@ If you're still concerned about resources:
 ### Option 1: Scheduled Transcoding (Recommended)
 
 - Run Tdarr only during off-peak hours (e.g., 2 AM - 6 AM)
-- Use systemd timer or cron to start/stop container
+- Use systemd timer to start/stop service
 - Zero impact during peak usage times
 - Example:
 
   ```bash
-  # Start transcoding at 2 AM
-  0 2 * * * docker start tdarr-node
-
-  # Stop transcoding at 6 AM
-  0 6 * * * docker stop tdarr-node
+  # Create systemd timer for scheduled transcoding
+  # Start transcoding at 2 AM, stop at 6 AM
+  # See tdarr.md for timer configuration
+  systemctl --user enable tdarr-schedule.timer
   ```
 
 ### Option 2: Manual Transcoding
@@ -274,10 +273,10 @@ If you're still concerned about resources:
   ```bash
   # When you want to transcode
   ssh ansible@jellyfin.discus-moth.ts.net
-  docker start tdarr-server tdarr-node
+  systemctl --user start tdarr-server tdarr-node
 
   # When done
-  docker stop tdarr-server tdarr-node
+  systemctl --user stop tdarr-server tdarr-node
   ```
 
 ### Option 3: Defer Until Hardware Upgrade

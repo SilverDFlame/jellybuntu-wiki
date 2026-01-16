@@ -174,7 +174,7 @@ podman logs qbittorrent --tail 100
 podman stats qbittorrent
 
 # Check number of active torrents
-docker logs qbittorrent | grep -i "torrent"
+journalctl --user -u qbittorrent | grep -i "torrent"
 ```
 
 **Solutions**:
@@ -214,8 +214,11 @@ are for verification only.
 **Diagnosis**:
 
 ```bash
+# Check service status
+systemctl --user status sabnzbd
+
 # Check container status
-docker ps -a | grep sabnzbd
+podman ps -a | grep sabnzbd
 
 # Check logs
 podman logs sabnzbd --tail 50
@@ -226,11 +229,11 @@ podman exec sabnzbd cat /config/sabnzbd.ini | grep -E "host_whitelist|local_rang
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   cd /opt/download-clients
-   systemctl --user up -d sabnzbd
+   systemctl --user start sabnzbd
+   systemctl --user enable sabnzbd
    ```
 
 2. **Hostname verification failing**:
@@ -1051,7 +1054,7 @@ podman stats unpackerr
 
 2. **Lower extraction priority** (if impacting other services):
    - Unpackerr runs as UID 3000 (same priority as other services)
-   - Can adjust Docker CPU shares if needed
+   - Can adjust Podman CPU limits if needed via Quadlet
 
 ### Verifying Everything Works
 
@@ -1060,17 +1063,18 @@ podman stats unpackerr
 ```bash
 # 1. Manually add a test NZB to SABnzbd
 # 2. Watch SABnzbd complete the download
-docker logs sabnzbd -f
+journalctl --user -u sabnzbd -f
 
 # 3. Verify file appears in category folder
 ls -lh /mnt/data/usenet/tv/  # or /movies
 
 # 4. Watch Unpackerr detect and extract
-podman logs unpackerr -f
+journalctl --user -u unpackerr -f
 # Should see: "Extracting: [filename]"
 
-# 5. Watch Sonarr/Radarr import
-podman logs sonarr -f  # or radarr
+# 5. Watch Sonarr/Radarr import (on media-services VM)
+# ssh to media-services VM first
+journalctl --user -u sonarr -f  # or radarr
 # Should see: "Imported: [filename]"
 
 # 6. Verify final media is in correct location
@@ -1171,7 +1175,7 @@ podman exec qbittorrent nslookup google.com
 
 1. **DNS issues**:
    - Check /etc/resolv.conf on host
-   - Verify DNS in docker-compose.yml
+   - Verify DNS in Quadlet .container file
 
 2. **Firewall blocking outbound**:
 
@@ -1214,8 +1218,8 @@ If issues persist:
 1. **Collect logs**:
 
    ```bash
-   docker logs qbittorrent --tail 500 > /tmp/qbittorrent.log
-   podman logs sabnzbd --tail 500 > /tmp/sabnzbd.log
+   journalctl --user -u qbittorrent -n 500 > /tmp/qbittorrent.log
+   journalctl --user -u sabnzbd -n 500 > /tmp/sabnzbd.log
    ```
 
 2. **Community Resources**:

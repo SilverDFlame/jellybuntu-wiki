@@ -313,11 +313,10 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
 
 2. **Reduce retention period**:
 
-   ```yaml
-   # In docker-compose.yml
-   prometheus:
-     command:
-       - '--storage.tsdb.retention.time=15d'  # Reduce from 30d
+   ```ini
+   # In Quadlet .container file (~/.config/containers/systemd/prometheus.container)
+   # Add to [Container] section:
+   PodmanArgs=--storage.tsdb.retention.time=15d  # Reduce from 30d
    ```
 
 3. **Add recording rules** (pre-aggregate expensive queries):
@@ -442,15 +441,16 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
    - Test again
 
 4. **Email SMTP not configured**:
-   - Check Grafana environment variables in docker-compose.yml:
+   - Check Grafana environment variables in Quadlet .container file:
 
-     ```yaml
-     - GF_SMTP_ENABLED=true
-     - GF_SMTP_HOST=smtp.gmail.com:587
-     - GF_SMTP_USER=your-email@gmail.com
+     ```ini
+     # In ~/.config/containers/systemd/grafana.container [Container] section:
+     Environment=GF_SMTP_ENABLED=true
+     Environment=GF_SMTP_HOST=smtp.gmail.com:587
+     Environment=GF_SMTP_USER=your-email@gmail.com
      ```
 
-   - Restart Grafana after adding SMTP config
+   - Restart Grafana after adding SMTP config: `systemctl --user restart grafana`
 
 5. **Check Grafana logs for errors**:
 
@@ -579,8 +579,9 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net "podman stat
    # Check cAdvisor resource usage
    podman stats cadvisor
 
-   # Reduce housekeeping interval (edit docker run command)
-   --housekeeping_interval=30s  # Increase from default 10s
+   # Reduce housekeeping interval (edit Quadlet .container file)
+   # Add to [Container] section:
+   # PodmanArgs=--housekeeping_interval=30s  # Increase from default 10s
    ```
 
 2. **node_exporter collecting too many metrics**:
@@ -694,8 +695,8 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net "podman stat
 
 3. **Use dashboard provisioning** (persist in version control):
    - Export dashboard JSON
-   - Save to `compose_files/monitoring/services/grafana/dashboards/`
-   - Mount in docker-compose.yml (already configured)
+   - Save to `~/.config/grafana/dashboards/`
+   - Mount via Quadlet Volume directive (already configured)
 
 ### Uptime Kuma Data Lost
 

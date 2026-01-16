@@ -114,35 +114,30 @@ iperf3 -c 192.168.0.13
    # Should be 1280 (Tailscale default)
    ```
 
-### 3. Docker Network Performance
+### 3. Podman Network Performance
 
 **Symptoms**: Slow container-to-container communication
 
-**Test Docker Network**:
+**Test Podman Network** (host networking):
 
 ```bash
-# Test between containers
-docker exec sonarr ping -c 4 radarr
+# With host networking, containers share host's network
+# Test connectivity to other services on same VM
+podman exec sonarr curl -s http://localhost:7878 | head -5  # Radarr
 
 # Test container to host
-docker exec sonarr ping -c 4 192.168.0.13
+podman exec sonarr ping -c 4 192.168.0.13
 
-# Check Docker network driver
-docker network inspect bridge
+# Check Podman network
+podman network inspect podman
 ```
 
 **Solutions**:
 
-1. **Use host networking** (when appropriate):
-
-   ```yaml
-   services:
-     service_name:
-       network_mode: host
-   ```
-
+1. **Use host networking** (already configured via Quadlet):
+   - All services use host networking for simplicity
+   - Configured in Quadlet .container files with `Network=host`
    - Removes container network overhead
-   - Used by: SABnzbd, Homarr, Recyclarr
 
 2. **Optimize Podman Network MTU**:
 
@@ -150,13 +145,11 @@ docker network inspect bridge
    # Check Podman network MTU
    podman network inspect podman | grep -i mtu
 
-   # Set MTU in containers registries.conf or via PodmanArgs:
-   {
-     "mtu": 1500
-   }
+   # Set MTU via Quadlet if needed
+   # Add to .container file: PodmanArgs=--network-alias=... --mtu=1500
 
-   # Restart Docker
-   sudo systemctl restart docker
+   # Restart services
+   systemctl --user restart sonarr radarr prowlarr
    ```
 
 3. **Use macvlan for better performance** (advanced):
@@ -173,8 +166,8 @@ docker network inspect bridge
 # Host interface
 ip link show ens18 | grep mtu
 
-# Docker
-ip link show docker0 | grep mtu
+# Podman (if using bridge network, not host)
+podman network inspect podman | grep mtu
 
 # Tailscale
 ip link show tailscale0 | grep mtu
@@ -332,7 +325,7 @@ iperf3 -c 192.168.0.12
 
 4. **Use host networking** for low-overhead services
 
-5. **Monitor regularly** with `iftop`, `docker stats`
+5. **Monitor regularly** with `iftop`, `podman stats`
 
 6. **Limit bandwidth** on download clients to prevent saturation
 

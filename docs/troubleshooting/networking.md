@@ -481,7 +481,10 @@ systemctl status systemd-resolved
    resolvectl status
    ```
 
-## Docker Network Issues
+## Podman Container Network Issues
+
+> **Note**: Services run as rootless Podman containers with Quadlet. They use host networking, so containers
+> communicate via `localhost` ports on the same VM.
 
 ### 1. Containers Can't Reach Internet
 
@@ -495,14 +498,15 @@ systemctl status systemd-resolved
 
 ```bash
 # Test from inside container
-docker exec sonarr ping -c 3 8.8.8.8
-docker exec sonarr ping -c 3 google.com
+podman exec sonarr ping -c 3 8.8.8.8
+podman exec sonarr ping -c 3 google.com
 
-# Check Docker network
-docker network inspect bridge
+# Check Podman network settings
+podman network ls
+podman network inspect podman
 
-# Check iptables (Docker uses this)
-sudo iptables -L -n | grep -A 5 DOCKER
+# Check container DNS config
+podman exec sonarr cat /etc/resolv.conf
 ```
 
 **Solutions**:
@@ -510,20 +514,19 @@ sudo iptables -L -n | grep -A 5 DOCKER
 1. **DNS issues**:
 
    ```bash
-   # Check Docker DNS
-   docker exec sonarr cat /etc/resolv.conf
+   # Check container DNS
+   podman exec sonarr cat /etc/resolv.conf
 
-   # Set DNS in docker-compose.yml
-   dns:
-     - 9.9.9.9
-     - 192.168.0.1
+   # Set DNS in Quadlet .container file
+   # Add to [Container] section:
+   # DNS=9.9.9.9
+   # DNS=192.168.0.1
    ```
 
-2. **Restart Docker**:
+2. **Restart services**:
 
    ```bash
-   sudo systemctl restart docker
-   docker compose up -d
+   systemctl --user restart sonarr radarr prowlarr
    ```
 
 ### 2. Containers Can't Communicate
@@ -532,29 +535,34 @@ sudo iptables -L -n | grep -A 5 DOCKER
 
 - Sonarr can't reach Prowlarr
 - Services can't talk to each other
-- Container name resolution fails
+- Connection refused errors
 
 **Diagnosis**:
 
 ```bash
-# Check containers are on same network
-docker network ls
-docker network inspect media-stack_default
+# Check containers are running
+podman ps
 
-# Test connectivity
-docker exec sonarr ping prowlarr
-docker exec sonarr nslookup prowlarr
+# Check network mode in Quadlet file
+cat ~/.config/containers/systemd/sonarr.container | grep Network
+
+# Test connectivity (all on same VM should use localhost)
+podman exec sonarr curl -s http://localhost:9696 | head -5
 ```
 
 **Solutions**:
 
-1. **Not on same network**:
-   - Verify all services use same docker-compose.yml
-   - Or explicitly define shared network in compose file
+1. **Use localhost for same-VM services**:
+   - With host networking, all containers share the host's network
+   - Correct: `http://localhost:9696` (Prowlarr on same VM)
+   - For cross-VM: `http://download-clients.discus-moth.ts.net:8080`
 
-2. **Use container names, not localhost**:
-   - Correct: `http://prowlarr:9696`
-   - Wrong: `http://localhost:9696`
+2. **Verify services are listening**:
+
+   ```bash
+   # Check what's listening on expected ports
+   sudo netstat -tulpn | grep -E "8989|7878|9696"
+   ```
 
 ## Advanced Troubleshooting
 
@@ -593,8 +601,8 @@ sudo netplan apply
 # Flush DNS cache
 sudo systemd-resolve --flush-caches
 
-# Restart Docker networking
-sudo systemctl restart docker
+# Restart Podman containers (rootless)
+systemctl --user restart sonarr radarr prowlarr
 ```
 
 ## Getting Help
@@ -613,7 +621,7 @@ If issues persist:
 2. **Resources**:
    - Tailscale docs: https://tailscale.com/kb/
    - UFW guide: https://wiki.ubuntu.com/UncomplicatedFirewall
-   - Docker networking: https://docs.docker.com/network/
+   - Podman networking: https://docs.podman.io/en/latest/markdown/podman-network.1.html
 
 ## See Also
 

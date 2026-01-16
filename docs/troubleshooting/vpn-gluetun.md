@@ -292,8 +292,8 @@ podman ps | grep gluetun
 podman ps | grep qbittorrent
 
 # Check logs
-podman logs gluetun | grep -i "8080"
-docker logs qbittorrent
+journalctl --user -u gluetun | grep -i "8080"
+journalctl --user -u qbittorrent | tail -50
 ```
 
 **Solutions**:
@@ -303,7 +303,7 @@ docker logs qbittorrent
    ```bash
    systemctl --user start gluetun
    # Wait 30 seconds for VPN to connect
-   docker start qbittorrent
+   systemctl --user start qbittorrent
    ```
 
 2. **Port not exposed**:

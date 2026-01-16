@@ -30,7 +30,7 @@ Visit http://monitoring.discus-moth.ts.net:9090/targets to see which scrape targ
 - `prometheus` (1 target) - self-monitoring
 - `proxmox-host` (1 target) - jellybuntu hypervisor
 - `vm-nodes` (6 targets) - All guest VMs
-- `docker-containers` (3 targets) - cAdvisor on VMs with Docker
+- `podman-containers` (3 targets) - cAdvisor on VMs with Podman
 - `snmp-mikrotik` (2 targets) - Router and switch
 - `blackbox-dns` (4 targets) - DNS server checks
 - `blackbox-http-external` (3 targets) - Internet connectivity
@@ -65,7 +65,7 @@ ALERTS{alertstate="firing"}
 
 # Check if cAdvisor is running
 
-up{job="docker-containers"}
+up{job="podman-containers"}
 
 # Check if SNMP exporters are working
 
