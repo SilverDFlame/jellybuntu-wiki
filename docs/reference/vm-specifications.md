@@ -418,7 +418,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **NFS Server:** Btrfs NAS (192.168.0.15)
 
-- Pool: `storage` (Btrfs RAID1, 3x 6TB)
+- Pool: `storage` (Btrfs RAID1, 3x 6TB mirror, ~9TB usable)
 - Export: `/mnt/storage/data`
 - Permissions: 770 (UID/GID 3000)
 - Snapshots: Automatic via systemd timers
