@@ -25,8 +25,9 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Nexus Repository**: http://nas.discus-moth.ts.net:8081 (Registry: nas.discus-moth.ts.net:5001)
 - **NAS**: http://nas.discus-moth.ts.net (Btrfs RAID1 storage, 192.168.0.15)
 - **Prometheus**: http://monitoring.discus-moth.ts.net:9090
+- **Alertmanager**: http://monitoring.discus-moth.ts.net:9093
 - **Grafana**: http://monitoring.discus-moth.ts.net:3000
-- **Uptime Kuma**: http://monitoring.discus-moth.ts.net:3001
+- **Uptime Kuma**: http://oracle-monitoring.discus-moth.ts.net:3001 (External monitoring on Oracle Cloud)
 - **Woodpecker CI**: https://automation.discus-moth.ts.net (Web UI via Tailscale Funnel)
 - **Lancache**: http://lancache.discus-moth.ts.net:80 (Game download cache)
 
@@ -49,8 +50,8 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **AdGuard Home**: http://192.168.0.15:80 (DNS: 192.168.0.15:53)
 - **Nexus Repository**: http://192.168.0.15:8081 (Registry: 192.168.0.15:5001)
 - **Prometheus**: http://192.168.0.16:9090
+- **Alertmanager**: http://192.168.0.16:9093
 - **Grafana**: http://192.168.0.16:3000
-- **Uptime Kuma**: http://192.168.0.16:3001
 - **Woodpecker CI**: http://192.168.0.17:8000 (Web UI)
 - **Lancache**: http://192.168.0.18:80 (HTTP), https://192.168.0.18:443 (SNI proxy)
 
@@ -63,7 +64,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 | All Media Services (.13) | **Quadlet** (rootless Podman) | Sonarr, Radarr, Prowlarr, Jellyseerr, etc. |
 | Download Clients (.14) | **Quadlet** (rootless Podman) | qBittorrent, SABnzbd, Gluetun VPN, Unpackerr |
 | AdGuard Home (.15) | **Quadlet** (rootless Podman) | On NAS VM |
-| Monitoring Services (.16) | **Quadlet** (rootless Podman) | Prometheus, Grafana, Uptime Kuma |
+| Monitoring Services (.16) | **Quadlet** (rootless Podman) | Prometheus, Alertmanager, Grafana (Uptime Kuma on external) |
 | Home Assistant | **Quadlet** (rootless Podman) | LinuxServer.io image |
 | Satisfactory | Native (systemd) | SteamCMD + systemd service |
 | Flaresolverr | **Quadlet** (rootless Podman) | Cloudflare bypass |
@@ -265,12 +266,14 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net
 
 # Check all services
 
-systemctl --user status prometheus grafana uptime-kuma node-exporter cadvisor
+systemctl --user status prometheus alertmanager grafana snmp-exporter blackbox-exporter
 
 # Restart all
 
-systemctl --user restart prometheus grafana uptime-kuma
+systemctl --user restart prometheus alertmanager grafana
 ```
+
+Note: Uptime Kuma runs on external monitoring (Oracle Cloud) at oracle-monitoring.discus-moth.ts.net:3001
 
 #### Woodpecker CI VM (192.168.0.17)
 
@@ -345,8 +348,8 @@ tailscale funnel status
 | Nexus Repository | .15 | 8081 | HTTP | Web UI |
 | Nexus Repository | .15 | 5001 | HTTP | Container Registry |
 | Prometheus | .16 | 9090 | HTTP | Web UI |
+| Alertmanager | .16 | 9093 | HTTP | Web UI |
 | Grafana | .16 | 3000 | HTTP | Web UI |
-| Uptime Kuma | .16 | 3001 | HTTP | Web UI |
 | Woodpecker Server | .17 | 8000 | HTTP | Web UI |
 | Woodpecker Server | .17 | 9000 | gRPC | Agent communication |
 | Lancache | .18 | 80 | HTTP | Cache traffic |
