@@ -73,7 +73,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 | Unbound | **Quadlet** (rootless Podman) | DNS resolver |
 | Woodpecker CI (.17) | **Quadlet** (rootless Podman) | Server + Agent |
 | Nexus Repository (.15) | **Quadlet** (rootless Podman) | Container registry on NAS |
-| Lancache (.18) | **Quadlet** (rootless Podman) | Game download cache (Steam, Epic, etc.) |
+| Lancache (.18) | **Quadlet** (rootful Podman) | Game download cache (Steam, Epic, etc.) |
 
 > **Important**: Most services now use **rootless Podman with Quadlet** (systemd integration). Use `systemctl --user`
 commands, NOT `docker` or `docker-compose`.
