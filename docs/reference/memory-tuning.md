@@ -458,11 +458,11 @@ Without limits, Prometheus calculated memory usage as `usage / 0 = +Infinity%`, 
 
 The incident generated several troubleshooting documents (now archived):
 
-- `docs/troubleshooting/memory-alerts-analysis-20251031.md` - Detailed investigation
-- `docs/troubleshooting/MEMORY-ALERTS-EXECUTIVE-SUMMARY.md` - Executive overview
-- `docs/troubleshooting/memory-alerts-remediation.md` - General remediation steps
-- `docs/troubleshooting/memory-limits-patches.md` - Service-specific patches
-- `docs/troubleshooting/CHANGES-MEMORY-LIMITS-20251031.md` - Implementation log
+- [`memory-alerts-analysis-20251031.md`](../archive/memory-alerts-analysis-20251031.md) - Detailed investigation
+- [`MEMORY-ALERTS-EXECUTIVE-SUMMARY.md`](../archive/MEMORY-ALERTS-EXECUTIVE-SUMMARY.md) - Executive overview
+- [`memory-alerts-remediation.md`](../archive/memory-alerts-remediation.md) - General remediation steps
+- [`memory-limits-patches.md`](../archive/memory-limits-patches.md) - Service-specific patches
+- [`CHANGES-MEMORY-LIMITS-20251031.md`](../archive/CHANGES-MEMORY-LIMITS-20251031.md) - Implementation log
 
 **Note:** These files remain available for historical reference but this guide now serves as the
 primary reference for memory tuning.

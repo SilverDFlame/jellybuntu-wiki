@@ -10,7 +10,7 @@
 - 18x ContainerHighMemory (containers using >90% of memory limits)
 - 1x HighMemoryUsage (VM using >85% of available memory)
 
-**See detailed remediation guide**: `docs/troubleshooting/memory-alerts-remediation.md`
+**See detailed remediation guide**: [`memory-alerts-remediation.md`](../archive/memory-alerts-remediation.md)
 
 ---
 
