@@ -9,7 +9,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **Cores:** 2 (shared)
 - **CPU Type:** host
 - **CPU Units:** 1024 (medium priority)
-- **Memory:** 4GB (4096MB)
+- **Memory:** 2GB (2048MB)
 - **Disk:** 40GB (local-zfs)
 - **Network:** virtio bridge (vmbr0)
 
@@ -22,7 +22,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Services:**
 
-- Home Assistant (Docker)
+- Home Assistant (Quadlet/Podman)
 
 **Ports:**
 
@@ -32,7 +32,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Storage:**
 
-- Docker compose directory: `/opt/home-assistant`
+- Quadlet files: `~/.config/containers/systemd/`
 - Data directory: `/mnt/data` (NFS from Btrfs NAS)
 
 ---
@@ -41,11 +41,11 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Hardware:**
 
-- **Cores:** 2 (pinned to physical cores 2-3)
-- **CPU Pinning:** 2-3 (dedicated cores)
+- **Cores:** 4 (pinned to physical cores 4-7)
+- **CPU Pinning:** 4-7 (dedicated cores)
 - **CPU Type:** host
 - **CPU Units:** 2048 (high priority)
-- **Memory:** 6GB (6144MB)
+- **Memory:** 8GB (8192MB)
 - **Disk:** 60GB (local-zfs)
 - **Network:** virtio bridge (vmbr0)
 - **NUMA:** Disabled
@@ -170,10 +170,10 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Hardware:**
 
-- **Cores:** 2 (shared)
+- **Cores:** 4 (shared)
 - **CPU Type:** host
-- **CPU Units:** 512 (low priority)
-- **Memory:** 6GB (6144MB)
+- **CPU Units:** 1024 (medium priority)
+- **Memory:** 8GB (8192MB)
 - **Disk:** 50GB (local-zfs)
 - **Network:** virtio bridge (vmbr0)
 
@@ -184,12 +184,15 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **Gateway:** 192.168.0.1
 - **DNS:** 9.9.9.9, 192.168.0.1
 
-**Services (Docker Compose):**
+**Services (Quadlet/Podman):**
 
 - Sonarr (TV show management)
 - Radarr (movie management)
 - Prowlarr (indexer management)
 - Jellyseerr (request management)
+- Bazarr (subtitle management)
+- Huntarr (missing content discovery)
+- Homarr (dashboard)
 - Flaresolverr (Cloudflare bypass)
 - Recyclarr (custom formats/quality profiles)
 
@@ -205,21 +208,11 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Storage:**
 
-- Docker compose directory: `/opt/media-stack`
+- Quadlet files: `~/.config/containers/systemd/`
 - Data directory: `/mnt/data` (NFS from Btrfs NAS)
 - Media paths:
   - TV Shows: `/mnt/data/media/tv`
   - Movies: `/mnt/data/media/movies`
-- Config directories:
-  - `/opt/media-stack/services/`
-  - `/opt/media-stack/configs/`
-  - `/opt/media-stack/recyclarr/`
-
-**Docker Compose Structure:**
-
-- Main file: `docker-compose.yml`
-- Modular services in `services/` subdirectory
-- Include-based composition
 
 ---
 
@@ -227,7 +220,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Hardware:**
 
-- **Cores:** 2 (shared)
+- **Cores:** 4 (shared)
 - **CPU Type:** host
 - **CPU Units:** 1024 (medium priority)
 - **Memory:** 6GB (6144MB)
@@ -241,10 +234,12 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **Gateway:** 192.168.0.1
 - **DNS:** 9.9.9.9, 192.168.0.1
 
-**Services (Docker Compose):**
+**Services (Quadlet/Podman):**
 
+- Gluetun (VPN client)
 - qBittorrent (torrent client)
 - SABnzbd (usenet client)
+- Unpackerr (automatic extraction)
 
 **Ports:**
 
@@ -257,7 +252,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Storage:**
 
-- Docker compose directory: `/opt/download-clients`
+- Quadlet files: `~/.config/containers/systemd/`
 - Data directory: `/mnt/data` (NFS from Btrfs NAS)
 - Torrent paths:
   - TV: `/mnt/data/torrents/tv`
@@ -267,18 +262,11 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
   - TV: `/mnt/data/usenet/tv`
   - Movies: `/mnt/data/usenet/movies`
   - Incomplete: `/mnt/data/usenet/incomplete`
-- Config directory: `/opt/download-clients/sabnzbd/`
-
-**Docker Compose Structure:**
-
-- Main file: `docker-compose-downloads.yml`
-- Modular services in `services/` subdirectory
-- Include-based composition
 
 **SABnzbd Configuration:**
 
 - Host whitelist: `download-clients.discus-moth.ts.net`
-- Local ranges: 192.168.0.0/16, 172.16.0.0/12 (Docker), 100.64.0.0/10 (Tailscale)
+- Local ranges: 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10 (Tailscale)
 - API access for Sonarr/Radarr
 
 ---
@@ -287,8 +275,8 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Hardware:**
 
-- CPU: 4 cores (host type, shared, no pinning)
-- RAM: 6GB (6144MB)
+- CPU: 2 cores (host type, shared, no pinning)
+- RAM: 4GB (4096MB)
 - Disk: 64GB (local-zfs storage)
 - CPU Units: 1024 (medium priority)
 
@@ -301,15 +289,18 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 **Services:**
 
 - Prometheus - Metrics collection and storage
+- Alertmanager - Alert routing and deduplication
 - Grafana - Visualization and dashboards
-- Uptime Kuma - Uptime monitoring and alerting
 - SNMP Exporter - Network device monitoring
 - Blackbox Exporter - Endpoint monitoring
+- cAdvisor - Container metrics
+
+**Note:** Uptime Kuma moved to external monitoring (Oracle Cloud)
 
 **Deployment:**
 
-- Stack: Podman Compose (not Docker)
-- Compose directory: `/opt/monitoring`
+- Stack: Quadlet/Podman (rootless)
+- Quadlet files: `~/.config/containers/systemd/`
 - Data directory: `/opt/monitoring/data`
 - Boot order: 7 (starts after core services)
 - Start delay: 20 seconds
@@ -368,21 +359,23 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 | VM | VMID | Cores | Pinning | CPU Type | CPU Units | Priority | RAM | Disk | Special Flags |
 |----|------|-------|---------|----------|-----------|----------|-----|------|---------------|
-| Home Assistant | 100 | 2 | No | host | 1024 | Medium | 4GB | 40GB | - |
-| Satisfactory | 200 | 2 | 2-3 | host | 2048 | High | 6GB | 60GB | numa=0 |
+| Home Assistant | 100 | 2 | No | host | 1024 | Medium | 2GB | 40GB | - |
+| Satisfactory | 200 | 4 | 4-7 | host | 2048 | High | 8GB | 60GB | numa=0 |
 | NAS (Btrfs RAID1) | 300 | 2 | No | host | 1024 | Medium | 6GB | 32GB + 3x6TB | - |
 | Jellyfin | 400 | 4 | No | host | 2048 | High | 8GB | 80GB | +aes |
-| Media Services | 401 | 2 | No | host | 512 | Low | 6GB | 50GB | - |
-| Download Clients | 402 | 2 | No | host | 1024 | Medium | 6GB | 60GB | - |
-| Monitoring | 500 | 4 | No | host | 1024 | Medium | 6GB | 64GB | - |
-| **Total** | | **18** | | | | | **42GB** | **394GB + 1TB** | |
+| Media Services | 401 | 4 | No | host | 1024 | Medium | 8GB | 50GB | - |
+| Download Clients | 402 | 4 | No | host | 1024 | Medium | 6GB | 60GB | - |
+| Monitoring | 500 | 2 | No | host | 1024 | Medium | 4GB | 64GB | - |
+| Woodpecker CI | 600 | 2 | No | host | 512 | Low | 8GB | 32GB | - |
+| Lancache | 700 | 2 | No | host | 512 | Low | 4GB | 32GB | - |
+| **Total** | | **26** | | | | | **54GB** | **450GB + 6TB** | |
 
 **Physical Host Resources:**
 
-- 8 physical CPU cores (Intel Xeon X5570 @ 2.93GHz)
-- 48GB RAM
-- 1.4TB storage
-- 125% CPU overprovisioning (18 virtual / 8 physical)
+- 16 physical CPU cores / 32 threads (AMD EPYC 7313P)
+- 128GB RAM
+- NVMe boot + 3x 6TB Btrfs RAID1 (~9TB usable) + 32GB RAM disk (transcoding)
+- ~160% CPU overprovisioning (26 virtual / 16 physical)
 
 **CPU Overprovisioning Strategy:**
 

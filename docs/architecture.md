@@ -22,7 +22,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Resources: 2 cores, 2GB RAM, 40GB disk
   - IP: 192.168.0.10
   - Stack: Rootless Podman with Quadlet
-  - Priority: Low (cpu_units: 512)
+  - Priority: Medium (cpu_units: 1024)
 
 #### Game Servers
 
@@ -62,7 +62,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Priority: Medium (cpu_units: 1024)
 
 - **Download Clients** (VMID 402)
-  - Resources: 2 cores, 6GB RAM, 60GB disk
+  - Resources: 4 cores, 6GB RAM, 60GB disk
   - IP: 192.168.0.14
   - Stack: Rootless Podman with Quadlet
   - Services: qBittorrent, SABnzbd, Gluetun (VPN), Unpackerr
@@ -90,12 +90,12 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Services: Woodpecker Server, Woodpecker Agent
   - Priority: Low (cpu_units: 512)
   - Purpose: Automated testing, linting, security scanning, and deployment pipelines
-  - Deployment: Phase C (optional, advanced services)
+  - Deployment: Phase 2 (CI infrastructure)
 
 #### Caching Infrastructure
 
 - **Lancache** (VMID 700)
-  - Resources: 2 cores, 4GB RAM, 20GB disk + NFS cache storage
+  - Resources: 2 cores, 4GB RAM, 32GB disk + NFS cache storage
   - IP: 192.168.0.18
   - Stack: **Rootful Podman** with Quadlet (exception - see [Lancache Rootful Security](#lancache-rootful-security))
   - Services: lancache/monolithic (nginx-based game download cache)
@@ -303,11 +303,11 @@ unpackerr.container
 | NAS              | 300  | 2      | 6GB      | 3x6TB** | Medium   | 1024      |
 | Jellyfin         | 400  | 4      | 8GB      | 80GB    | High     | 2048      |
 | Media Services   | 401  | 4      | 8GB      | 50GB    | Medium   | 1024      |
-| Download Clients | 402  | 2      | 6GB      | 60GB    | Medium   | 1024      |
+| Download Clients | 402  | 4      | 6GB      | 60GB    | Medium   | 1024      |
 | Monitoring       | 500  | 2      | 4GB      | 64GB    | Medium   | 1024      |
-| Woodpecker CI    | 600  | 2      | 2GB      | 30GB    | Low      | 512       |
-| Lancache         | 700  | 2      | 4GB      | 20GB*** | Low      | 512       |
-| **Total**        |      | **24** | **48GB** |         |          |           |
+| Woodpecker CI    | 600  | 2      | 8GB      | 32GB    | Low      | 512       |
+| Lancache         | 700  | 2      | 4GB      | 32GB*** | Low      | 512       |
+| **Total**        |      | **26** | **54GB** |         |          |           |
 
 *Satisfactory cores are pinned to physical cores 4-7 (was 2-3)
 **NAS has 3x 6TB drives in Btrfs RAID1 (~9TB usable)

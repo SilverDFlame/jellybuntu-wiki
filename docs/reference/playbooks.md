@@ -224,9 +224,9 @@ Run all phases at once (skips Phase 4):
 ### 04-configure-home-assistant-role.yml
 
 **Target**: home_assistant
-**Roles**: docker, docker_compose_app
+**Roles**: podman_app
 
-**Service**: Home Assistant in Docker
+**Service**: Home Assistant (Quadlet/Podman)
 **Port**: 8123
 **URL**: http://home-assistant.discus-moth.ts.net:8123
 
@@ -239,14 +239,14 @@ Run all phases at once (skips Phase 4):
 
 **Service**: Satisfactory Dedicated Server
 **Ports**: 7777 (game), 15000 (beacon), 15777 (query)
-**CPU**: Pinned to cores 2-3 for consistent performance
+**CPU**: Pinned to cores 4-7 for consistent performance (4 cores on EPYC 7313P)
 
 ---
 
 ### 06-configure-media-services-role.yml
 
 **Target**: media_services
-**Roles**: docker, nfs_client, docker_compose_app
+**Roles**: nfs_client, podman_app
 
 **Services Deployed**:
 
@@ -267,7 +267,7 @@ Run all phases at once (skips Phase 4):
 ### 07-configure-download-clients-role.yml
 
 **Target**: download_clients
-**Roles**: docker, nfs_client, docker_compose_app
+**Roles**: nfs_client, podman_app
 
 **Services Deployed**:
 
@@ -354,7 +354,7 @@ Run all phases at once (skips Phase 4):
 **Target**: nas (192.168.0.15)
 **Roles**: adguard_home
 
-**Service**: AdGuard Home (Docker)
+**Service**: AdGuard Home (Quadlet/Podman)
 **Ports**: 53 (DNS), 80 (Web UI)
 **URL**: http://nas.discus-moth.ts.net:80
 
