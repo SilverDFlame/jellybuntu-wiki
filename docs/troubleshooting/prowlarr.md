@@ -2,14 +2,26 @@
 
 Troubleshooting guide for Prowlarr indexer management issues.
 
+> **IMPORTANT**: Prowlarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Quick Checks
 
 ```bash
-# Check container is running
-docker ps | grep prowlarr
+# SSH to media-services VM
+ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
+
+# Check service status
+systemctl --user status prowlarr
 
 # View logs
-docker logs prowlarr --tail 100
+journalctl --user -u prowlarr -f
+
+# Check container is running
+podman ps | grep prowlarr
+
+# View container logs
+podman logs prowlarr --tail 100
 
 # Check web UI access
 curl http://localhost:9696
@@ -31,23 +43,26 @@ curl http://download-clients.discus-moth.ts.net:8081
 **Diagnosis**:
 
 ```bash
+# Check service status
+systemctl --user status prowlarr
+
 # Check container status
-docker ps -a | grep prowlarr
+podman ps -a | grep prowlarr
 
 # Check logs
-docker logs prowlarr --tail 50
+podman logs prowlarr --tail 50
 
 # Check port
-sudo netstat -tulpn | grep 9696
+ss -tlnp | grep 9696
 ```
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose up -d prowlarr
+   systemctl --user start prowlarr
+   systemctl --user enable prowlarr
    ```
 
 2. **Firewall blocking**:
@@ -56,6 +71,17 @@ sudo netstat -tulpn | grep 9696
    sudo ufw allow from 192.168.0.0/24 to any port 9696
    sudo ufw allow from 100.64.0.0/10 to any port 9696
    sudo ufw reload
+   ```
+
+3. **Quadlet configuration issue**:
+
+   ```bash
+   # Check Quadlet file
+   cat ~/.config/containers/systemd/prowlarr.container
+
+   # Reload and restart
+   systemctl --user daemon-reload
+   systemctl --user restart prowlarr
    ```
 
 ### 2. Indexers Failing to Connect
@@ -70,10 +96,11 @@ sudo netstat -tulpn | grep 9696
 
 ```bash
 # Test from container
-docker exec prowlarr wget -O- https://example-indexer.com
+podman exec prowlarr wget -O- https://example-indexer.com
 
 # Check Flaresolverr if using Cloudflare bypass
-docker ps | grep flaresolverr
+systemctl --user status flaresolverr
+podman ps | grep flaresolverr
 curl http://localhost:8191
 ```
 
@@ -87,7 +114,7 @@ curl http://localhost:8191
 2. **Cloudflare protection**:
    - Ensure Flaresolverr is running
    - Configure indexer to use Flaresolverr
-   - Settings > Indexers > [Indexer] > FlareSolverr: `http://flaresolverr:8191`
+   - Settings > Indexers > [Indexer] > FlareSolverr: `http://localhost:8191`
 
 3. **Rate limiting**:
    - Reduce search frequency
@@ -105,23 +132,23 @@ curl http://localhost:8191
 **Diagnosis**:
 
 ```bash
-# Test connectivity between containers
-docker exec prowlarr ping sonarr
-docker exec prowlarr ping radarr
+# Test connectivity between services (all on same VM)
+curl http://localhost:8989  # Sonarr
+curl http://localhost:7878  # Radarr
 
 # Check API connectivity
-docker exec prowlarr wget -O- http://sonarr:8989/api/v3/health
-docker exec prowlarr wget -O- http://radarr:7878/api/v3/health
+curl http://localhost:8989/api/v3/health
+curl http://localhost:7878/api/v3/health
 ```
 
 **Solutions**:
 
 1. **Incorrect app configuration**:
    - Settings > Apps > Add Application
-   - **Prowlarr Server**: `http://prowlarr:9696` (not localhost!)
-   - **Sonarr Server**: `http://sonarr:8989`
-   - **Radarr Server**: `http://radarr:7878`
-   - Use container names, not IPs or hostnames
+   - **Prowlarr Server**: `http://localhost:9696`
+   - **Sonarr Server**: `http://localhost:8989`
+   - **Radarr Server**: `http://localhost:7878`
+   - Use localhost since all services are on same VM
 
 2. **Wrong API keys**:
    - Get Sonarr API: Settings > General > Security > API Key
@@ -172,21 +199,21 @@ docker exec prowlarr wget -O- http://radarr:7878/api/v3/health
 **Diagnosis**:
 
 ```bash
-# Test connectivity
-docker exec prowlarr ping download-clients.discus-moth.ts.net
+# Test connectivity to download-clients VM
+ping -c 3 download-clients.discus-moth.ts.net
 
 # Test qBittorrent
-docker exec prowlarr wget -O- http://download-clients.discus-moth.ts.net:8080
+curl http://download-clients.discus-moth.ts.net:8080
 
 # Test SABnzbd
-docker exec prowlarr wget -O- http://download-clients.discus-moth.ts.net:8081
+curl http://download-clients.discus-moth.ts.net:8081
 ```
 
 **Solutions**:
 
 1. **Wrong hostname**:
    - Use `download-clients.discus-moth.ts.net` or `192.168.0.14`
-   - NOT `localhost` or container names
+   - NOT `localhost` (download clients are on different VM)
 
 2. **Correct download client settings**:
    - **qBittorrent**:
@@ -212,10 +239,12 @@ docker exec prowlarr wget -O- http://download-clients.discus-moth.ts.net:8081
 
 ```bash
 # Check Flaresolverr is running
-docker ps | grep flaresolverr
+systemctl --user status flaresolverr
+podman ps | grep flaresolverr
 
 # View logs
-docker logs flaresolverr --tail 50
+journalctl --user -u flaresolverr -f
+podman logs flaresolverr --tail 50
 
 # Test Flaresolverr
 curl -X POST http://localhost:8191/v1 \
@@ -228,17 +257,17 @@ curl -X POST http://localhost:8191/v1 \
 1. **Flaresolverr not running**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose up -d flaresolverr
+   systemctl --user start flaresolverr
+   systemctl --user enable flaresolverr
    ```
 
 2. **Wrong Flaresolverr URL in indexer**:
-   - Edit indexer > FlareSolverr URL: `http://flaresolverr:8191`
-   - NOT `localhost` or IP address
+   - Edit indexer > FlareSolverr URL: `http://localhost:8191`
+   - All services on same VM, so localhost works
 
 3. **Flaresolverr timeout**:
    - Increase timeout in indexer settings
-   - Restart Flaresolverr: `docker compose restart flaresolverr`
+   - Restart Flaresolverr: `systemctl --user restart flaresolverr`
 
 ## Advanced Troubleshooting
 
@@ -246,45 +275,59 @@ curl -X POST http://localhost:8191/v1 \
 
 ```bash
 # Stop Prowlarr
-docker compose -f /opt/media-stack/docker-compose.yml stop prowlarr
+systemctl --user stop prowlarr
 
 # Backup database
-cp -r /opt/media-stack/prowlarr/config /opt/media-stack/prowlarr/config.bak
+cp -r ~/.config/prowlarr ~/.config/prowlarr.bak
 
 # Restart
-docker compose -f /opt/media-stack/docker-compose.yml up -d prowlarr
-docker logs prowlarr -f
+systemctl --user start prowlarr
+journalctl --user -u prowlarr -f
 ```
 
 ### Reset Indexers
 
 ```bash
 # Backup config first
-docker compose stop prowlarr
+systemctl --user stop prowlarr
 
 # Remove indexer database (keeps settings)
-rm /opt/media-stack/prowlarr/config/prowlarr.db-shm
-rm /opt/media-stack/prowlarr/config/prowlarr.db-wal
+rm ~/.config/prowlarr/prowlarr.db-shm
+rm ~/.config/prowlarr/prowlarr.db-wal
 
 # Restart
-docker compose up -d prowlarr
+systemctl --user start prowlarr
 ```
 
-### Container Network Debugging
+### Container Debugging
 
 ```bash
 # Enter container
-docker exec -it prowlarr /bin/bash
+podman exec -it prowlarr /bin/bash
 
 # Test connectivity
-ping sonarr
-ping radarr
-ping flaresolverr
-ping download-clients.discus-moth.ts.net
+ping -c 3 192.168.0.14
+wget -O- http://192.168.0.14:8080
 
 # Test HTTP
-wget -O- http://sonarr:8989/api/v3/health
-wget -O- http://flaresolverr:8191
+wget -O- http://localhost:8989/api/v3/health
+wget -O- http://localhost:8191
+
+# Exit
+exit
+```
+
+### Check Quadlet Configuration
+
+```bash
+# View Quadlet file
+cat ~/.config/containers/systemd/prowlarr.container
+
+# Regenerate systemd units
+systemctl --user daemon-reload
+
+# Check generated service
+systemctl --user cat prowlarr
 ```
 
 ## Getting Help
@@ -294,7 +337,8 @@ If issues persist:
 1. **Collect logs**:
 
    ```bash
-   docker logs prowlarr --tail 500 > /tmp/prowlarr.log
+   journalctl --user -u prowlarr -n 500 --no-pager > /tmp/prowlarr.log
+   podman logs prowlarr --tail 500 >> /tmp/prowlarr.log
    ```
 
 2. **Check Prowlarr Wiki**:
@@ -308,6 +352,7 @@ If issues persist:
 ## See Also
 
 - [Sonarr/Radarr Troubleshooting](sonarr-radarr.md)
+- [Flaresolverr Troubleshooting](flaresolverr.md)
 - [Download Clients Troubleshooting](download-clients.md)
 - [Podman Troubleshooting](podman.md)
 - [Networking Troubleshooting](networking.md)

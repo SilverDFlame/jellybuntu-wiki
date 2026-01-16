@@ -3,13 +3,16 @@
 Gluetun provides VPN protection for qBittorrent downloads with automatic port forwarding. This guide covers
 troubleshooting VPN connectivity, port forwarding, kill switch, and network isolation issues.
 
+> **IMPORTANT**: Gluetun runs as a **rootless Podman container with Quadlet** on the download-clients VM (192.168.0.14).
+> Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Overview
 
 - **VM**: download-clients (192.168.0.14)
 - **Container**: gluetun
 - **VPN Provider**: Private Internet Access (PIA)
 - **Protected Services**: qBittorrent (SABnzbd does not use VPN)
-- **Image**: docker.io/qmcgaw/gluetun:v3.41.0
+- **Deployment**: Rootless Podman with Quadlet
 
 ## Quick Diagnostics
 
@@ -17,20 +20,24 @@ troubleshooting VPN connectivity, port forwarding, kill switch, and network isol
 # SSH to download-clients VM
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net
 
+# Check service status
+systemctl --user status gluetun
+
 # Check if Gluetun is running
-docker ps | grep gluetun
+podman ps | grep gluetun
 
 # View logs
-docker logs gluetun --tail 100
+journalctl --user -u gluetun -f
+podman logs gluetun --tail 100
 
 # Check VPN connection status
-docker logs gluetun | grep -i "ip"
+podman logs gluetun | grep -i "ip"
 
 # View port forwarding status
-docker logs gluetun | grep -i "port"
+podman logs gluetun | grep -i "port"
 
 # Test VPN connectivity from qBittorrent
-docker exec gluetun curl -s ifconfig.me
+podman exec gluetun curl -s ifconfig.me
 ```
 
 ## Common Issues
@@ -47,7 +54,7 @@ docker exec gluetun curl -s ifconfig.me
 
 ```bash
 # Check Gluetun logs for errors
-docker logs gluetun | grep -i "error\|failed"
+podman logs gluetun | grep -i "error\|failed"
 
 # Common errors:
 # "AUTH_FAILED" - Wrong credentials
@@ -77,11 +84,11 @@ docker logs gluetun | grep -i "error\|failed"
 
    ```bash
    # Check if specific server is down
-   docker logs gluetun | grep "server"
+   podman logs gluetun | grep "server"
 
    # Try different server region (edit compose file)
    # Then restart:
-   docker restart gluetun
+   systemctl --user restart gluetun
    ```
 
 4. **Outdated Gluetun image**:
@@ -89,8 +96,8 @@ docker logs gluetun | grep -i "error\|failed"
    ```bash
    # Update Gluetun
    cd /opt/media-stack
-   docker compose pull gluetun
-   docker compose up -d gluetun
+   systemctl --user pull gluetun
+   systemctl --user up -d gluetun
    ```
 
 ### 2. Port Forwarding Not Working
@@ -105,7 +112,7 @@ docker logs gluetun | grep -i "error\|failed"
 
 ```bash
 # Check port forwarding status
-docker logs gluetun | grep -i "port forward"
+podman logs gluetun | grep -i "port forward"
 
 # Should see: "port forwarding is on and assigned port is XXXXX"
 
@@ -124,7 +131,7 @@ docker logs gluetun | grep -i "port forward"
      - VPN_PORT_FORWARDING_PROVIDER=private internet access
      ```
 
-   - Restart if changed: `docker restart gluetun`
+   - Restart if changed: `systemctl --user restart gluetun`
 
 2. **PIA server doesn't support port forwarding**:
    - Not all PIA servers support port forwarding
@@ -138,13 +145,13 @@ docker logs gluetun | grep -i "port forward"
 3. **Port forwarding expired**:
    - PIA ports expire every 60 days
    - Gluetun auto-renews, but may fail
-   - Restart Gluetun to get new port: `docker restart gluetun`
+   - Restart Gluetun to get new port: `systemctl --user restart gluetun`
 
 4. **qBittorrent port mismatch**:
 
    ```bash
    # Get Gluetun forwarded port
-   docker logs gluetun | grep "port forward" | tail -1
+   podman logs gluetun | grep "port forward" | tail -1
 
    # Update qBittorrent automatically (already configured via port-sync script)
    # Or manually in qBittorrent: Tools → Options → Connection → Port
@@ -154,7 +161,7 @@ docker logs gluetun | grep -i "port forward"
 
    ```bash
    # Get forwarded port from logs
-   PORT=$(docker logs gluetun 2>&1 | grep -oP 'port forwarding is on and assigned port is \K\d+' | tail -1)
+   PORT=$(podman logs gluetun 2>&1 | grep -oP 'port forwarding is on and assigned port is \K\d+' | tail -1)
    echo "Forwarded port: $PORT"
 
    # Test externally using port checker:
@@ -174,13 +181,13 @@ docker logs gluetun | grep -i "port forward"
 
 ```bash
 # Check for reconnection patterns
-docker logs gluetun | grep -i "reconnect\|disconnect"
+podman logs gluetun | grep -i "reconnect\|disconnect"
 
 # Check container restart count
-docker ps -a | grep gluetun
+podman ps -a | grep gluetun
 
 # Monitor in real-time
-docker logs gluetun -f
+podman logs gluetun -f
 ```
 
 **Solutions**:
@@ -193,7 +200,7 @@ docker logs gluetun -f
      - SERVER_REGIONS=US New York  # or other region
      ```
 
-   - Restart: `docker restart gluetun`
+   - Restart: `systemctl --user restart gluetun`
 
 2. **Network instability**:
 
@@ -202,13 +209,13 @@ docker logs gluetun -f
    ping -c 100 8.8.8.8 | tail -5
 
    # Check DNS issues
-   docker logs gluetun | grep -i "dns"
+   podman logs gluetun | grep -i "dns"
    ```
 
 3. **Gluetun health check failing**:
    - Health check tests VPN connectivity every minute
    - If fails 3 times, container restarts
-   - Check: `docker inspect gluetun | grep -A10 Health`
+   - Check: `podman inspect gluetun | grep -A10 Health`
 
 4. **PIA connection limits**:
    - PIA allows 10 simultaneous connections per account
@@ -226,13 +233,13 @@ docker logs gluetun -f
 ```bash
 # Test kill switch
 # 1. Get current VPN IP
-docker exec gluetun curl -s ifconfig.me
+podman exec gluetun curl -s ifconfig.me
 
 # 2. Disconnect VPN (stop Gluetun)
-docker stop gluetun
+systemctl --user stop gluetun
 
 # 3. Try to access internet from qBittorrent (should fail)
-docker exec -it qbittorrent curl --max-time 5 -s ifconfig.me
+podman exec -it qbittorrent curl --max-time 5 -s ifconfig.me
 # Should timeout or fail (kill switch working)
 ```
 
@@ -254,7 +261,7 @@ docker exec -it qbittorrent curl --max-time 5 -s ifconfig.me
    - Recreate container if wrong:
 
      ```bash
-     docker compose up -d --force-recreate qbittorrent
+     systemctl --user up -d --force-recreate qbittorrent
      ```
 
 3. **Firewall rules not applied**:
@@ -265,7 +272,7 @@ docker exec -it qbittorrent curl --max-time 5 -s ifconfig.me
      - FIREWALL_INPUT_PORTS=8080
      ```
 
-   - Restart if changed: `docker restart gluetun`
+   - Restart if changed: `systemctl --user restart gluetun`
 
 ### 5. Can't Access qBittorrent Web UI
 
@@ -279,13 +286,13 @@ docker exec -it qbittorrent curl --max-time 5 -s ifconfig.me
 
 ```bash
 # Check if Gluetun is running
-docker ps | grep gluetun
+podman ps | grep gluetun
 
 # Check qBittorrent container status
-docker ps | grep qbittorrent
+podman ps | grep qbittorrent
 
 # Check logs
-docker logs gluetun | grep -i "8080"
+podman logs gluetun | grep -i "8080"
 docker logs qbittorrent
 ```
 
@@ -294,7 +301,7 @@ docker logs qbittorrent
 1. **Gluetun not running**:
 
    ```bash
-   docker start gluetun
+   systemctl --user start gluetun
    # Wait 30 seconds for VPN to connect
    docker start qbittorrent
    ```
@@ -307,7 +314,7 @@ docker logs qbittorrent
        - 8080:8080  # qBittorrent Web UI
      ```
 
-   - Restart if missing: `docker restart gluetun`
+   - Restart if missing: `systemctl --user restart gluetun`
 
 3. **Firewall blocking inbound**:
    - Check FIREWALL_INPUT_PORTS includes 8080:
@@ -316,17 +323,17 @@ docker logs qbittorrent
      - FIREWALL_INPUT_PORTS=8080
      ```
 
-   - Restart if changed: `docker restart gluetun`
+   - Restart if changed: `systemctl --user restart gluetun`
 
 4. **qBittorrent not using Gluetun network**:
 
    ```bash
    # Verify network mode
-   docker inspect qbittorrent | grep -i networkmode
+   podman inspect qbittorrent | grep -i networkmode
 
    # Should show: "NetworkMode": "container:gluetun"
    # If not, recreate:
-   docker compose up -d --force-recreate qbittorrent
+   systemctl --user up -d --force-recreate qbittorrent
    ```
 
 5. **Access from correct network**:
@@ -349,7 +356,7 @@ docker logs qbittorrent
 # Should show VPN provider's DNS, NOT your ISP
 
 # Or test via command line
-docker exec gluetun nslookup google.com
+podman exec gluetun nslookup google.com
 # Should show VPN DNS server (PIA)
 ```
 
@@ -373,10 +380,10 @@ docker exec gluetun nslookup google.com
 
    ```bash
    # Check Gluetun logs
-   docker logs gluetun | grep -i "dns"
+   podman logs gluetun | grep -i "dns"
 
    # Restart Gluetun
-   docker restart gluetun
+   systemctl --user restart gluetun
    ```
 
 3. **Verify DNS is private**:
@@ -397,13 +404,13 @@ docker exec gluetun nslookup google.com
 
 ```bash
 # Test VPN speed
-docker exec gluetun curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
+podman exec gluetun curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
 
 # Check CPU usage
-docker stats gluetun --no-stream
+podman stats gluetun --no-stream
 
 # Check if using UDP or TCP
-docker logs gluetun | grep -i "protocol"
+podman logs gluetun | grep -i "protocol"
 ```
 
 **Solutions**:
@@ -445,13 +452,13 @@ docker logs gluetun | grep -i "protocol"
 
 ```bash
 # Check Gluetun's public IP (should be VPN IP)
-docker exec gluetun curl -s ifconfig.me
+podman exec gluetun curl -s ifconfig.me
 
 # Compare to VM's public IP (should be different)
 curl -s ifconfig.me
 
 # Check logs for VPN connection
-docker logs gluetun | grep -i "connected"
+podman logs gluetun | grep -i "connected"
 ```
 
 **Solutions**:
@@ -460,7 +467,7 @@ docker logs gluetun | grep -i "connected"
 
    ```bash
    # Check connection status
-   docker logs gluetun | tail -20
+   podman logs gluetun | tail -20
 
    # Look for: "Connected to VPN" or similar
    # If missing, VPN failed to connect
@@ -470,7 +477,7 @@ docker logs gluetun | grep -i "connected"
    - qBittorrent IP check:
 
      ```bash
-     docker exec gluetun curl -s ifconfig.me  # This is correct!
+     podman exec gluetun curl -s ifconfig.me  # This is correct!
      ```
 
    - Don't check from VM directly (that's not using VPN):
@@ -482,16 +489,16 @@ docker logs gluetun | grep -i "connected"
 3. **Restart Gluetun**:
 
    ```bash
-   docker restart gluetun
+   systemctl --user restart gluetun
    # Wait 30 seconds
-   docker exec gluetun curl -s ifconfig.me
+   podman exec gluetun curl -s ifconfig.me
    ```
 
 4. **VPN routing issue**:
    - Check routing table in Gluetun:
 
      ```bash
-     docker exec gluetun ip route
+     podman exec gluetun ip route
      # Should show VPN gateway as default route
      ```
 
@@ -501,21 +508,21 @@ docker logs gluetun | grep -i "connected"
 
 ```bash
 # 1. Verify VPN connected
-docker logs gluetun | grep -i "connected"
+podman logs gluetun | grep -i "connected"
 
 # 2. Check VPN IP (should be PIA IP, not home IP)
-docker exec gluetun curl -s ifconfig.me
+podman exec gluetun curl -s ifconfig.me
 
 # 3. Verify port forwarding active
-docker logs gluetun | grep "port forward"
+podman logs gluetun | grep "port forward"
 
 # 4. Test DNS (should show VPN DNS)
-docker exec gluetun nslookup google.com
+podman exec gluetun nslookup google.com
 
 # 5. Test kill switch (should timeout)
-docker stop gluetun
-docker exec -it qbittorrent curl --max-time 5 ifconfig.me  # Should fail
-docker start gluetun
+systemctl --user stop gluetun
+podman exec -it qbittorrent curl --max-time 5 ifconfig.me  # Should fail
+systemctl --user start gluetun
 
 # 6. Test qBittorrent web UI accessible
 curl http://download-clients.discus-moth.ts.net:8080
@@ -537,7 +544,7 @@ Visit https://browserleaks.com/webrtc to check for WebRTC leaks (if using browse
 1. Get forwarded port:
 
    ```bash
-   docker logs gluetun | grep "port forward" | tail -1
+   podman logs gluetun | grep "port forward" | tail -1
    ```
 
 2. Test port at: https://www.yougetsignal.com/tools/open-ports/
@@ -557,7 +564,7 @@ Edit gluetun.yml:
 # or leave blank for auto-selection with port forwarding
 ```
 
-Restart: `docker restart gluetun`
+Restart: `systemctl --user restart gluetun`
 
 ### Enable Debug Logging
 
@@ -565,7 +572,7 @@ Restart: `docker restart gluetun`
 - LOG_LEVEL=debug
 ```
 
-Restart and view detailed logs: `docker logs gluetun -f`
+Restart and view detailed logs: `podman logs gluetun -f`
 
 ### Custom DNS
 
@@ -633,7 +640,7 @@ Use specific DNS servers:
 ### Save Full Logs
 
 ```bash
-docker logs gluetun > gluetun-debug.log
+podman logs gluetun > gluetun-debug.log
 # Review for errors
 grep -i "error\|failed\|warn" gluetun-debug.log
 ```
@@ -646,11 +653,11 @@ ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net
 
 # Pull latest image
 cd /opt/media-stack
-docker compose pull gluetun
-docker compose up -d gluetun
+systemctl --user pull gluetun
+systemctl --user up -d gluetun
 
 # Verify version
-docker logs gluetun | grep "version"
+podman logs gluetun | grep "version"
 ```
 
 ## See Also
