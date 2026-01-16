@@ -2,15 +2,28 @@
 
 Troubleshooting guide for Sonarr (TV) and Radarr (Movies) media management issues.
 
+> **IMPORTANT**: Sonarr and Radarr run as **rootless Podman containers with Quadlet** on the media-services VM
+> (192.168.0.13). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Quick Checks
 
 ```bash
-# Check containers are running
-docker ps | grep -E "sonarr|radarr"
+# SSH to media-services VM
+ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
+
+# Check service status
+systemctl --user status sonarr radarr
 
 # View logs
-docker logs sonarr --tail 100
-docker logs radarr --tail 100
+journalctl --user -u sonarr -f
+journalctl --user -u radarr -f
+
+# Check containers are running
+podman ps | grep -E "sonarr|radarr"
+
+# View container logs
+podman logs sonarr --tail 100
+podman logs radarr --tail 100
 
 # Check web UI access
 curl http://localhost:8989  # Sonarr
@@ -33,15 +46,18 @@ df -h /mnt/data
 **Diagnosis**:
 
 ```bash
+# Check service status
+systemctl --user status sonarr radarr
+
 # Check container status
-docker ps -a | grep -E "sonarr|radarr"
+podman ps -a | grep -E "sonarr|radarr"
 
 # Check container logs
-docker logs sonarr --tail 50
-docker logs radarr --tail 50
+podman logs sonarr --tail 50
+podman logs radarr --tail 50
 
 # Check if port is listening
-sudo netstat -tulpn | grep -E "8989|7878"
+ss -tlnp | grep -E "8989|7878"
 
 # Test local access
 curl http://localhost:8989
@@ -50,11 +66,11 @@ curl http://localhost:7878
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose up -d sonarr radarr
+   systemctl --user start sonarr radarr
+   systemctl --user enable sonarr radarr
    ```
 
 2. **Port conflict**:
@@ -75,6 +91,18 @@ curl http://localhost:7878
    sudo ufw reload
    ```
 
+4. **Quadlet configuration issue**:
+
+   ```bash
+   # Check Quadlet files exist
+   ls -la ~/.config/containers/systemd/sonarr.container
+   ls -la ~/.config/containers/systemd/radarr.container
+
+   # Reload systemd and restart
+   systemctl --user daemon-reload
+   systemctl --user restart sonarr radarr
+   ```
+
 ### 2. Can't Connect to Download Clients
 
 **Symptoms**:
@@ -86,16 +114,15 @@ curl http://localhost:7878
 **Diagnosis**:
 
 ```bash
-# Test connectivity to download clients
+# Test connectivity to download clients VM
 curl http://download-clients.discus-moth.ts.net:8080  # qBittorrent
 curl http://download-clients.discus-moth.ts.net:8081  # SABnzbd
 
 # Check from inside container
-docker exec sonarr ping download-clients.discus-moth.ts.net
+podman exec sonarr ping -c 3 download-clients.discus-moth.ts.net
 
-# Verify network
-docker network ls
-docker network inspect media-stack_default
+# Test with wget
+podman exec sonarr wget -O- http://192.168.0.14:8080
 ```
 
 **Solutions**:
@@ -107,7 +134,7 @@ docker network inspect media-stack_default
 
 2. **Wrong port**:
    - qBittorrent: Port 8080
-   - SABnzbd: Port 8081 (external), 8080 (internal container)
+   - SABnzbd: Port 8081
 
 3. **Authentication issues**:
    - qBittorrent: Check username/password in download client settings
@@ -116,8 +143,8 @@ docker network inspect media-stack_default
 4. **Test from container**:
 
    ```bash
-   docker exec sonarr wget -O- http://192.168.0.14:8080
-   docker exec radarr wget -O- http://192.168.0.14:8080
+   podman exec sonarr wget -O- http://192.168.0.14:8080
+   podman exec radarr wget -O- http://192.168.0.14:8080
    ```
 
 ### 3. Prowlarr Indexers Not Syncing
@@ -132,12 +159,13 @@ docker network inspect media-stack_default
 
 ```bash
 # Check Prowlarr is running
-docker ps | grep prowlarr
+systemctl --user status prowlarr
+podman ps | grep prowlarr
 
 # View Prowlarr logs
-docker logs prowlarr --tail 100
+journalctl --user -u prowlarr -f
 
-# Test Prowlarr API
+# Test Prowlarr connectivity
 curl http://localhost:9696/api/v1/health
 ```
 
@@ -145,22 +173,22 @@ curl http://localhost:9696/api/v1/health
 
 1. **Incorrect Prowlarr settings in Sonarr/Radarr**:
    - Settings > Apps > Add Application
-   - **Prowlarr Server**: `http://prowlarr:9696`
-   - **Sonarr/Radarr Server**: `http://sonarr:8989` or `http://radarr:7878`
-   - Use container names, not IPs
+   - **Prowlarr Server**: `http://localhost:9696` or `http://192.168.0.13:9696`
+   - **Sonarr/Radarr Server**: `http://localhost:8989` or `http://localhost:7878`
    - Verify API keys are correct
 
-2. **Docker network issues**:
+2. **Test connectivity between services**:
 
    ```bash
-   # Verify containers are on same network
-   docker inspect sonarr | grep NetworkMode
-   docker inspect prowlarr | grep NetworkMode
+   # All services run on same VM, so localhost works
+   curl http://localhost:9696
+   curl http://localhost:8989
+   curl http://localhost:7878
    ```
 
 3. **Force sync**:
    - Prowlarr > Settings > Apps > [App] > Test & Save
-   - Or Sync button
+   - Or click Sync button
 
 ### 4. Missing Episodes Not Being Found Automatically
 
@@ -195,12 +223,14 @@ curl http://localhost:9696/api/v1/health
 
 ##### Option 1: Use Huntarr (Recommended - Automatic Backlog Searches)
 
-Huntarr is specifically designed to solve this problem by automatically searching for missing/wanted content on a schedule.
+Huntarr is specifically designed to solve this problem by automatically searching for missing/wanted content on a
+schedule.
 
 1. **Verify Huntarr is installed and running**:
 
    ```bash
-   docker ps | grep huntarr
+   systemctl --user status huntarr
+   podman ps | grep huntarr
    # Should show huntarr container running on port 9705
    ```
 
@@ -258,7 +288,7 @@ For immediate results without Huntarr:
 **See Also**:
 
 - [Huntarr Configuration Guide](../configuration/huntarr-setup.md)
-- [Huntarr Troubleshooting](../configuration/huntarr-setup.md#troubleshooting)
+- [Huntarr Troubleshooting](huntarr.md)
 
 ---
 
@@ -290,8 +320,7 @@ ls -l /mnt/data/
 
 1. **Wrong path configuration**:
    - Settings > Media Management > Root Folders
-   - Should be `/data/media/tv` (Sonarr) or `/data/media/movies` (Radarr)
-   - NOT `/mnt/data/` or `/media/`
+   - Should be `/mnt/data/media/tv` (Sonarr) or `/mnt/data/media/movies` (Radarr)
 
 2. **Download client category mismatch**:
    - Sonarr: Settings > Download Clients > Category should be `tv`
@@ -309,8 +338,8 @@ ls -l /mnt/data/
 4. **Check container volume mounts**:
 
    ```bash
-   docker inspect sonarr | grep -A 10 Mounts
-   # Should show /mnt/data:/data
+   podman inspect sonarr | grep -A 10 Mounts
+   # Should show /mnt/data mounted
    ```
 
 ### 6. Quality Profile Issues
@@ -337,7 +366,7 @@ ls -l /mnt/data/
 2. **Run Recyclarr sync** (if configured):
 
    ```bash
-   docker exec recyclarr recyclarr sync
+   podman exec recyclarr recyclarr sync
    ```
 
 3. **Check indexer search capabilities**:
@@ -361,8 +390,8 @@ ls -l /mnt/data/
 
 ```bash
 # Check metadata provider connectivity
-docker exec sonarr wget -O- https://api.thetvdb.com
-docker exec radarr wget -O- https://api.themoviedb.org
+podman exec sonarr wget -O- https://api.thetvdb.com
+podman exec radarr wget -O- https://api.themoviedb.org
 ```
 
 **Solutions**:
@@ -445,46 +474,62 @@ du -sh /mnt/data/media/*
 ### Database Corruption
 
 ```bash
-# Stop containers
-docker compose -f /opt/media-stack/docker-compose.yml stop sonarr radarr
+# Stop services
+systemctl --user stop sonarr radarr
 
 # Backup databases
-cp -r /opt/media-stack/sonarr/config /opt/media-stack/sonarr/config.bak
-cp -r /opt/media-stack/radarr/config /opt/media-stack/radarr/config.bak
+cp -r ~/.config/sonarr ~/.config/sonarr.bak
+cp -r ~/.config/radarr ~/.config/radarr.bak
 
 # Restart and check logs
-docker compose -f /opt/media-stack/docker-compose.yml up -d sonarr radarr
-docker logs sonarr -f
-docker logs radarr -f
+systemctl --user start sonarr radarr
+journalctl --user -u sonarr -f
+journalctl --user -u radarr -f
 ```
 
 ### Reset Configuration
 
 ```bash
 # Backup first!
-docker compose -f /opt/media-stack/docker-compose.yml stop sonarr radarr
+systemctl --user stop sonarr radarr
 
 # Remove config (will reset everything!)
-sudo mv /opt/media-stack/sonarr/config /opt/media-stack/sonarr/config.old
-sudo mv /opt/media-stack/radarr/config /opt/media-stack/radarr/config.old
+mv ~/.config/sonarr ~/.config/sonarr.old
+mv ~/.config/radarr ~/.config/radarr.old
 
-# Restart
-docker compose -f /opt/media-stack/docker-compose.yml up -d sonarr radarr
+# Restart (will create fresh config)
+systemctl --user start sonarr radarr
 ```
 
-### Container Network Debugging
+### Container Debugging
 
 ```bash
 # Enter container shell
-docker exec -it sonarr /bin/bash
+podman exec -it sonarr /bin/bash
 
 # Test connectivity
-ping prowlarr
-ping download-clients.discus-moth.ts.net
-wget -O- http://prowlarr:9696
+ping -c 3 192.168.0.14
+wget -O- http://192.168.0.14:8080
 
 # Check DNS resolution
 nslookup download-clients.discus-moth.ts.net
+
+# Exit container
+exit
+```
+
+### Check Quadlet Configuration
+
+```bash
+# View Quadlet files
+cat ~/.config/containers/systemd/sonarr.container
+cat ~/.config/containers/systemd/radarr.container
+
+# Regenerate systemd units
+systemctl --user daemon-reload
+
+# Check generated service
+systemctl --user cat sonarr
 ```
 
 ## Getting Help
@@ -494,8 +539,10 @@ If issues persist:
 1. **Collect logs**:
 
    ```bash
-   docker logs sonarr --tail 500 > /tmp/sonarr.log
-   docker logs radarr --tail 500 > /tmp/radarr.log
+   journalctl --user -u sonarr -n 500 --no-pager > /tmp/sonarr.log
+   journalctl --user -u radarr -n 500 --no-pager > /tmp/radarr.log
+   podman logs sonarr --tail 500 >> /tmp/sonarr.log
+   podman logs radarr --tail 500 >> /tmp/radarr.log
    ```
 
 2. **Check Servarr Wiki**:
@@ -511,6 +558,7 @@ If issues persist:
 
 - [Download Clients Troubleshooting](download-clients.md)
 - [Prowlarr Troubleshooting](prowlarr.md)
+- [Huntarr Troubleshooting](huntarr.md)
 - [NAS/NFS Troubleshooting](nas-nfs.md)
 - [Podman Troubleshooting](podman.md)
 - [Common Issues](common-issues.md)

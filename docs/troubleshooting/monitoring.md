@@ -1,33 +1,44 @@
 # Monitoring Troubleshooting Guide
 
-Common issues and solutions for the Jellybuntu monitoring infrastructure (Prometheus, Grafana, Uptime Kuma).
+Common issues and solutions for the Jellybuntu monitoring infrastructure (Prometheus, Alertmanager, Grafana).
+
+> **IMPORTANT**: Monitoring services run as **rootless Podman containers with Quadlet** on the monitoring VM
+> (192.168.0.16). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+>
+> **Note**: Uptime Kuma has been moved to external monitoring (Oracle Cloud).
 
 ## Service Accessibility Issues
 
 ### Can't Access Any Monitoring Services
 
-**Symptoms**: Unable to reach Prometheus, Grafana, or Uptime Kuma UIs
+**Symptoms**: Unable to reach Prometheus, Grafana, or Alertmanager UIs
 
 **Diagnosis**:
 
 ```bash
+# SSH to monitoring VM
+ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net
+
 # 1. Verify monitoring VM is running
 qm status 500  # From Proxmox host
 
-# 2. Check containers are running
-ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net "podman ps"
+# 2. Check service status
+systemctl --user status prometheus grafana alertmanager
 
-# 3. Verify network connectivity
+# 3. Check containers are running
+podman ps
+
+# 4. Verify network connectivity
 ping monitoring.discus-moth.ts.net
 ```
 
 **Solutions**:
 
-1. **Containers stopped** (empty `podman ps` output):
+1. **Services stopped**:
 
    ```bash
-   ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
-     "cd /opt/monitoring && podman-compose up -d"
+   systemctl --user start prometheus grafana alertmanager
+   systemctl --user enable prometheus grafana alertmanager
    ```
 
 2. **Containers keep stopping after SSH logout** (rootless Podman issue):
@@ -42,9 +53,9 @@ ping monitoring.discus-moth.ts.net
      "loginctl show-user ansible | grep Linger"
    # Expected: Linger=yes
 
-   # Restart containers
+   # Restart services
    ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
-     "cd /opt/monitoring && podman-compose up -d"
+     "systemctl --user restart prometheus grafana alertmanager"
    ```
 
 3. **Firewall blocking access**:
@@ -105,7 +116,7 @@ Look for status: `Restarting` or `Exited (X) Y seconds ago`
    # Check for YAML syntax errors (tabs vs spaces, indentation)
    # Fix config, then restart
    ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
-     "cd /opt/monitoring && podman-compose restart prometheus"
+     "cd /opt/monitoring && systemctl --user restart prometheus"
    ```
 
    **Grafana**: "failed to start grafana" / "permission denied"
@@ -118,7 +129,7 @@ Look for status: `Restarting` or `Exited (X) Y seconds ago`
    # Grafana container runs as UID 0 (maps to ansible user)
    # Ensure volume ownership is correct
    ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
-     "podman-compose down && podman-compose up -d"
+     "systemctl --user down && systemctl --user up -d"
    ```
 
    **Uptime Kuma**: "database locked"
@@ -179,11 +190,11 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
    ```bash
    # Check if cAdvisor is running
    ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
-     "docker ps | grep cadvisor"
+     "podman ps | grep cadvisor"
 
    # Restart if needed
    ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
-     "docker restart cadvisor"
+     "systemctl --user restart cadvisor"
    ```
 
 4. **SNMP target down** (Mikrotik devices):
@@ -302,11 +313,10 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
 
 2. **Reduce retention period**:
 
-   ```yaml
-   # In docker-compose.yml
-   prometheus:
-     command:
-       - '--storage.tsdb.retention.time=15d'  # Reduce from 30d
+   ```ini
+   # In Quadlet .container file (~/.config/containers/systemd/prometheus.container)
+   # Add to [Container] section:
+   PodmanArgs=--storage.tsdb.retention.time=15d  # Reduce from 30d
    ```
 
 3. **Add recording rules** (pre-aggregate expensive queries):
@@ -431,15 +441,16 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
    - Test again
 
 4. **Email SMTP not configured**:
-   - Check Grafana environment variables in docker-compose.yml:
+   - Check Grafana environment variables in Quadlet .container file:
 
-     ```yaml
-     - GF_SMTP_ENABLED=true
-     - GF_SMTP_HOST=smtp.gmail.com:587
-     - GF_SMTP_USER=your-email@gmail.com
+     ```ini
+     # In ~/.config/containers/systemd/grafana.container [Container] section:
+     Environment=GF_SMTP_ENABLED=true
+     Environment=GF_SMTP_HOST=smtp.gmail.com:587
+     Environment=GF_SMTP_USER=your-email@gmail.com
      ```
 
-   - Restart Grafana after adding SMTP config
+   - Restart Grafana after adding SMTP config: `systemctl --user restart grafana`
 
 5. **Check Grafana logs for errors**:
 
@@ -566,10 +577,11 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net "podman stat
 
    ```bash
    # Check cAdvisor resource usage
-   docker stats cadvisor
+   podman stats cadvisor
 
-   # Reduce housekeeping interval (edit docker run command)
-   --housekeeping_interval=30s  # Increase from default 10s
+   # Reduce housekeeping interval (edit Quadlet .container file)
+   # Add to [Container] section:
+   # PodmanArgs=--housekeeping_interval=30s  # Increase from default 10s
    ```
 
 2. **node_exporter collecting too many metrics**:
@@ -683,8 +695,8 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net "podman stat
 
 3. **Use dashboard provisioning** (persist in version control):
    - Export dashboard JSON
-   - Save to `compose_files/monitoring/services/grafana/dashboards/`
-   - Mount in docker-compose.yml (already configured)
+   - Save to `~/.config/grafana/dashboards/`
+   - Mount via Quadlet Volume directive (already configured)
 
 ### Uptime Kuma Data Lost
 

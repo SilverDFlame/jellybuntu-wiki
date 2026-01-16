@@ -74,7 +74,7 @@ Tdarr uses a server-node architecture:
 
 ### 1. Access Web UI
 
-After deployment via [`playbooks/18-configure-tdarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/18-configure-tdarr-role.yml), access the web UI at:
+After deployment via [`playbooks/core/15-configure-tdarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/15-configure-tdarr-role.yml), access the web UI at:
 
 ```text
 http://jellyfin.discus-moth.ts.net:8265

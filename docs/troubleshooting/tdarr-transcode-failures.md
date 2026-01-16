@@ -59,11 +59,11 @@ the flow has nowhere to inject files, causing immediate failure.
 ```bash
 # Check FFmpeg version and codecs
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-  "docker exec tdarr-node ffmpeg -version"
+  "podman exec tdarr-node ffmpeg -version"
 
 # Check if libx265 is available
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-  "docker exec tdarr-node ffmpeg -encoders 2>&1 | grep 265"
+  "podman exec tdarr-node ffmpeg -encoders 2>&1 | grep 265"
 ```
 
 **Expected output**: Should show `libx265` encoder listed
@@ -120,7 +120,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
 ```bash
 # Check if media is mounted correctly in container
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-  "docker exec tdarr-node ls -l /media/movies /media/tv"
+  "podman exec tdarr-node ls -l /media/movies /media/tv"
 
 # Verify NFS mount on host
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
@@ -203,7 +203,7 @@ copy -map 0:s?` which duplicates the automatic stream mapping performed by the F
 ```bash
 # Monitor CPU usage during transcodes
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-  "docker stats --no-stream tdarr-node"
+  "podman stats --no-stream tdarr-node"
 
 # With single worker, CPU should be ~200-250% (2-2.5 cores out of 4)
 # With dual workers, CPU would hit 400% (all 4 cores maxed)
@@ -332,7 +332,7 @@ curl -I http://media-services.discus-moth.ts.net:6767
 
 # After transcode, verify file has no subtitle streams
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-  "docker exec jellyfin ffprobe -v error -select_streams s -show_entries stream=index,codec_name -of default=noprint_wrappers=1 '/path/to/transcoded/file.mkv'"
+  "podman exec jellyfin ffprobe -v error -select_streams s -show_entries stream=index,codec_name -of default=noprint_wrappers=1 '/path/to/transcoded/file.mkv'"
 
 # Should return empty (no subtitle streams)
 ```
@@ -409,11 +409,11 @@ Ensure the tdarr-node container has sufficient resources:
 ```bash
 # Check container stats
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-  "docker stats --no-stream tdarr-node"
+  "podman stats --no-stream tdarr-node"
 
 # Check container logs for OOM or resource issues
 ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-  "docker logs tdarr-node 2>&1 | tail -50"
+  "journalctl --user -u tdarr-node 2>&1 | tail -50"
 ```
 
 **Healthy metrics**:

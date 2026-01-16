@@ -221,7 +221,7 @@ ansible-playbook -i ../inventory.ini 09-configure-nfs-and-migrate-to-storage.yml
 2. NFS share created: /mnt/tank/data
 3. nfsuser created on TrueNAS (UID/GID 3000)
 
-**Note**: Run AFTER TrueNAS manual setup. See [reference/truenas-setup.md](truenas-setup.md)
+**Note**: Run AFTER TrueNAS manual setup. See [truenas-setup.md](truenas-setup.md)
 
 ---
 

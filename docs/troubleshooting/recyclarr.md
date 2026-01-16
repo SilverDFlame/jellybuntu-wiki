@@ -3,12 +3,15 @@
 Recyclarr automatically syncs quality profiles and custom formats from TRaSH Guides to Sonarr and Radarr, ensuring
 optimal media quality configurations.
 
+> **IMPORTANT**: Recyclarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Overview
 
 - **VM**: media-services (192.168.0.13)
 - **Container**: recyclarr
-- **Config Path**: `/opt/media-stack/recyclarr/config`
-- **Image**: docker.io/recyclarr/recyclarr:7.4.1
+- **Config Path**: `~/.config/recyclarr/`
+- **Deployment**: Rootless Podman with Quadlet
 - **Purpose**: Automate TRaSH Guides quality profile and custom format sync
 
 ## What Recyclarr Does
@@ -28,29 +31,29 @@ This eliminates manual configuration and ensures optimal media quality.
 # SSH to media-services VM
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
-# Check if container exists
-docker ps -a | grep recyclarr
+# Check service status
+systemctl --user status recyclarr
 
 # View logs from last run
-docker logs recyclarr
+journalctl --user -u recyclarr -n 100
 
 # Check config file
-sudo cat /opt/media-stack/recyclarr/config/recyclarr.yml
+cat ~/.config/recyclarr/recyclarr.yml
 
 # Manual sync test
-docker start recyclarr
-docker logs recyclarr -f
+systemctl --user start recyclarr
+journalctl --user -u recyclarr -f
 ```
 
 ## How Recyclarr Runs
 
 **Important**: Recyclarr is **not** a continuously running service. It's designed to run periodically:
 
-1. Container starts
-2. Reads config from `/config/recyclarr.yml`
+1. Service starts container
+2. Reads config from `~/.config/recyclarr/recyclarr.yml`
 3. Syncs to Sonarr and Radarr
 4. Exits (container stops)
-5. Docker restart policy: `unless-stopped` (manual starts only)
+5. Run manually or via systemd timer
 
 ### Running Sync Manually
 
@@ -59,34 +62,25 @@ docker logs recyclarr -f
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # Start Recyclarr (runs sync then exits)
-docker start recyclarr
+systemctl --user start recyclarr
 
 # Follow logs to see sync progress
-docker logs recyclarr -f
+journalctl --user -u recyclarr -f
 
 # Check result
-docker logs recyclarr --tail 50
+journalctl --user -u recyclarr -n 50
 ```
 
 ### Automated Sync Schedule
 
-To run Recyclarr automatically, set up a cron job or systemd timer:
+To run Recyclarr automatically, set up a systemd timer (recommended for Quadlet deployments):
 
-**Cron Example** (runs daily at 3 AM):
-
-```bash
-# Edit crontab
-crontab -e
-
-# Add line:
-0 3 * * * docker start recyclarr
-```
-
-**Systemd Timer Example**:
+**Systemd Timer Example** (runs daily at 3 AM):
 
 ```bash
-# Create timer file
-sudo nano /etc/systemd/system/recyclarr.timer
+# Create user timer file
+mkdir -p ~/.config/systemd/user
+nano ~/.config/systemd/user/recyclarr.timer
 ```
 
 Add content:
@@ -96,42 +90,24 @@ Add content:
 Description=Run Recyclarr daily
 
 [Timer]
-OnCalendar=daily
-OnCalendar=03:00
+OnCalendar=*-*-* 03:00:00
 Persistent=true
 
 [Install]
 WantedBy=timers.target
 ```
 
-Create service file:
-
-```bash
-sudo nano /etc/systemd/system/recyclarr.service
-```
-
-Add content:
-
-```ini
-[Unit]
-Description=Recyclarr Sync
-After=docker.service
-Requires=docker.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/docker start recyclarr
-```
-
 Enable timer:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now recyclarr.timer
+systemctl --user daemon-reload
+systemctl --user enable --now recyclarr.timer
 
 # Check status
-sudo systemctl list-timers recyclarr.timer
+systemctl --user list-timers recyclarr.timer
 ```
+
+**Note**: The Quadlet `.container` file already defines the service unit, so you only need the timer.
 
 ## Common Issues
 
@@ -146,7 +122,7 @@ sudo systemctl list-timers recyclarr.timer
 
 ```bash
 # Check Recyclarr logs
-docker logs recyclarr | grep -i error
+journalctl --user -u recyclarr | grep -i error
 
 # Common errors:
 # "Failed to connect to http://localhost:8989"
@@ -157,16 +133,17 @@ docker logs recyclarr | grep -i error
 **Solutions**:
 
 1. **Network mode issue**:
-   - Recyclarr uses `network_mode: host`
+   - Recyclarr uses host networking via Quadlet
    - This allows `localhost` URLs to work
-   - Verify in compose file: `docker inspect recyclarr | grep NetworkMode`
+   - Verify in Quadlet file: `cat ~/.config/containers/systemd/recyclarr.container`
 
 2. **Sonarr/Radarr not running**:
 
    ```bash
    # Check if services are up
-   docker ps | grep sonarr
-   docker ps | grep radarr
+   systemctl --user status sonarr
+   systemctl --user status radarr
+   podman ps | grep -E "sonarr|radarr"
    ```
 
 3. **Wrong API key**:
@@ -175,7 +152,7 @@ docker logs recyclarr | grep -i error
    - Verify config file has correct keys:
 
      ```bash
-     sudo cat /opt/media-stack/recyclarr/config/recyclarr.yml | grep api_key
+     cat ~/.config/recyclarr/recyclarr.yml | grep api_key
      ```
 
 4. **Test connectivity manually**:
@@ -198,8 +175,8 @@ docker logs recyclarr | grep -i error
 
 ```bash
 # Check logs for custom format errors
-docker logs recyclarr | grep -i "custom format"
-docker logs recyclarr | grep -i "trash_id"
+journalctl --user -u recyclarr | grep -i "custom format"
+journalctl --user -u recyclarr | grep -i "trash_id"
 ```
 
 **Common Errors**:
@@ -227,8 +204,8 @@ docker logs recyclarr | grep -i "trash_id"
 
    ```bash
    # Run sync again
-   docker start recyclarr
-   docker logs recyclarr -f
+   systemctl --user start recyclarr
+   journalctl --user -u recyclarr -f
    ```
 
 ### 3. Quality Profile Not Updated
@@ -242,8 +219,8 @@ docker logs recyclarr | grep -i "trash_id"
 
 ```bash
 # Check logs for quality profile actions
-docker logs recyclarr | grep -i "quality profile"
-docker logs recyclarr | grep -i "WEB-2160p"
+journalctl --user -u recyclarr | grep -i "quality profile"
+journalctl --user -u recyclarr | grep -i "WEB-2160p"
 ```
 
 **Solutions**:
@@ -283,10 +260,10 @@ docker logs recyclarr | grep -i "WEB-2160p"
 
 ```bash
 # Check logs for config errors
-docker logs recyclarr | grep -i "error\|failed\|invalid"
+journalctl --user -u recyclarr | grep -i "error\|failed\|invalid"
 
 # Verify config file syntax
-sudo cat /opt/media-stack/recyclarr/config/recyclarr.yml
+cat ~/.config/recyclarr/recyclarr.yml
 ```
 
 **Solutions**:
@@ -304,14 +281,13 @@ sudo cat /opt/media-stack/recyclarr/config/recyclarr.yml
 
    ```bash
    # If config was working before
-   sudo cp /opt/media-stack/recyclarr/config/recyclarr.yml.bak \
-     /opt/media-stack/recyclarr/config/recyclarr.yml
+   cp ~/.config/recyclarr/recyclarr.yml.bak ~/.config/recyclarr/recyclarr.yml
    ```
 
 4. **Re-deploy from Ansible** (if using playbook):
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/09-configure-recyclarr-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/core/deploy-media-services.yml --tags recyclarr
    ```
 
 ### 5. Permissions Issues
@@ -326,10 +302,10 @@ sudo cat /opt/media-stack/recyclarr/config/recyclarr.yml
 
 ```bash
 # Check file ownership
-ls -la /opt/media-stack/recyclarr/config/
+ls -la ~/.config/recyclarr/
 
-# Check container user
-docker inspect recyclarr | grep -i user
+# Check container user mapping
+podman inspect recyclarr | grep -i user
 ```
 
 **Solutions**:
@@ -337,21 +313,21 @@ docker inspect recyclarr | grep -i user
 1. **Fix config directory permissions**:
 
    ```bash
-   sudo chown -R 1000:1000 /opt/media-stack/recyclarr/config
-   sudo chmod -R 755 /opt/media-stack/recyclarr/config
+   # Config owned by user running podman (rootless)
+   chown -R $(id -u):$(id -g) ~/.config/recyclarr
+   chmod -R 755 ~/.config/recyclarr
    ```
 
 2. **Verify volume mount**:
 
    ```bash
-   docker inspect recyclarr | grep -A5 Mounts
+   cat ~/.config/containers/systemd/recyclarr.container | grep -i volume
    ```
 
-3. **Recreate container**:
+3. **Restart service**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose up -d recyclarr
+   systemctl --user restart recyclarr
    ```
 
 ### 6. Sync Takes Too Long or Times Out
@@ -388,28 +364,28 @@ docker inspect recyclarr | grep -i user
 
    ```bash
    # Check if Sonarr/Radarr are slow
-   docker stats sonarr radarr --no-stream
+   podman stats sonarr radarr --no-stream
    ```
 
 ### 7. No Output in Logs
 
 **Symptoms**:
 
-- `docker logs recyclarr` shows nothing
+- `journalctl --user -u recyclarr` shows nothing
 - Container starts and stops immediately
 - No error messages
 
 **Diagnosis**:
 
 ```bash
+# Check service status
+systemctl --user status recyclarr
+
 # Check container status
-docker ps -a | grep recyclarr
+podman ps -a | grep recyclarr
 
 # Check exit code
-docker inspect recyclarr | grep -i exitcode
-
-# Try running with output
-docker start -i recyclarr
+podman inspect recyclarr | grep -i exitcode
 ```
 
 **Solutions**:
@@ -419,24 +395,24 @@ docker start -i recyclarr
    - Check earlier log entries:
 
      ```bash
-     docker logs recyclarr --tail 200
+     journalctl --user -u recyclarr -n 200
      ```
 
 2. **No config file**:
 
    ```bash
    # Verify config exists
-   ls -la /opt/media-stack/recyclarr/config/recyclarr.yml
+   ls -la ~/.config/recyclarr/recyclarr.yml
    ```
 
 3. **Silent failure**:
    - Try manual run with interactive output:
 
    ```bash
-   docker run --rm -it \
+   podman run --rm -it \
      --network host \
-     -v /opt/media-stack/recyclarr/config:/config \
-     docker.io/recyclarr/recyclarr:7.4.1
+     -v ~/.config/recyclarr:/config \
+     docker.io/recyclarr/recyclarr:latest
    ```
 
 ## Verification After Sync
@@ -527,10 +503,10 @@ custom_formats:
 
 ```bash
 # Complete log from last run
-docker logs recyclarr
+journalctl --user -u recyclarr --no-pager
 
 # Save to file for analysis
-docker logs recyclarr > recyclarr-sync.log
+journalctl --user -u recyclarr --no-pager > recyclarr-sync.log
 ```
 
 ### Log Patterns
@@ -566,13 +542,14 @@ docker logs recyclarr > recyclarr-sync.log
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # Pull latest image
-cd /opt/media-stack
-docker compose pull recyclarr
-docker compose up -d recyclarr
+podman pull docker.io/recyclarr/recyclarr:latest
+
+# Restart service with new image
+systemctl --user restart recyclarr
 
 # Run sync with new version
-docker start recyclarr
-docker logs recyclarr -f
+systemctl --user start recyclarr
+journalctl --user -u recyclarr -f
 ```
 
 ## Related TRaSH Guides

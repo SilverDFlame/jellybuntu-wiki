@@ -1,16 +1,25 @@
 # Tdarr Troubleshooting Guide
 
+> **IMPORTANT**: Tdarr runs as a **rootless Podman container with Quadlet** on the Jellyfin VM (192.168.0.12).
+> Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Quick Diagnostics
 
-### Check Container Status
+### Check Service Status
 
 ```bash
-# Verify both containers are running
-ssh ansible@jellyfin.discus-moth.ts.net "docker ps | grep tdarr"
+# SSH to Jellyfin VM
+ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net
 
-# Expected output:
-# tdarr-node    ...  Up X hours  ...
-# tdarr-server  ...  Up X hours  ...
+# Check service status
+systemctl --user status tdarr-server tdarr-node
+
+# View logs
+journalctl --user -u tdarr-server -f
+journalctl --user -u tdarr-node -f
+
+# Check containers are running
+podman ps | grep tdarr
 ```
 
 ### Check Web UI Access
@@ -26,7 +35,7 @@ curl -I http://jellyfin.discus-moth.ts.net:8265
 
 ```bash
 # View current memory usage
-ssh ansible@jellyfin.discus-moth.ts.net "docker stats --no-stream tdarr-server tdarr-node"
+podman stats --no-stream tdarr-server tdarr-node
 
 # Expected:
 # tdarr-server: < 1GB
@@ -36,14 +45,14 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker stats --no-stream tdarr-server t
 ### View Logs
 
 ```bash
-# Server logs (last 50 lines)
-ssh ansible@jellyfin.discus-moth.ts.net "docker logs --tail 50 tdarr-server"
+# Server logs
+journalctl --user -u tdarr-server -n 50
 
-# Node logs (last 50 lines)
-ssh ansible@jellyfin.discus-moth.ts.net "docker logs --tail 50 tdarr-node"
+# Node logs
+journalctl --user -u tdarr-node -n 50
 
 # Follow logs in real-time
-ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
+journalctl --user -u tdarr-node -f
 ```
 
 ## Common Issues
@@ -60,13 +69,13 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 1. **Container Not Running**:
 
    ```bash
-   ssh ansible@jellyfin.discus-moth.ts.net "docker ps | grep tdarr-server"
+   systemctl --user status tdarr-server
 
    # If not running, check why:
-   ssh ansible@jellyfin.discus-moth.ts.net "docker logs tdarr-server"
+   journalctl --user -u tdarr-server -n 100
 
    # Restart container:
-   ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose restart tdarr-server"
+   systemctl --user restart tdarr-server
    ```
 
 2. **Firewall Blocking Port 8265**:
@@ -78,14 +87,14 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
    # Expected: 8265/tcp ALLOW Anywhere
 
    # If missing, re-run playbook:
-   ./bin/runtime/ansible-run.sh playbooks/18-configure-tdarr-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/core/15-configure-tdarr-role.yml
    ```
 
 3. **Wrong Network Mode**:
 
    ```bash
    # Verify network_mode: host is set
-   ssh ansible@jellyfin.discus-moth.ts.net "grep -A 5 'tdarr-server:' /opt/jellyfin/docker-compose.yml | grep network_mode"
+   cat ~/.config/containers/systemd/tdarr-server.container | grep Network
 
    # Expected: network_mode: host
    ```
@@ -113,23 +122,23 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 
    ```bash
    # Check container start times
-   ssh ansible@jellyfin.discus-moth.ts.net "docker ps --format '{{.Names}}\t{{.Status}}' | grep tdarr"
+   podman ps --format '{{.Names}}\t{{.Status}}' | grep tdarr
 
    # Restart node (depends_on should handle this):
-   ssh ansible@jellyfin.discus-moth.ts.net "docker restart tdarr-node"
+   systemctl --user restart tdarr-node
    ```
 
 2. **Incorrect Server IP Configuration**:
 
    ```bash
    # Check node environment variables
-   ssh ansible@jellyfin.discus-moth.ts.net "docker inspect tdarr-node | grep -A 5 Env | grep serverIP"
+   podman inspect tdarr-node | grep -A 5 Env | grep serverIP"
 
    # Expected: "serverIP=0.0.0.0"
 
    # If wrong, fix in compose file and recreate:
-   # Edit: /opt/jellyfin/docker-compose.yml
-   ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose up -d tdarr-node"
+   # Edit Quadlet config: ~/.config/containers/systemd/tdarr-node.container
+   systemctl --user start tdarr-node
    ```
 
 3. **Port 8266 Communication Issue**:
@@ -145,7 +154,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 
    ```bash
    # Verify node IDs match in both containers
-   ssh ansible@jellyfin.discus-moth.ts.net "docker inspect tdarr-server tdarr-node | grep nodeID"
+   podman inspect tdarr-server tdarr-node | grep nodeID
 
    # Expected: Both show "nodeID=JellyfinNode"
    ```
@@ -164,7 +173,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 
    ```bash
    # Check if node is hitting memory limit
-   ssh ansible@jellyfin.discus-moth.ts.net "docker stats --no-stream tdarr-node | grep MiB"
+   podman stats --no-stream tdarr-node | grep MiB
 
    # If at 2GB limit, consider:
    # - Reduce concurrent transcodes to 1
@@ -176,7 +185,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 
    ```bash
    # Check node logs for FFmpeg errors
-   ssh ansible@jellyfin.discus-moth.ts.net "docker logs tdarr-node | grep -i error"
+   journalctl --user -u tdarr-node | grep -i error
 
    # Common errors:
    # - "Encoder 'hevc' not found": Codec not supported
@@ -191,7 +200,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
    ssh ansible@jellyfin.discus-moth.ts.net "ls -la /mnt/data/media/tv | head"
 
    # Verify PUID/PGID match NFS user:
-   ssh ansible@jellyfin.discus-moth.ts.net "docker inspect tdarr-node | grep -E 'PUID|PGID'"
+   podman inspect tdarr-node | grep -E 'PUID|PGID'"
 
    # Expected: PUID=1000, PGID=1000 (or your NFS user IDs)
 
@@ -199,7 +208,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
    ssh ansible@jellyfin.discus-moth.ts.net "sudo chown -R 1000:1000 /opt/jellyfin/tdarr"
 
    # Then restart containers:
-   ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose restart tdarr-server tdarr-node"
+   systemctl --user restart tdarr-server tdarr-node
    ```
 
 4. **Source File Issues**:
@@ -244,10 +253,10 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 
    ```bash
    # Check container uptime
-   ssh ansible@jellyfin.discus-moth.ts.net "docker ps --format '{{.Names}}\t{{.Status}}' | grep tdarr"
+   podman ps --format '{{.Names}}\t{{.Status}}' | grep tdarr
 
    # If memory grows over time, restart containers:
-   ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose restart"
+   systemctl --user restart tdarr-server tdarr-node
    ```
 
 3. **Large File Processing**:
@@ -266,12 +275,12 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 
    ```bash
    # Verify memory limits are enforced
-   ssh ansible@jellyfin.discus-moth.ts.net "docker inspect tdarr-node | grep -A 5 Memory"
+   podman inspect tdarr-node | grep -A 5 Memory"
 
    # Expected: "Memory": 2147483648 (2GB in bytes)
 
    # If 0, limits not applied - re-deploy:
-   ./bin/runtime/ansible-run.sh playbooks/18-configure-tdarr-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/core/15-configure-tdarr-role.yml
    ```
 
 ### Issue: Slow Transcode Speed
@@ -299,7 +308,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 
    ```bash
    # Check process nice value
-   ssh ansible@jellyfin.discus-moth.ts.net "docker top tdarr-node | head"
+   podman top tdarr-node | head
 
    # If nice value is very high (low priority), consider adjusting
    # Note: Low priority is intentional to avoid impacting Jellyfin
@@ -344,7 +353,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
 # Web UI > Queue > Pause
 
 # Or stop Tdarr containers temporarily:
-ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop tdarr-server tdarr-node"
+systemctl --user stop tdarr-server tdarr-node
 ```
 
 **Permanent Solutions**:
@@ -364,7 +373,8 @@ ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop
 
    ```bash
    # Check Jellyfin container priority
-   ssh ansible@jellyfin.discus-moth.ts.net "docker inspect jellyfin | grep -i nice"
+   # Jellyfin is native systemd, not container
+sudo systemctl show jellyfin | grep -i nice
 
    # If not set, consider adding priority to Jellyfin compose
    ```
@@ -373,7 +383,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop
 
    ```bash
    # Watch resource usage in real-time
-   ssh ansible@jellyfin.discus-moth.ts.net "watch -n 2 'docker stats --no-stream'"
+   watch -n 2 'podman stats --no-stream'
    ```
 
 ### Issue: Files Not Being Scanned
@@ -397,7 +407,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop
 
    ```bash
    # Check NFS mount inside container
-   ssh ansible@jellyfin.discus-moth.ts.net "docker exec tdarr-server ls -la /media"
+   podman exec tdarr-server ls -la /media"
 
    # Expected: tv/ and movies/ directories
 
@@ -412,7 +422,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop
 
    ```bash
    # Check permissions from inside container
-   ssh ansible@jellyfin.discus-moth.ts.net "docker exec tdarr-server ls -la /media/tv | head"
+   podman exec tdarr-server ls -la /media/tv | head"
 
    # Verify PUID/PGID match ownership
    ```
@@ -452,7 +462,7 @@ ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop
 
    ```bash
    # Verify Tdarr can write to media directory
-   ssh ansible@jellyfin.discus-moth.ts.net "docker exec tdarr-server touch /media/tv/test.txt && rm /media/tv/test.txt"
+   podman exec tdarr-server touch /media/tv/test.txt && rm /media/tv/test.txt"
 
    # If error, check NFS mount permissions and PUID/PGID
    ```
@@ -516,16 +526,16 @@ ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop
 
 ```bash
 # Server logs
-ssh ansible@jellyfin.discus-moth.ts.net "docker logs tdarr-server"
+journalctl --user -u tdarr-server -n 100
 
 # Node logs
-ssh ansible@jellyfin.discus-moth.ts.net "docker logs tdarr-node"
+journalctl --user -u tdarr-node -n 100
 
 # Follow in real-time
-ssh ansible@jellyfin.discus-moth.ts.net "docker logs -f tdarr-node"
+journalctl --user -u tdarr-node -f
 
 # Save to file for analysis
-ssh ansible@jellyfin.discus-moth.ts.net "docker logs tdarr-node" > /tmp/tdarr-node.log
+journalctl --user -u tdarr-node -n 100 > /tmp/tdarr-node.log
 ```
 
 ### Application Logs
@@ -570,7 +580,7 @@ ssh ansible@jellyfin.discus-moth.ts.net
 
 # Stop and remove containers
 cd /opt/jellyfin
-docker compose down
+systemctl --user stop tdarr-server tdarr-node
 
 # Backup current configuration (optional)
 sudo tar -czf /tmp/tdarr-backup-$(date +%Y%m%d).tar.gz tdarr/
@@ -580,7 +590,7 @@ sudo rm -rf tdarr/*
 
 # Re-deploy via Ansible
 exit
-./bin/runtime/ansible-run.sh playbooks/18-configure-tdarr-role.yml
+./bin/runtime/ansible-run.sh playbooks/core/15-configure-tdarr-role.yml
 ```
 
 ### Database Corruption
@@ -592,7 +602,7 @@ If Web UI shows errors or queue is corrupted:
 ssh ansible@jellyfin.discus-moth.ts.net
 
 # Stop containers
-cd /opt/jellyfin && docker compose stop tdarr-server tdarr-node
+systemctl --user stop tdarr-server tdarr-node
 
 # Backup database
 sudo cp -r tdarr/server/Tdarr /tmp/tdarr-db-backup
@@ -601,7 +611,7 @@ sudo cp -r tdarr/server/Tdarr /tmp/tdarr-db-backup
 sudo rm -rf tdarr/server/Tdarr
 
 # Restart containers
-docker compose up -d tdarr-server tdarr-node
+systemctl --user start tdarr-server tdarr-node
 
 # Note: Loses transcode history but fixes corruption
 ```
@@ -612,12 +622,12 @@ Test node-to-server communication:
 
 ```bash
 # From node container, test server port
-ssh ansible@jellyfin.discus-moth.ts.net "docker exec tdarr-node nc -zv 127.0.0.1 8266"
+podman exec tdarr-node nc -zv 127.0.0.1 8266"
 
 # Expected: "Connection to 127.0.0.1 8266 port [tcp/*] succeeded!"
 
 # Check server is listening
-ssh ansible@jellyfin.discus-moth.ts.net "docker exec tdarr-server ss -tlnp | grep 8266"
+podman exec tdarr-server ss -tlnp | grep 8266"
 ```
 
 ## Getting Help
@@ -629,27 +639,27 @@ When asking for help, collect:
 1. **Container status**:
 
    ```bash
-   ssh ansible@jellyfin.discus-moth.ts.net "docker ps -a | grep tdarr"
+   podman ps -a | grep tdarr
    ```
 
 2. **Recent logs**:
 
    ```bash
-   ssh ansible@jellyfin.discus-moth.ts.net "docker logs --tail 100 tdarr-server" > server.log
-   ssh ansible@jellyfin.discus-moth.ts.net "docker logs --tail 100 tdarr-node" > node.log
+   journalctl --user -u tdarr-server --tail 100 > server.log
+   journalctl --user -u tdarr-node --tail 100 > node.log
    ```
 
 3. **Resource usage**:
 
    ```bash
-   ssh ansible@jellyfin.discus-moth.ts.net "docker stats --no-stream tdarr-server tdarr-node"
+   podman stats --no-stream tdarr-server tdarr-node
    ssh ansible@jellyfin.discus-moth.ts.net "free -h"
    ```
 
 4. **Configuration**:
 
    ```bash
-   ssh ansible@jellyfin.discus-moth.ts.net "cat /opt/jellyfin/docker-compose.yml | grep -A 30 tdarr-server"
+   cat ~/.config/containers/systemd/tdarr-server.container
    ```
 
 ### External Resources
@@ -664,7 +674,7 @@ When asking for help, collect:
 - **Setup Guide**: `docs/configuration/tdarr-setup.md`
 - **Deployment Plan**: `docs/plans/current-plan.md`
 - **Feasibility Analysis**: `docs/troubleshooting/tdarr-feasibility-analysis.md`
-- **Playbook**: [`playbooks/18-configure-tdarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/18-configure-tdarr-role.yml)
+- **Playbook**: [`playbooks/core/15-configure-tdarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/15-configure-tdarr-role.yml)
 
 ## Rollback Procedures
 
@@ -672,10 +682,10 @@ When asking for help, collect:
 
 ```bash
 # Stop Tdarr without removing data
-ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose stop tdarr-server tdarr-node"
+systemctl --user stop tdarr-server tdarr-node
 
 # Re-enable when ready
-ssh ansible@jellyfin.discus-moth.ts.net "cd /opt/jellyfin && docker compose start tdarr-server tdarr-node"
+systemctl --user start tdarr-server tdarr-node
 ```
 
 ### Complete Removal

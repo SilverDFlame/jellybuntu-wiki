@@ -2,23 +2,29 @@
 
 Common issues and solutions for Jellyseerr request management.
 
+> **IMPORTANT**: Jellyseerr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Quick Diagnostics
 
 ```bash
 # SSH to media-services VM
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
-# Check if container is running
-docker ps | grep jellyseer
+# Check service status
+systemctl --user status jellyseerr
 
 # View logs
-docker logs jellyseer --tail 100
+journalctl --user -u jellyseerr -f
+
+# Check if container is running
+podman ps | grep jellyseerr
 
 # Check resource usage
-docker stats jellyseer --no-stream
+podman stats jellyseerr --no-stream
 
 # Verify config directory
-ls -la /opt/media-stack/jellyseer/config
+ls -la ~/.config/jellyseerr/
 ```
 
 ## Common Issues
@@ -33,8 +39,8 @@ ls -la /opt/media-stack/jellyseer/config
 **Diagnosis**:
 
 ```bash
-# Check if container is running
-docker ps | grep jellyseer
+# Check service status
+systemctl --user status jellyseerr
 
 # Check if port is listening
 sudo netstat -tulpn | grep 5055
@@ -45,14 +51,14 @@ sudo ufw status | grep 5055
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   cd /opt/media-stack
-   docker compose up -d jellyseer
+   systemctl --user start jellyseerr
+   systemctl --user enable jellyseerr
 
    # Check logs for errors
-   docker logs jellyseer
+   journalctl --user -u jellyseerr -n 100
    ```
 
 2. **Port conflict**:
@@ -172,13 +178,13 @@ curl -H "X-Api-Key: YOUR_RADARR_API_KEY" \
 
 ```bash
 # Check Jellyseerr logs
-docker logs jellyseer | grep -i sonarr
-docker logs jellyseer | grep -i radarr
-docker logs jellyseer | grep -i error
+journalctl --user -u jellyseerr | grep -i sonarr
+journalctl --user -u jellyseerr | grep -i radarr
+journalctl --user -u jellyseerr | grep -i error
 
 # Check Sonarr/Radarr logs
-docker logs sonarr | grep -i jellyseerr
-docker logs radarr | grep -i jellyseerr
+journalctl --user -u sonarr | grep -i jellyseerr
+journalctl --user -u radarr | grep -i jellyseerr
 ```
 
 **Solutions**:
@@ -246,9 +252,9 @@ docker logs radarr | grep -i jellyseerr
 
 ```bash
 # Check Jellyseerr logs for notification errors
-docker logs jellyseer | grep -i notification
-docker logs jellyseer | grep -i email
-docker logs jellyseer | grep -i discord
+journalctl --user -u jellyseerr | grep -i notification
+journalctl --user -u jellyseerr | grep -i email
+journalctl --user -u jellyseerr | grep -i discord
 ```
 
 **Solutions**:
@@ -316,11 +322,11 @@ docker logs jellyseer | grep -i discord
 
 ```bash
 # Check logs for database errors
-docker logs jellyseer | grep -i database
-docker logs jellyseer | grep -i sqlite
+journalctl --user -u jellyseerr | grep -i database
+journalctl --user -u jellyseerr | grep -i sqlite
 
 # Check database file
-ls -lah /opt/media-stack/jellyseer/config/db/
+ls -lah ~/.config/jellyseerr/db/
 ```
 
 **Solutions**:
@@ -329,30 +335,30 @@ ls -lah /opt/media-stack/jellyseer/config/db/
 
    ```bash
    # Stop Jellyseerr
-   docker stop jellyseer
+   systemctl --user stop jellyseerr
 
    # Restore backup (if available)
-   sudo tar -xzf jellyseerr-config-backup-YYYYMMDD.tar.gz \
-     -C /opt/media-stack/jellyseer/config/
+   tar -xzf jellyseerr-config-backup-YYYYMMDD.tar.gz \
+     -C ~/.config/jellyseerr/
 
    # Start Jellyseerr
-   docker start jellyseer
+   systemctl --user start jellyseerr
    ```
 
 2. **Repair database** (advanced):
 
    ```bash
    # Stop Jellyseerr
-   docker stop jellyseer
+   systemctl --user stop jellyseerr
 
    # Install sqlite3
    sudo apt install sqlite3
 
    # Check database integrity
-   sudo sqlite3 /opt/media-stack/jellyseer/config/db/db.sqlite3 "PRAGMA integrity_check;"
+   sqlite3 ~/.config/jellyseerr/db/db.sqlite3 "PRAGMA integrity_check;"
 
    # If corrupted, try to recover
-   sudo sqlite3 /opt/media-stack/jellyseer/config/db/db.sqlite3 ".recover" > recovered.sql
+   sqlite3 ~/.config/jellyseerr/db/db.sqlite3 ".recover" > recovered.sql
 
    # Recreate database from recovered SQL (complex - restore from backup preferred)
    ```
@@ -361,14 +367,10 @@ ls -lah /opt/media-stack/jellyseer/config/db/
 
    ```bash
    # Backup old config
-   sudo mv /opt/media-stack/jellyseer/config /opt/media-stack/jellyseer/config.old
-
-   # Create new config directory
-   sudo mkdir -p /opt/media-stack/jellyseer/config
-   sudo chown -R 1000:1000 /opt/media-stack/jellyseer/config
+   mv ~/.config/jellyseerr ~/.config/jellyseerr.old
 
    # Restart Jellyseerr (will initialize fresh)
-   docker restart jellyseer
+   systemctl --user restart jellyseerr
 
    # Reconfigure from scratch
    ```
@@ -384,10 +386,10 @@ ls -lah /opt/media-stack/jellyseer/config/db/
 
 ```bash
 # Check memory usage
-docker stats jellyseer --no-stream
+podman stats jellyseerr --no-stream
 
 # Check logs for memory errors
-docker logs jellyseer | grep -i memory
+journalctl --user -u jellyseerr | grep -i memory
 ```
 
 **Solutions**:
@@ -397,7 +399,7 @@ docker logs jellyseer | grep -i memory
    - Consider increasing VM RAM if needed
 
 2. **Memory leak**:
-   - Restart container: `docker restart jellyseer`
+   - Restart service: `systemctl --user restart jellyseerr`
    - Update to latest version
 
 3. **Reduce sync frequency**:
@@ -422,16 +424,17 @@ docker logs jellyseer | grep -i memory
 ### Enable Debug Logging
 
 ```bash
-# Edit docker-compose.yml or jellyseer.yml
-# Change LOG_LEVEL to debug
-# environment:
-#   - LOG_LEVEL=debug
+# Edit Quadlet container file
+nano ~/.config/containers/systemd/jellyseerr.container
+# Add to [Container] section:
+# Environment=LOG_LEVEL=debug
 
-# Restart container
-docker compose restart jellyseer
+# Reload and restart
+systemctl --user daemon-reload
+systemctl --user restart jellyseerr
 
 # View detailed logs
-docker logs jellyseer -f
+journalctl --user -u jellyseerr -f
 ```
 
 ### Common Log Errors

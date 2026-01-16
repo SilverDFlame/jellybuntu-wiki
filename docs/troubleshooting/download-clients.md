@@ -2,15 +2,28 @@
 
 Troubleshooting guide for qBittorrent and SABnzbd download client issues.
 
+> **IMPORTANT**: Download clients run as **rootless Podman containers with Quadlet** on the download-clients VM
+> (192.168.0.14). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+
 ## Quick Checks
 
 ```bash
-# Check containers are running
-docker ps | grep -E "qbittorrent|sabnzbd"
+# SSH to download-clients VM
+ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net
+
+# Check service status
+systemctl --user status qbittorrent sabnzbd gluetun unpackerr
 
 # View logs
-docker logs qbittorrent --tail 100
-docker logs sabnzbd --tail 100
+journalctl --user -u qbittorrent -f
+journalctl --user -u sabnzbd -f
+
+# Check containers are running
+podman ps | grep -E "qbittorrent|sabnzbd|gluetun|unpackerr"
+
+# View container logs
+podman logs qbittorrent --tail 100
+podman logs sabnzbd --tail 100
 
 # Check web access
 curl http://localhost:8080  # qBittorrent
@@ -32,29 +45,32 @@ df -h /mnt/data
 **Diagnosis**:
 
 ```bash
+# Check service status
+systemctl --user status qbittorrent
+
 # Check container status
-docker ps -a | grep qbittorrent
+podman ps -a | grep qbittorrent
 
 # Check logs
-docker logs qbittorrent --tail 50
+podman logs qbittorrent --tail 50
 
 # Check port
-sudo netstat -tulpn | grep 8080
+ss -tlnp | grep 8080
 ```
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   cd /opt/download-clients
-   docker compose up -d qbittorrent
+   systemctl --user start qbittorrent
+   systemctl --user enable qbittorrent
    ```
 
 2. **Get default password**:
 
    ```bash
-   docker logs qbittorrent 2>&1 | grep -i password
+   podman logs qbittorrent 2>&1 | grep -i password
    # Default username: admin
    # Default password: shown in logs
    ```
@@ -85,7 +101,7 @@ ls -la /mnt/data/torrents
 df -h /mnt/data
 
 # View qBittorrent logs
-docker logs qbittorrent --tail 100
+podman logs qbittorrent --tail 100
 ```
 
 **Solutions**:
@@ -155,10 +171,10 @@ docker logs qbittorrent --tail 100
 
 ```bash
 # Check CPU usage
-docker stats qbittorrent
+podman stats qbittorrent
 
 # Check number of active torrents
-docker logs qbittorrent | grep -i "torrent"
+journalctl --user -u qbittorrent | grep -i "torrent"
 ```
 
 **Solutions**:
@@ -198,23 +214,26 @@ are for verification only.
 **Diagnosis**:
 
 ```bash
+# Check service status
+systemctl --user status sabnzbd
+
 # Check container status
-docker ps -a | grep sabnzbd
+podman ps -a | grep sabnzbd
 
 # Check logs
-docker logs sabnzbd --tail 50
+podman logs sabnzbd --tail 50
 
 # Check configuration
-docker exec sabnzbd cat /config/sabnzbd.ini | grep -E "host_whitelist|local_ranges"
+podman exec sabnzbd cat /config/sabnzbd.ini | grep -E "host_whitelist|local_ranges"
 ```
 
 **Solutions**:
 
-1. **Container not running**:
+1. **Service not running**:
 
    ```bash
-   cd /opt/download-clients
-   docker compose up -d sabnzbd
+   systemctl --user start sabnzbd
+   systemctl --user enable sabnzbd
    ```
 
 2. **Hostname verification failing**:
@@ -238,10 +257,10 @@ docker exec sabnzbd cat /config/sabnzbd.ini | grep -E "host_whitelist|local_rang
 
 ```bash
 # Check logs
-docker logs sabnzbd --tail 100
+podman logs sabnzbd --tail 100
 
 # Check server config
-docker exec sabnzbd cat /config/sabnzbd.ini | grep -A 5 "\\[servers\\]"
+podman exec sabnzbd cat /config/sabnzbd.ini | grep -A 5 "\\[servers\\]"
 ```
 
 **Solutions**:
@@ -275,10 +294,10 @@ docker exec sabnzbd cat /config/sabnzbd.ini | grep -A 5 "\\[servers\\]"
 ls -la /mnt/data/usenet
 
 # Check SABnzbd's effective UID/GID
-docker exec sabnzbd id
+podman exec sabnzbd id
 
 # Check volume mounts
-docker inspect sabnzbd | grep -A 10 Mounts
+podman inspect sabnzbd | grep -A 10 Mounts
 ```
 
 **Solutions**:
@@ -298,7 +317,7 @@ docker inspect sabnzbd | grep -A 10 Mounts
 3. **Check container PUID/PGID** (should be 3000):
 
    ```bash
-   docker exec sabnzbd printenv | grep -E "PUID|PGID"
+   podman exec sabnzbd printenv | grep -E "PUID|PGID"
    ```
 
 ### 4. SABnzbd Categories Not Working
@@ -337,7 +356,7 @@ docker inspect sabnzbd | grep -A 10 Mounts
 
 ```bash
 # Get API key
-docker exec sabnzbd cat /config/sabnzbd.ini | grep "^api_key"
+podman exec sabnzbd cat /config/sabnzbd.ini | grep "^api_key"
 
 # Test API
 API_KEY="your_api_key_here"
@@ -358,7 +377,7 @@ curl "http://localhost:8080/api?mode=version&apikey=$API_KEY"
 3. **Test connectivity**:
 
    ```bash
-   docker exec sonarr wget -O- "http://download-clients.discus-moth.ts.net:8081/sabnzbd/api?mode=version&apikey=YOUR_KEY"
+   podman exec sonarr wget -O- "http://download-clients.discus-moth.ts.net:8081/sabnzbd/api?mode=version&apikey=YOUR_KEY"
    ```
 
 ## VPN (Gluetun) Issues
@@ -378,14 +397,14 @@ Guide](../configuration/vpn-gluetun.md) for full details.
 
 ```bash
 # Check Gluetun status
-docker ps | grep gluetun
+podman ps | grep gluetun
 # Should show "healthy" status
 
 # View Gluetun logs
-docker logs gluetun --tail 100
+podman logs gluetun --tail 100
 
 # Check VPN connection
-docker exec gluetun wget -qO- ifconfig.me
+podman exec gluetun wget -qO- ifconfig.me
 # Should show VPN provider's IP, not your home IP
 ```
 
@@ -401,7 +420,7 @@ docker exec gluetun wget -qO- ifconfig.me
 
    ```bash
    # Check Gluetun logs for specific error
-   docker logs gluetun | grep -i error
+   podman logs gluetun | grep -i error
 
    # Try different server location (edit secrets file)
    sops group_vars/all.sops.yaml
@@ -425,11 +444,11 @@ docker exec gluetun wget -qO- ifconfig.me
 
 ```bash
 # Check if Gluetun is healthy
-docker ps | grep gluetun
+podman ps | grep gluetun
 
 # Test internet from download clients
-docker exec qbittorrent ping -c 3 8.8.8.8
-docker exec sabnzbd wget -qO- --timeout=5 ifconfig.me
+podman exec qbittorrent ping -c 3 8.8.8.8
+podman exec sabnzbd wget -qO- --timeout=5 ifconfig.me
 ```
 
 **Solutions**:
@@ -438,13 +457,13 @@ docker exec sabnzbd wget -qO- --timeout=5 ifconfig.me
 
    ```bash
    # Check Gluetun health
-   docker inspect gluetun | grep Health -A 10
+   podman inspect gluetun | grep Health -A 10
 
    # Restart Gluetun
-   docker restart gluetun
+   podman restart gluetun
 
    # Wait for healthy status, then restart download clients
-   docker restart qbittorrent sabnzbd
+   podman restart qbittorrent sabnzbd
    ```
 
 2. **Firewall blocking local subnets**:
@@ -453,17 +472,17 @@ docker exec sabnzbd wget -qO- --timeout=5 ifconfig.me
      - `100.64.0.0/10` (Tailscale)
 
    ```bash
-   docker exec gluetun env | grep FIREWALL_OUTBOUND_SUBNETS
+   podman exec gluetun env | grep FIREWALL_OUTBOUND_SUBNETS
    ```
 
 3. **Network mode misconfigured**:
 
    ```bash
    # Verify containers use Gluetun network
-   docker inspect qbittorrent | grep NetworkMode
+   podman inspect qbittorrent | grep NetworkMode
    # Should show: "container:gluetun"
 
-   docker inspect sabnzbd | grep NetworkMode
+   podman inspect sabnzbd | grep NetworkMode
    # Should show: "container:gluetun"
    ```
 
@@ -479,7 +498,7 @@ docker exec sabnzbd wget -qO- --timeout=5 ifconfig.me
 
 ```bash
 # Check if Gluetun exposes correct ports
-docker ps | grep gluetun
+podman ps | grep gluetun
 # Should show: 0.0.0.0:8080->8080/tcp, 0.0.0.0:8081->8081/tcp
 
 # Test local access
@@ -497,7 +516,7 @@ curl -I http://localhost:8081  # SABnzbd
    - SABnzbd should listen on port 8081 internally (not 8080)
 
    ```bash
-   docker exec sabnzbd cat /config/sabnzbd.ini | grep "^port"
+   podman exec sabnzbd cat /config/sabnzbd.ini | grep "^port"
    # Should show: port = 8081
    ```
 
@@ -523,23 +542,23 @@ The kill-switch prevents download clients from leaking your real IP if VPN disco
 
 ```bash
 # 1. Check current IP (should be VPN provider's)
-docker exec qbittorrent wget -qO- ifconfig.me
+podman exec qbittorrent wget -qO- ifconfig.me
 
 # 2. Stop Gluetun
-docker stop gluetun
+podman stop gluetun
 
 # 3. Try to access internet (should FAIL)
-docker exec qbittorrent wget -qO- --timeout=5 ifconfig.me
+podman exec qbittorrent wget -qO- --timeout=5 ifconfig.me
 # Expected: Timeout or connection refused (kill-switch working)
 
 # 4. Restart Gluetun
-docker start gluetun
+podman start gluetun
 
 # 5. Wait for healthy status
-docker ps | grep gluetun
+podman ps | grep gluetun
 
 # 6. Verify VPN reconnected
-docker exec qbittorrent wget -qO- ifconfig.me
+podman exec qbittorrent wget -qO- ifconfig.me
 # Should show VPN IP again
 ```
 
@@ -570,7 +589,7 @@ docker exec qbittorrent wget -qO- ifconfig.me
 1. **Check Gluetun DNS configuration**:
 
    ```bash
-   docker exec gluetun cat /etc/resolv.conf
+   podman exec gluetun cat /etc/resolv.conf
    # Should show VPN provider's DNS servers
    ```
 
@@ -592,10 +611,10 @@ docker exec qbittorrent wget -qO- ifconfig.me
 
 ```bash
 # Check VPN server location
-docker logs gluetun | grep -i "connected to"
+podman logs gluetun | grep -i "connected to"
 
 # Test speed from download client
-docker exec qbittorrent wget -O /dev/null http://speedtest.tele2.net/100MB.zip
+podman exec qbittorrent wget -O /dev/null http://speedtest.tele2.net/100MB.zip
 ```
 
 **Solutions**:
@@ -641,7 +660,7 @@ docker exec qbittorrent wget -O /dev/null http://speedtest.tele2.net/100MB.zip
 ```bash
 # 1. Check PIA forwarded port
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "docker exec gluetun cat /tmp/gluetun/forwarded_port"
+  "podman exec gluetun cat /tmp/gluetun/forwarded_port"
 # Example output: 46124
 
 # 2. Check qBittorrent is listening on the same port
@@ -651,17 +670,17 @@ ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
 
 # 3. Check Docker is exposing the port
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "docker port gluetun | grep $(docker exec gluetun cat /tmp/gluetun/forwarded_port)"
+  "podman port gluetun | grep $(podman exec gluetun cat /tmp/gluetun/forwarded_port)"
 # Should show: 46124/tcp -> 0.0.0.0:46124
 
 # 4. Check UFW firewall allows the port
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "sudo ufw status | grep $(docker exec gluetun cat /tmp/gluetun/forwarded_port)"
+  "sudo ufw status | grep $(podman exec gluetun cat /tmp/gluetun/forwarded_port)"
 # Should show ALLOW rules for the port
 
 # 5. Verify Gluetun auto-configured its firewall
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "docker logs gluetun 2>&1 | grep 'setting allowed input port'"
+  "podman logs gluetun 2>&1 | grep 'setting allowed input port'"
 # Should show: INFO [firewall] setting allowed input port XXXXX through interface tun0...
 
 # 6. Check port sync automation status
@@ -691,9 +710,9 @@ ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
 
    ```bash
    cd /opt/download-clients
-   docker compose restart gluetun
+   systemctl --user restart gluetun
    # Wait ~30 seconds
-   docker ps | grep gluetun  # Should show "healthy"
+   podman ps | grep gluetun  # Should show "healthy"
    ```
 
 3. **Old UFW Rules Still Present**:
@@ -795,7 +814,7 @@ cat /opt/download-clients/port-sync.log
    ```bash
    # Get PIA port
    PIA_PORT=$(ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-     "docker exec gluetun cat /tmp/gluetun/forwarded_port")
+     "podman exec gluetun cat /tmp/gluetun/forwarded_port")
 
    echo "PIA forwarded port: $PIA_PORT"
 
@@ -818,13 +837,13 @@ cat /opt/download-clients/port-sync.log
 
 ```bash
 # Check Gluetun IP
-docker exec gluetun wget -qO- ifconfig.me
+podman exec gluetun wget -qO- ifconfig.me
 
 # Check qBittorrent IP
-docker exec qbittorrent wget -qO- ifconfig.me
+podman exec qbittorrent wget -qO- ifconfig.me
 
 # Check SABnzbd IP
-docker exec sabnzbd wget -qO- ifconfig.me
+podman exec sabnzbd wget -qO- ifconfig.me
 ```
 
 **Expected**: All three should show the SAME IP (VPN provider's IP)
@@ -835,8 +854,8 @@ docker exec sabnzbd wget -qO- ifconfig.me
 
    ```bash
    # Verify network_mode
-   docker inspect qbittorrent | grep -i networkmode
-   docker inspect sabnzbd | grep -i networkmode
+   podman inspect qbittorrent | grep -i networkmode
+   podman inspect sabnzbd | grep -i networkmode
    # Both should show: "container:<gluetun_container_id>"
    ```
 
@@ -844,8 +863,8 @@ docker exec sabnzbd wget -qO- ifconfig.me
 
    ```bash
    cd /opt/download-clients
-   docker compose down
-   docker compose up -d
+   systemctl --user down
+   systemctl --user up -d
    ```
 
 3. **Check for IPv6 leaks**:
@@ -901,14 +920,14 @@ If SABnzbd's Direct Unpack is enabled, BOTH SABnzbd and Unpackerr will try to ex
 
 ```bash
 # Check Unpackerr is running
-docker ps | grep unpackerr
+podman ps | grep unpackerr
 
 # Check logs
-docker logs unpackerr --tail 100
+podman logs unpackerr --tail 100
 
 # Check monitored paths
-docker exec unpackerr env | grep UN_SONARR_0_PATHS
-docker exec unpackerr env | grep UN_RADARR_0_PATHS
+podman exec unpackerr env | grep UN_SONARR_0_PATHS
+podman exec unpackerr env | grep UN_RADARR_0_PATHS
 ```
 
 **Solutions**:
@@ -917,7 +936,7 @@ docker exec unpackerr env | grep UN_RADARR_0_PATHS
 
    ```bash
    # Verify SABnzbd categories are correct
-   docker exec sabnzbd cat /config/sabnzbd.ini | grep -A 5 "\\[categories\\]"
+   podman exec sabnzbd cat /config/sabnzbd.ini | grep -A 5 "\\[categories\\]"
 
    # Should show:
    # [[tv]]
@@ -954,7 +973,7 @@ docker exec unpackerr env | grep UN_RADARR_0_PATHS
 
 ```bash
 # Check if SABnzbd's direct_unpack is disabled
-docker exec sabnzbd cat /config/sabnzbd.ini | grep "^direct_unpack"
+podman exec sabnzbd cat /config/sabnzbd.ini | grep "^direct_unpack"
 # Should show: direct_unpack = 0
 ```
 
@@ -983,11 +1002,11 @@ docker exec sabnzbd cat /config/sabnzbd.ini | grep "^direct_unpack"
 
 ```bash
 # Check Unpackerr can reach *arr apps
-docker exec unpackerr wget -qO- --timeout=5 http://media-services.discus-moth.ts.net:8989/api/v3/system/status
-docker exec unpackerr wget -qO- --timeout=5 http://media-services.discus-moth.ts.net:7878/api/v3/system/status
+podman exec unpackerr wget -qO- --timeout=5 http://media-services.discus-moth.ts.net:8989/api/v3/system/status
+podman exec unpackerr wget -qO- --timeout=5 http://media-services.discus-moth.ts.net:7878/api/v3/system/status
 
 # Check API keys are correct
-docker exec unpackerr env | grep API_KEY
+podman exec unpackerr env | grep API_KEY
 ```
 
 **Solutions**:
@@ -1004,7 +1023,7 @@ docker exec unpackerr env | grep API_KEY
 3. **Check Unpackerr logs for errors**:
 
    ```bash
-   docker logs unpackerr | grep -i error
+   podman logs unpackerr | grep -i error
    ```
 
 #### 4. Slow Extraction Performance
@@ -1019,11 +1038,11 @@ docker exec unpackerr env | grep API_KEY
 
 ```bash
 # Check parallel extractions setting
-docker exec unpackerr env | grep UN_PARALLEL
+podman exec unpackerr env | grep UN_PARALLEL
 # Should show: UN_PARALLEL=1
 
 # Monitor CPU during extraction
-docker stats unpackerr
+podman stats unpackerr
 ```
 
 **Solutions**:
@@ -1031,11 +1050,11 @@ docker stats unpackerr
 1. **Increase parallel extractions** (if you have spare CPU):
    - Edit [`services/compose/services/unpackerr.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/services/compose/services/unpackerr.yml)
    - Change: `UN_PARALLEL=2` (or higher)
-   - Restart: `docker compose restart unpackerr`
+   - Restart: `systemctl --user restart unpackerr`
 
 2. **Lower extraction priority** (if impacting other services):
    - Unpackerr runs as UID 3000 (same priority as other services)
-   - Can adjust Docker CPU shares if needed
+   - Can adjust Podman CPU limits if needed via Quadlet
 
 ### Verifying Everything Works
 
@@ -1044,17 +1063,18 @@ docker stats unpackerr
 ```bash
 # 1. Manually add a test NZB to SABnzbd
 # 2. Watch SABnzbd complete the download
-docker logs sabnzbd -f
+journalctl --user -u sabnzbd -f
 
 # 3. Verify file appears in category folder
 ls -lh /mnt/data/usenet/tv/  # or /movies
 
 # 4. Watch Unpackerr detect and extract
-docker logs unpackerr -f
+journalctl --user -u unpackerr -f
 # Should see: "Extracting: [filename]"
 
-# 5. Watch Sonarr/Radarr import
-docker logs sonarr -f  # or radarr
+# 5. Watch Sonarr/Radarr import (on media-services VM)
+# ssh to media-services VM first
+journalctl --user -u sonarr -f  # or radarr
 # Should see: "Imported: [filename]"
 
 # 6. Verify final media is in correct location
@@ -1144,18 +1164,18 @@ rm /mnt/data/test-download-clients.txt
 
 ```bash
 # Test internet connectivity
-docker exec qbittorrent ping -c 3 8.8.8.8
-docker exec sabnzbd ping -c 3 8.8.8.8
+podman exec qbittorrent ping -c 3 8.8.8.8
+podman exec sabnzbd ping -c 3 8.8.8.8
 
 # Test DNS
-docker exec qbittorrent nslookup google.com
+podman exec qbittorrent nslookup google.com
 ```
 
 **Solutions**:
 
 1. **DNS issues**:
    - Check /etc/resolv.conf on host
-   - Verify DNS in docker-compose.yml
+   - Verify DNS in Quadlet .container file
 
 2. **Firewall blocking outbound**:
 
@@ -1170,25 +1190,25 @@ docker exec qbittorrent nslookup google.com
 
 ```bash
 # Backup config
-docker compose stop qbittorrent
+systemctl --user stop qbittorrent
 cp -r /opt/download-clients/qbittorrent/config /opt/download-clients/qbittorrent/config.bak
 
 # Remove and recreate
-docker compose up -d qbittorrent
+systemctl --user up -d qbittorrent
 ```
 
 ### Reset SABnzbd
 
 ```bash
 # Backup config
-docker compose stop sabnzbd
+systemctl --user stop sabnzbd
 cp -r /opt/download-clients/sabnzbd/config /opt/download-clients/sabnzbd/config.bak
 
 # Remove config (will reset)
 rm /opt/download-clients/sabnzbd/config/sabnzbd.ini
 
 # Restart
-docker compose up -d sabnzbd
+systemctl --user up -d sabnzbd
 ```
 
 ## Getting Help
@@ -1198,8 +1218,8 @@ If issues persist:
 1. **Collect logs**:
 
    ```bash
-   docker logs qbittorrent --tail 500 > /tmp/qbittorrent.log
-   docker logs sabnzbd --tail 500 > /tmp/sabnzbd.log
+   journalctl --user -u qbittorrent -n 500 > /tmp/qbittorrent.log
+   journalctl --user -u sabnzbd -n 500 > /tmp/sabnzbd.log
    ```
 
 2. **Community Resources**:
