@@ -636,6 +636,52 @@ sudo tailscale up
 # Check Tailscale admin console
 ```
 
+### NFS Performance: Local IP vs Tailscale
+
+**Problem**: NFS throughput limited to ~70 Mbps when using Tailscale hostname
+
+**Cause**:
+When mounting NFS using Tailscale hostnames (e.g., `nas.discus-moth.ts.net`), traffic routes
+through the Tailscale WireGuard tunnel. This adds encryption overhead that significantly
+limits throughput compared to direct local network access.
+
+**Evidence** (from lancache deployment):
+
+```text
+# Tailscale path (slow):
+clientaddr=100.107.204.114  ← Via Tailscale
+addr=100.65.73.89           ← NAS via Tailscale
+Result: ~70 Mbps throughput, 31% iowait
+
+# Local network path (fast):
+clientaddr=192.168.0.18     ← Direct LAN
+addr=192.168.0.15           ← NAS direct
+Result: Full 10Gbps throughput
+```
+
+**When to Use Local IP for NFS**:
+
+| Use Case | Recommendation | Reason |
+|----------|----------------|--------|
+| High-throughput (lancache, media) | **Local IP** | Performance critical |
+| Low-throughput (config files) | Tailscale OK | Convenience, security |
+| Remote/external clients | Tailscale only | Not on local network |
+| VMs on same physical host | **Local IP** | Maximum performance |
+
+**Implementation**:
+
+```yaml
+# host_vars/lancache.yml - Use local IP for performance
+lancache_nfs_server: "192.168.0.15"  # NOT nas.discus-moth.ts.net
+
+# host_vars/media-services.yml - Tailscale OK for lower throughput
+nfs_server: "nas.discus-moth.ts.net"  # Convenience over performance
+```
+
+**Security Note**: Using local IPs is safe for VMs on the same physical network.
+The NFS server firewall (UFW) restricts NFS access to 192.168.0.0/24 regardless
+of which hostname/IP is used to connect.
+
 ### NFS Mount Fails
 
 **Problem**: Can't mount NFS share
