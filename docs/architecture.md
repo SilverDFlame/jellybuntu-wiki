@@ -104,6 +104,17 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Storage: NFS-backed cache at /mnt/lancache (2TB limit, stored on NAS)
   - Deployment: Phase 3 (services)
 
+#### Network Infrastructure
+
+- **UniFi Controller** (VMID 800)
+  - Resources: 2 cores, 2GB RAM, 32GB disk
+  - IP: 192.168.0.19
+  - Stack: Rootless Podman with Quadlet (MongoDB 7.0 + LinuxServer UniFi app)
+  - Services: UniFi Network Application (AP and network device management)
+  - Priority: Low (cpu_units: 512)
+  - Purpose: Self-hosted UniFi Network Controller for managing APs and network devices
+  - Deployment: Phase 3 (services)
+
 ### 3. Application Layer
 
 **Home Assistant**: Podman Quadlet container for home automation and device integration
@@ -307,7 +318,8 @@ unpackerr.container
 | Monitoring       | 500  | 2      | 4GB      | 64GB    | Medium   | 1024      |
 | Woodpecker CI    | 600  | 2      | 8GB      | 32GB    | Low      | 512       |
 | Lancache         | 700  | 2      | 4GB      | 32GB*** | Low      | 512       |
-| **Total**        |      | **26** | **54GB** |         |          |           |
+| UniFi Controller | 800  | 2      | 2GB      | 32GB    | Low      | 512       |
+| **Total**        |      | **28** | **56GB** |         |          |           |
 
 *Satisfactory cores are pinned to physical cores 4-7 (was 2-3)
 **NAS has 3x 6TB drives in Btrfs RAID1 (~9TB usable)
@@ -390,6 +402,12 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 │  │ Prometheus   │  │ CI/CD Server  │  │ Game DL Cache   │       │
 │  │ .16          │  │ .17           │  │ .18             │       │
 │  └──────────────┘  └───────────────┘  └─────────────────┘       │
+│                                                                  │
+│  ┌──────────────┐                                                │
+│  │ UniFi        │                                                │
+│  │ Controller   │                                                │
+│  │ .19          │                                                │
+│  └──────────────┘                                                │
 │                                                                  │
 │  vmbr0 Bridge ─────────────┬─────── 192.168.0.0/24               │
 └────────────────────────────┼─────────────────────────────────────┘

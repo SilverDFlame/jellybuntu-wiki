@@ -112,6 +112,7 @@ nav:
   - Reference:
       - Playbooks: reference/playbooks.md
       - Terraform Modules: reference/terraform-modules.md
+      - Container Versioning: reference/container-versioning.md
       - Proxmox API: reference/proxmox-api-permissions.md
       - SSH Bastion: reference/ssh-bastion.md
       - Tailscale Auto-Approval: reference/tailscale-auto-approval.md

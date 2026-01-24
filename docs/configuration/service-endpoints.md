@@ -30,6 +30,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Uptime Kuma**: http://oracle-monitoring.discus-moth.ts.net:3001 (External monitoring on Oracle Cloud)
 - **Woodpecker CI**: https://automation.discus-moth.ts.net (Web UI via Tailscale Funnel)
 - **Lancache**: http://lancache.discus-moth.ts.net:80 (Game download cache)
+- **UniFi Controller**: https://unifi-controller.discus-moth.ts.net:8443 (Network management)
 
 ### Via Local Network (Static IPs)
 
@@ -54,6 +55,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Grafana**: http://192.168.0.16:3000
 - **Woodpecker CI**: http://192.168.0.17:8000 (Web UI)
 - **Lancache**: http://192.168.0.18:80 (HTTP), https://192.168.0.18:443 (SNI proxy)
+- **UniFi Controller**: https://192.168.0.19:8443 (Network management)
 
 ## Deployment Types
 
@@ -74,6 +76,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 | Woodpecker CI (.17) | **Quadlet** (rootless Podman) | Server + Agent |
 | Nexus Repository (.15) | **Quadlet** (rootless Podman) | Container registry on NAS |
 | Lancache (.18) | **Quadlet** (rootful Podman) | Game download cache (Steam, Epic, etc.) |
+| UniFi Controller (.19) | **Quadlet** (rootless Podman) | MongoDB + LinuxServer UniFi app |
 
 > **Important**: Most services now use **rootless Podman with Quadlet** (systemd integration). Use `systemctl --user`
 commands, NOT `docker` or `docker-compose`.
@@ -295,6 +298,26 @@ systemctl --user restart woodpecker-server woodpecker-agent
 tailscale funnel status
 ```
 
+#### UniFi Controller VM (192.168.0.19)
+
+```bash
+# SSH into VM
+
+ssh -i ~/.ssh/ansible_homelab ansible@unifi-controller.discus-moth.ts.net
+
+# Check all services
+
+systemctl --user status unifi-mongodb unifi-app
+
+# Restart all
+
+systemctl --user restart unifi-mongodb unifi-app
+
+# View UniFi app logs
+
+journalctl --user -u unifi-app -f
+```
+
 ### Troubleshooting Service Issues
 
 #### Service Won't Start
@@ -323,9 +346,9 @@ tailscale funnel status
 | Service | VM | Port | Protocol | Purpose |
 |---------|-------|------|----------|---------|
 | Home Assistant | .10 | 8123 | HTTP | Web UI |
-| Satisfactory | .11 | 7777 | UDP | Game |
-| Satisfactory | .11 | 15000 | UDP | Beacon |
-| Satisfactory | .11 | 15777 | UDP | Query |
+| Satisfactory | .11 | 7777 | TCP | Server API |
+| Satisfactory | .11 | 7777 | UDP | Game Traffic |
+| Satisfactory | .11 | 8888 | TCP | Server Manager HTTPS |
 | Jellyfin | .12 | 8096 | HTTP | Web UI |
 | Jellyfin | .12 | 8920 | HTTPS | HTTPS UI |
 | Jellyfin | .12 | 7359 | UDP | Discovery |
@@ -354,6 +377,10 @@ tailscale funnel status
 | Woodpecker Server | .17 | 9000 | gRPC | Agent communication |
 | Lancache | .18 | 80 | HTTP | Cache traffic |
 | Lancache | .18 | 443 | HTTPS | SNI proxy |
+| UniFi Controller | .19 | 8443 | HTTPS | Web UI |
+| UniFi Controller | .19 | 8080 | HTTP | Device Inform |
+| UniFi Controller | .19 | 3478 | UDP | STUN |
+| UniFi Controller | .19 | 10001 | UDP | Device Discovery |
 
 *qBittorrent uses dynamic port forwarding via PIA VPN (e.g., 46124). Port is automatically assigned and updated. See
 [VPN Configuration Guide](vpn-gluetun.md) for details.
