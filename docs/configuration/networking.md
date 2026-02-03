@@ -659,6 +659,38 @@ sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/test
 > **Note**: NFS mounts use direct IP (192.168.0.15) rather than Tailscale hostname to avoid
 > tunnel saturation under heavy I/O. See [NFS Direct IP Migration](../reference/nfs-direct-ip-migration.md).
 
+### NFS Performance: Local IP vs Tailscale
+
+For high-throughput NFS workloads, using local IP addresses instead of Tailscale hostnames provides significant performance improvements:
+
+| Connection Type | Throughput | Use Case |
+|-----------------|------------|----------|
+| Tailscale hostname | ~70 Mbps | Low-bandwidth, remote access |
+| Local IP (192.168.0.x) | Full LAN speed (1-10 Gbps) | High-throughput local services |
+
+**Why the difference?**
+
+- Tailscale encrypts all traffic through a WireGuard tunnel
+- Encryption overhead becomes significant under sustained heavy I/O
+- Local IP bypasses the tunnel for VMs on the same physical network
+
+**Services using local IP for NFS:**
+
+- **All media VMs** (Jellyfin, Media Services, Download Clients): Use `192.168.0.15` for media storage
+- **LANCache**: Uses `192.168.0.15` for game cache storage (requires ~140x higher throughput than Tailscale provides)
+
+**Configuration example** (from `host_vars/lancache.yml`):
+
+```yaml
+# NFS mount uses direct local IP for full 10Gbps LAN speed
+# Using Tailscale hostname (nas.discus-moth.ts.net) would limit throughput
+# to ~70 Mbps due to WireGuard tunnel encryption overhead.
+# Local IP is safe because both VMs are on the same physical network.
+nfs_server: "192.168.0.15"
+```
+
+**Security note**: Using local IP is safe for VMs on the same physical network segment. External access still requires Tailscale VPN.
+
 ### Firewall Locked Me Out
 
 **Problem**: Can't access any services
