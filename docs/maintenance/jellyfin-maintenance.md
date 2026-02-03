@@ -500,6 +500,147 @@ curl -X POST "http://localhost:8096/Users/<USER_ID>/Policy" \
 2. Click "Password" tab
 3. Set new password or enable "Easy Pin"
 
+## Smart Reboot Feature
+
+The Jellyfin VM includes an automatic reboot feature that safely restarts the system after driver updates (e.g., NVIDIA) without interrupting active viewers.
+
+### How It Works
+
+The smart reboot script checks three conditions before rebooting:
+
+1. **Reboot Required**: Either `/var/run/reboot-required` exists OR NVIDIA driver/library mismatch detected
+2. **Time Window**: Current time is within the configured window (default: 3-5 AM)
+3. **No Active Playback**: Jellyfin API reports no active streaming sessions
+
+If all conditions pass, the system reboots automatically. Otherwise, it retries on the next timer check (every 30 minutes during the window).
+
+### Configuration Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `jellyfin_smart_reboot_enabled` | `true` | Enable/disable the feature |
+| `jellyfin_smart_reboot_window_start` | `3` | Start hour (24h format) |
+| `jellyfin_smart_reboot_window_end` | `5` | End hour (24h format) |
+| `jellyfin_smart_reboot_url` | `http://localhost:8096` | Jellyfin API URL |
+
+### Monitoring Smart Reboot
+
+```bash
+# Check timer status
+sudo systemctl status jellyfin-smart-reboot.timer
+
+# View recent reboot check logs
+sudo journalctl -u jellyfin-smart-reboot -n 50
+
+# Check next scheduled run
+sudo systemctl list-timers jellyfin-smart-reboot.timer
+
+# Manual test run (won't reboot outside time window)
+sudo /usr/local/bin/jellyfin-smart-reboot.sh
+```
+
+### Troubleshooting Smart Reboot
+
+**Script not running**:
+
+```bash
+# Check timer is enabled
+sudo systemctl is-enabled jellyfin-smart-reboot.timer
+
+# Enable if needed
+sudo systemctl enable --now jellyfin-smart-reboot.timer
+```
+
+**API authentication failures**:
+
+```bash
+# Check credentials file exists and has correct permissions
+sudo ls -la /etc/jellyfin/smart-reboot-credentials
+
+# Verify API key is set
+sudo cat /etc/jellyfin/smart-reboot-credentials
+
+# Test API key manually
+curl -s "http://localhost:8096/Sessions" -H "X-Emby-Token: YOUR_API_KEY" | jq length
+```
+
+**NVIDIA driver mismatch not detected**:
+
+```bash
+# Check NVIDIA driver status
+nvidia-smi
+
+# If you see "Driver/library version mismatch", reboot is needed
+# The script detects this automatically
+```
+
+### Disabling Smart Reboot
+
+To disable the feature via Ansible:
+
+```yaml
+# In host_vars/jellyfin.yml
+jellyfin_smart_reboot_enabled: false
+```
+
+Then run the Jellyfin playbook to apply the change.
+
+---
+
+## Creating a Jellyfin API Key
+
+API keys are required for automation scripts (like smart reboot) to query Jellyfin without user credentials.
+
+### Via Web UI (Recommended)
+
+1. Open Jellyfin Dashboard: `http://jellyfin.discus-moth.ts.net:8096`
+2. Navigate to **Dashboard** → **API Keys** (under Advanced)
+3. Click **+** (Add API Key)
+4. Enter a descriptive name (e.g., "Smart Reboot Script")
+5. Click **OK** to create the key
+6. Copy the generated API key immediately (it won't be shown again)
+
+### Via Command Line
+
+```bash
+# SSH to Jellyfin VM
+ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net
+
+# Create API key via sqlite (requires admin access)
+sudo sqlite3 /var/lib/jellyfin/data/jellyfin.db \
+  "INSERT INTO ApiKeys (AccessToken, DateCreated, Name) VALUES ('$(openssl rand -hex 32)', datetime('now'), 'Script Access');"
+
+# Retrieve the key you just created
+sudo sqlite3 /var/lib/jellyfin/data/jellyfin.db \
+  "SELECT AccessToken FROM ApiKeys WHERE Name='Script Access';"
+```
+
+### Testing Your API Key
+
+```bash
+# Test public endpoint (no auth required)
+curl -s "http://localhost:8096/System/Info/Public" | jq '.Version'
+
+# Test authenticated endpoint
+curl -s "http://localhost:8096/Sessions" -H "X-Emby-Token: YOUR_API_KEY" | jq length
+
+# Test user listing (requires admin key)
+curl -s "http://localhost:8096/Users" -H "X-Emby-Token: YOUR_API_KEY" | jq '.[].Name'
+```
+
+### Storing API Keys Securely
+
+For Ansible-managed scripts, store API keys in the SOPS-encrypted vault:
+
+```yaml
+# In group_vars/all.sops.yaml (encrypted)
+vault_jellyfin_api_key: "your-api-key-here"
+```
+
+The smart reboot script reads the API key from `/etc/jellyfin/smart-reboot-credentials` (mode 0600, root-only), which is populated by Ansible from the vault.
+
+---
+
 ## Troubleshooting Common Issues
 
 ### Service Won't Start
