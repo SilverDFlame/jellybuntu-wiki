@@ -9,8 +9,8 @@ multiplayer sessions.
 ## Overview
 
 - **VM**: satisfactory-server (VMID 200, 192.168.0.11)
-- **Ports**: 7777 (Game), 15000 (Beacon), 15777 (Query)
-- **Protocol**: UDP
+- **Ports**: 7777 (Game/API), 8888 (Server Manager)
+- **Protocol**: TCP
 - **Deployment**: Native systemd user service with SteamCMD
 - **Install Path**: `~/SatisfactoryDedicatedServer/`
 - **Save Path**: `~/.config/Epic/FactoryGame/Saved/SaveGames/`
@@ -142,8 +142,8 @@ mAutoSaveOnDisconnect=True
 
 2. **Connect to server** from Satisfactory game:
    - Server Manager → Add Server
-   - Enter: `satisfactory-server.discus-moth.ts.net:15777`
-   - Or: `192.168.0.11:15777`
+   - Enter: `satisfactory-server.discus-moth.ts.net:7777`
+   - Or: `192.168.0.11:7777`
 
 3. **Claim the server** (first connection):
    - Set server name
@@ -154,16 +154,14 @@ mAutoSaveOnDisconnect=True
 
 | Port | Protocol | Purpose |
 |------|----------|---------|
-| 7777 | UDP | Game traffic |
-| 15000 | UDP | Beacon/NAT negotiation |
-| 15777 | UDP | Query port (server browser) |
+| 7777 | TCP | Game traffic and Server API |
+| 8888 | TCP | Server Manager HTTPS (optional) |
 
 Ensure these ports are open in the firewall:
 
 ```bash
-sudo ufw allow 7777/udp
-sudo ufw allow 15000/udp
-sudo ufw allow 15777/udp
+sudo ufw allow 7777/tcp
+sudo ufw allow 8888/tcp
 ```
 
 ## Service Management
@@ -350,7 +348,7 @@ NetServerMaxTickRate=120
 **Remote player considerations:**
 
 - Tailscale adds latency (~10-50ms depending on distance)
-- For players far from the server, consider port forwarding UDP 7777 for direct connection
+- For players far from the server, consider port forwarding TCP 7777 for direct connection
 - High factory complexity increases network traffic
 
 ### Monitoring & Diagnostics
@@ -444,7 +442,7 @@ Satisfactory Mod Manager handles mods:
 | Issue | Solution |
 |-------|----------|
 | Server not starting | Check logs: `journalctl --user -u satisfactory` |
-| Can't connect | Verify firewall allows UDP 7777/15000/15777 |
+| Can't connect | Verify firewall allows TCP 7777/8888 |
 | High memory usage | Normal for large factories; add more RAM |
 | Server crashing | Check logs, verify game files, update server |
 | Save corruption | Restore from backup, verify disk space |
