@@ -3,11 +3,14 @@
 # https://github.com/DavidAnson/markdownlint-cli2
 
 config:
-  # Line length - allow up to 120 characters
+  # Line length - allow up to 200 characters
+  # Increased from 120 to accommodate GitHub URLs in cross-repository links
+  # Format: [`path/file`](https://github.com/SilverDFlame/jellybuntu/blob/main/path/file)
   MD013:
-    line_length: 120
+    line_length: 200
     code_blocks: false
     tables: false
+    headings: false
 
   # Multiple headings with same content allowed (common in documentation)
   MD024:

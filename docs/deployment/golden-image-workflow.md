@@ -328,9 +328,13 @@ packer build -var 'vm_id=9001' -var 'vm_name=ubuntu-server-2024-12' .
 
 Edit provisioning scripts:
 
-- [`infrastructure/packer/ubuntu-server/scripts/install-common.sh`](https://github.com/SilverDFlame/jellybuntu/blob/main/infrastructure/packer/ubuntu-server/scripts/install-common.sh) - Common packages
-- [`infrastructure/packer/ubuntu-server/scripts/install-podman.sh`](https://github.com/SilverDFlame/jellybuntu/blob/main/infrastructure/packer/ubuntu-server/scripts/install-podman.sh) - Container runtime
-- [`infrastructure/packer/ubuntu-server/ansible/security-baseline.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/infrastructure/packer/ubuntu-server/ansible/security-baseline.yml) - Security hardening
+- [`infrastructure/packer/ubuntu-server/scripts/install-common.sh`][install-common] - Common packages
+- [`infrastructure/packer/ubuntu-server/scripts/install-podman.sh`][install-podman] - Container runtime
+- [`infrastructure/packer/ubuntu-server/ansible/security-baseline.yml`][security-baseline] - Security hardening
+
+[install-common]: https://github.com/SilverDFlame/jellybuntu/blob/main/infrastructure/packer/ubuntu-server/scripts/install-common.sh
+[install-podman]: https://github.com/SilverDFlame/jellybuntu/blob/main/infrastructure/packer/ubuntu-server/scripts/install-podman.sh
+[security-baseline]: https://github.com/SilverDFlame/jellybuntu/blob/main/infrastructure/packer/ubuntu-server/ansible/security-baseline.yml
 
 ### Testing Golden Image Changes
 

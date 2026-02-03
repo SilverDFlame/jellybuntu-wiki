@@ -15,7 +15,7 @@ rules:
     min-spaces-from-content: 1
 
   # Comments indentation
-  comments-indentation: true
+  comments-indentation: enable
 
   # Indentation - 2 spaces
   indentation:

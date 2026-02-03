@@ -275,19 +275,20 @@ systemctl --user restart homeassistant
 For Z-Wave/Zigbee USB sticks:
 
 1. Pass through USB device in Proxmox
-2. Update Quadlet file:
 
-```ini
-[Container]
-AddDevice=/dev/ttyUSB0
-```
+1. Update Quadlet file:
 
-3. Restart service:
+   ```ini
+   [Container]
+   AddDevice=/dev/ttyUSB0
+   ```
 
-```bash
-systemctl --user daemon-reload
-systemctl --user restart homeassistant
-```
+1. Restart service:
+
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user restart homeassistant
+   ```
 
 ### Network Devices
 

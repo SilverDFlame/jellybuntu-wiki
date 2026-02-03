@@ -92,8 +92,13 @@ If you prefer to use API keys with built-in auto-approval, you can generate a ne
 
 ## Current Implementation
 
-The playbooks ([`playbooks/core/03-configure-tailscale-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/03-configure-tailscale-role.yml) and [`playbooks/utility/power-management.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/utility/power-management.yml)) already
-generate ephemeral, preauthorized auth keys with the `tag:homelab` tag.
+The following playbooks already generate ephemeral, preauthorized auth keys with the `tag:homelab` tag:
+
+- [`playbooks/core/03-configure-tailscale-role.yml`][tailscale-playbook]
+- [`playbooks/utility/power-management.yml`][power-playbook]
+
+[tailscale-playbook]: https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/03-configure-tailscale-role.yml
+[power-playbook]: https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/utility/power-management.yml
 
 To enable auto-approval, you just need to configure the ACL policy (Option 1) in the Tailscale admin console.
 
