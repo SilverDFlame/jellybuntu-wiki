@@ -6,7 +6,10 @@ Comprehensive guide for configuring Prometheus, Grafana, and the monitoring infr
 
 - **Prometheus**: http://monitoring.discus-moth.ts.net:9090
 - **Grafana**: http://monitoring.discus-moth.ts.net:3000
-- **Uptime Kuma**: http://monitoring.discus-moth.ts.net:3001
+- **Alertmanager**: http://monitoring.discus-moth.ts.net:9093
+
+> **Note**: Uptime Kuma has been moved to external monitoring (Oracle Cloud) for independent availability
+> monitoring.
 
 ## Prometheus Configuration
 
@@ -579,7 +582,6 @@ For multi-site monitoring, configure Prometheus federation to aggregate metrics 
 
 ## See Also
 
-- [Uptime Kuma Setup](uptime-kuma-setup.md) - Availability monitoring and status pages
 - [Service Endpoints](service-endpoints.md) - All monitored services
 - [Troubleshooting: Monitoring](../troubleshooting/monitoring.md) - Common monitoring issues
 - [Phase 5 Deployment](../deployment/phase5-monitoring.md) - Initial monitoring deployment

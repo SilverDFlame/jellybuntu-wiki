@@ -65,9 +65,8 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 | Port | Protocol | Service | Access |
 |------|----------|---------|--------|
-| 7777 | UDP | Game Port | Local + Tailscale |
-| 15000 | UDP | Beacon Port | Local + Tailscale |
-| 15777 | UDP | Query Port | Local + Tailscale |
+| 7777 | TCP | Game Port / Server API | Local + Tailscale |
+| 8888 | TCP | Server Manager HTTPS | Local + Tailscale |
 
 ---
 
@@ -311,8 +310,8 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 | Port | Protocol | Service | Access |
 |------|----------|---------|--------|
 | 9090 | TCP | Prometheus | Local + Tailscale |
+| 9093 | TCP | Alertmanager | Local + Tailscale |
 | 3000 | TCP | Grafana | Local + Tailscale |
-| 3001 | TCP | Uptime Kuma | Local + Tailscale |
 | 9116 | TCP | SNMP Exporter | Localhost |
 | 9115 | TCP | Blackbox Exporter | Localhost |
 
@@ -325,7 +324,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 - Prometheus data: `/opt/monitoring/data/prometheus`
 - Grafana data: `/opt/monitoring/data/grafana`
-- Uptime Kuma data: `/opt/monitoring/data/uptime-kuma`
+- Alertmanager data: `/opt/monitoring/data/alertmanager`
 - Config files: `/opt/monitoring/config`
 
 **Podman Compose Structure:**
@@ -335,7 +334,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - Resource limits:
   - Prometheus: 2GB RAM, 1.0 CPU
   - Grafana: 1GB RAM, 0.5 CPU
-  - Uptime Kuma: 512MB RAM, 0.5 CPU
+  - Alertmanager: 512MB RAM, 0.25 CPU
   - Exporters: 256MB RAM, 0.25 CPU each
 
 **Monitoring Targets:**
@@ -355,6 +354,47 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 ---
 
+## UniFi Controller (VMID 800)
+
+**Hardware:**
+
+- **Cores:** 2 (shared)
+- **CPU Type:** host
+- **CPU Units:** 1024 (medium priority)
+- **Memory:** 4GB (4096MB)
+- **Disk:** 32GB (local-zfs)
+- **Network:** virtio bridge (vmbr0)
+
+**Network:**
+
+- **IP:** 192.168.0.19
+- **Hostname:** unifi-controller.discus-moth.ts.net
+- **Gateway:** 192.168.0.1
+- **DNS:** 9.9.9.9, 192.168.0.1
+
+**Services (Quadlet/Podman):**
+
+- UniFi Network Application
+- MongoDB 7.0
+
+**Ports:**
+
+| Port | Protocol | Service | Access |
+|------|----------|---------|--------|
+| 8443 | TCP | Web UI (HTTPS) | Local + Tailscale |
+| 8080 | TCP | Device Inform | Local only |
+| 3478 | UDP | STUN | Local only |
+| 10001 | UDP | Device Discovery | Local only |
+
+**Storage:**
+
+- Quadlet files: `~/.config/containers/systemd/`
+- Config directory: `/opt/unifi/config`
+- MongoDB data: `/opt/unifi/mongodb`
+- Logs: `/opt/unifi/logs`
+
+---
+
 ## Resource Allocation Summary
 
 | VM | VMID | Cores | Pinning | CPU Type | CPU Units | Priority | RAM | Disk | Special Flags |
@@ -368,14 +408,15 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 | Monitoring | 500 | 2 | No | host | 1024 | Medium | 4GB | 64GB | - |
 | Woodpecker CI | 600 | 2 | No | host | 512 | Low | 8GB | 32GB | - |
 | Lancache | 700 | 2 | No | host | 512 | Low | 4GB | 32GB | - |
-| **Total** | | **26** | | | | | **54GB** | **450GB + 6TB** | |
+| UniFi Controller | 800 | 2 | No | host | 1024 | Medium | 4GB | 32GB | - |
+| **Total** | | **28** | | | | | **58GB** | **482GB + 6TB** | |
 
 **Physical Host Resources:**
 
 - 16 physical CPU cores / 32 threads (AMD EPYC 7313P)
 - 128GB RAM
 - NVMe boot + 3x 6TB Btrfs RAID1 (~9TB usable) + 32GB RAM disk (transcoding)
-- ~160% CPU overprovisioning (26 virtual / 16 physical)
+- ~175% CPU overprovisioning (28 virtual / 16 physical)
 
 **CPU Overprovisioning Strategy:**
 

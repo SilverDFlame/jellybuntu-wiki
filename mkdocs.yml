@@ -97,6 +97,7 @@ nav:
       - Service Endpoints: configuration/service-endpoints.md
       - Networking: configuration/networking.md
       - Security: configuration/security.md
+      - UniFi Controller: configuration/unifi-controller-setup.md
   - Maintenance:
       - Updates: maintenance/updates.md
       - Backup & Recovery: maintenance/backup-recovery.md
