@@ -1,6 +1,8 @@
 name: Claude Code
 
 on:
+  pull_request:
+    types: [opened, synchronize]
   issue_comment:
     types: [created]
   pull_request_review_comment:
@@ -11,6 +13,46 @@ on:
     types: [submitted]
 
 jobs:
+  # Automatic PR review on open/update
+  claude-pr-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude PR Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          additional_permissions: |
+            actions: read
+          prompt: |
+            Review this documentation PR for the Jellybuntu Wiki:
+
+            **Formatting (markdownlint)**:
+            - Lines over 120 chars (code blocks/tables exempt)
+            - Missing blank lines around code blocks and lists
+            - Code blocks without language tags
+
+            **Links**:
+            - Cross-repo links must use absolute GitHub URLs (https://github.com/SilverDFlame/jellybuntu/blob/main/...)
+            - Internal wiki links should be relative
+
+            **Style**:
+            - Consistent heading hierarchy
+            - Appropriate use of admonitions
+
+  # On-demand Claude interactions via @claude mention
   claude:
     if: |
       (github.event_name == 'issue_comment' &&
@@ -25,10 +67,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
+      issues: write
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      actions: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,16 +82,5 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-
-          # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
-
-          # Optional: Give a custom prompt to Claude. If this is not
-          # specified, Claude will perform the instructions specified in
-          # the comment that tagged it.
-          # prompt: 'Update the PR description to include summary.'
-
-          # Optional: Add claude_args to customize behavior
-          # See https://github.com/anthropics/claude-code-action
-          # claude_args: '--allowed-tools Bash(gh pr:*)'
