@@ -37,9 +37,12 @@ jobs:
           additional_permissions: |
             actions: read
           claude_args: |
-            --allowedTools "Bash(gh pr *),Bash(markdownlint-cli2 *),Bash(pre-commit *)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(markdownlint-cli2 *),Bash(pre-commit *)"
           prompt: |
-            Review this documentation PR for the Jellybuntu Wiki:
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this documentation PR for the Jellybuntu Wiki. Focus on:
 
             **Formatting (markdownlint)**:
             - Lines over 200 chars (code blocks/tables/headings exempt)
@@ -53,6 +56,12 @@ jobs:
             **Style**:
             - Consistent heading hierarchy
             - Appropriate use of admonitions
+
+            Note: The PR branch is already checked out in the current working directory.
+
+            Use `gh pr comment` for top-level feedback summary.
+            Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
 
   # On-demand Claude interactions via @claude mention
   claude:
