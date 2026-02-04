@@ -98,14 +98,23 @@ This flow uses a **4-branch architecture** that:
 
 1. **FFmpeg Command: Set Container** - Set output format
     - Container: `.mkv`
-2. **FFmpeg Command: Custom Arguments** - Exclude subtitles (to prevent WebVTT codec errors)
-    - Output Arguments: `-sn`
+2. **FFmpeg Command: Custom Arguments** - Handle streams incompatible with MKV container
+    - Output Arguments: `-map_chapters 0 -dn -sn`
 3. **FFmpeg Command: Execute** - Run the FFmpeg command
 4. **Replace Original File** - Replace source with transcoded file
 
-**Note on Subtitles**: Subtitles are excluded (`-sn`) because embedded WebVTT subtitle streams cause transcode failures
-with matroska muxer. Bazarr automatically re-downloads subtitles as external `.srt` files within ~9 hours of transcoding
-(see "Subtitle Management Strategy" section below). Audio streams are automatically copied.
+**Note on Custom Arguments**: These flags handle streams that are incompatible with the Matroska container:
+
+- `-map_chapters 0` - Preserves chapter markers by converting to MKV-native format
+- `-dn` - Skips data streams (bin_data chapters, attached pictures) that cause muxer errors
+- `-sn` - Skips subtitle streams (WebVTT codec incompatible with MKV)
+
+Without these flags, MP4 files containing data streams (common in anime/PTerWEB releases) fail with:
+`Only audio, video, and subtitles are supported for Matroska.`
+
+Bazarr automatically re-downloads subtitles as external `.srt` files within ~9 hours of transcoding
+(see "Subtitle Management Strategy" section below). Audio streams are automatically copied. Embedded cover art is lost
+but Jellyfin uses external/scraped artwork anyway.
 
 ## Connection Map
 
@@ -153,7 +162,7 @@ with matroska muxer. Bazarr automatically re-downloads subtitles as external `.s
 
 ### Shared Plugin Chain
 
-- **Set Container** → **Custom Arguments (-sn)** → **Execute** → **Replace Original File**
+- **Set Container** → **Custom Arguments** → **Execute** → **Replace Original File**
 
 ## How It Works
 
@@ -169,7 +178,7 @@ with matroska muxer. Bazarr automatically re-downloads subtitles as external `.s
 8. Custom Arguments (4K HDR) adds HDR metadata preservation parameters
 9. Merges to shared plugins
 10. Set Container sets output to `.mkv`
-11. Custom Arguments adds: `-sn` (excludes problematic embedded subtitles)
+11. Custom Arguments adds: `-map_chapters 0 -dn -sn` (preserves chapters, excludes data/subtitle streams)
 12. Execute runs the complete FFmpeg command (audio streams automatically copied)
 13. Replace Original File swaps original with transcoded version
 
@@ -187,7 +196,7 @@ with matroska muxer. Bazarr automatically re-downloads subtitles as external `.s
 8. (No HDR Custom Arguments - not needed)
 9. Merges to shared plugins
 10. Set Container sets output to `.mkv`
-11. Custom Arguments adds: `-sn`
+11. Custom Arguments adds: `-map_chapters 0 -dn -sn`
 12. Execute runs the complete FFmpeg command
 13. Replace Original File swaps original with transcoded version
 
@@ -205,7 +214,7 @@ with matroska muxer. Bazarr automatically re-downloads subtitles as external `.s
 8. Custom Arguments (1080p HDR) adds HDR metadata preservation parameters
 9. Merges to shared plugins
 10. Set Container sets output to `.mkv`
-11. Custom Arguments adds: `-sn`
+11. Custom Arguments adds: `-map_chapters 0 -dn -sn`
 12. Execute runs the complete FFmpeg command
 13. Replace Original File swaps original with transcoded version
 
@@ -223,7 +232,7 @@ with matroska muxer. Bazarr automatically re-downloads subtitles as external `.s
 8. (No HDR Custom Arguments - not needed)
 9. Merges to shared plugins
 10. Set Container sets output to `.mkv`
-11. Custom Arguments adds: `-sn`
+11. Custom Arguments adds: `-map_chapters 0 -dn -sn`
 12. Execute runs the complete FFmpeg command
 13. Replace Original File swaps original with transcoded version
 
@@ -537,6 +546,28 @@ Processing capacity increases by 50-100% with 3-4 concurrent GPU transcodes.
 - Check memory limits on tdarr-node container (should be 2GB)
 - Verify VM has sufficient free memory
 
+### MP4 Fails with "Only audio, video, and subtitles are supported"
+
+**Symptom**: Transcode fails with error:
+`Only audio, video, and subtitles are supported for Matroska.`
+
+**Cause**: MP4 files (common in anime/PTerWEB releases) contain data streams that MKV cannot handle:
+
+- `bin_data` streams (chapter metadata stored as binary)
+- Attached pictures (embedded cover art as PNG/JPEG)
+
+**Fix**: Ensure Custom Arguments plugin includes `-dn` flag:
+
+```text
+-map_chapters 0 -dn -sn
+```
+
+- `-map_chapters 0` converts chapters to MKV-native format (preserves chapter markers)
+- `-dn` skips data streams entirely
+- `-sn` skips subtitle streams (existing fix for WebVTT)
+
+**Impact**: Chapters are preserved. Embedded cover art is lost but Jellyfin uses external/scraped artwork.
+
 ## Maintenance
 
 ### Weekly
@@ -583,8 +614,8 @@ Processing capacity increases by 50-100% with 3-4 concurrent GPU transcodes.
                               ↓
                     [Set Container: .mkv]
                               ↓
-                  [Custom Arguments: -sn]
-                    (excludes subtitles)
+            [Custom Arguments: -map_chapters 0 -dn -sn]
+              (preserves chapters, excludes data/subs)
                               ↓
                           [Execute]
                     (auto-copies audio)
