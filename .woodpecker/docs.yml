@@ -54,10 +54,14 @@ steps:
         echo "$SSH_CI_PRIVATE_KEY" > /root/.ssh/ansible_ci
         chmod 600 /root/.ssh/ansible_ci
 
+        # Pre-populate known_hosts to avoid MITM vulnerabilities
+        # (StrictHostKeyChecking=no should be avoided in production)
+        ssh-keyscan -H nas.discus-moth.ts.net >> /root/.ssh/known_hosts 2>/dev/null
+
         # Deploy to NAS
         echo "Deploying documentation to NAS..."
         rsync -avz --delete \
-          -e "ssh -i /root/.ssh/ansible_ci -o StrictHostKeyChecking=no" \
+          -e "ssh -i /root/.ssh/ansible_ci" \
           site/ \
           ansible@nas.discus-moth.ts.net:/opt/docs/site/
 

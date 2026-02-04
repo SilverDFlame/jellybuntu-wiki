@@ -57,7 +57,7 @@ All VMs (except NAS itself) use ProxyJump:
 [jellyfin_servers:vars]
 ansible_user=ansible
 ansible_become=yes
-ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o ProxyJump=ansible@192.168.0.15'
+ansible_ssh_common_args='-o ConnectTimeout=5 -o ProxyJump=ansible@192.168.0.15'
 ```
 
 NAS has direct connection (no jump):
@@ -66,8 +66,16 @@ NAS has direct connection (no jump):
 [nas_servers:vars]
 ansible_user=ansible
 ansible_become=yes
-ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ConnectTimeout=5'
+ansible_ssh_common_args='-o ConnectTimeout=5'
 ```
+
+> **Note**: Before first connection, populate your `~/.ssh/known_hosts` with host keys:
+>
+> ```bash
+> ssh-keyscan -H 192.168.0.15 >> ~/.ssh/known_hosts
+> ssh-keyscan -H 192.168.0.12 >> ~/.ssh/known_hosts
+> # Repeat for other VMs as needed
+> ```
 
 ## When to Use Bastion Access
 
@@ -111,12 +119,16 @@ ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.15 "ping -c 1 192.168.0.12"
 ### Host key verification failed
 
 ```bash
-# Clear old host key
+# Clear old host key and re-scan
 ssh-keygen -R 192.168.0.12
+ssh-keyscan -H 192.168.0.12 >> ~/.ssh/known_hosts
 
-# Or disable strict checking (less secure)
-ssh -o StrictHostKeyChecking=no -o ProxyJump=ansible@192.168.0.15 ansible@192.168.0.12
+# Then connect normally
+ssh -o ProxyJump=ansible@192.168.0.15 ansible@192.168.0.12
 ```
+
+> **Security Warning**: Avoid using `StrictHostKeyChecking=no` as it disables MITM attack protection.
+> Always verify host keys have changed legitimately (e.g., after VM rebuild) before clearing them.
 
 ## Related Documentation
 

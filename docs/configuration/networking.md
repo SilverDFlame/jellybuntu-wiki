@@ -2,6 +2,9 @@
 
 Complete guide to network architecture, firewall rules, and Tailscale VPN configuration.
 
+> **Security Note**: The IP addresses documented here are private (RFC 1918) addresses on an isolated
+> home network, accessible only via Tailscale VPN. They are not routable from the public internet.
+
 ## Overview
 
 The Jellybuntu infrastructure uses a dual-network approach:
