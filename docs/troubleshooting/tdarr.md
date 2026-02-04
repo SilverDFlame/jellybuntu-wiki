@@ -372,11 +372,10 @@ systemctl --user stop tdarr-server tdarr-node
 3. **Increase Jellyfin Priority**:
 
    ```bash
-   # Check Jellyfin container priority
-   # Jellyfin is native systemd, not container
-sudo systemctl show jellyfin | grep -i nice
+   # Check Jellyfin service priority (Jellyfin is native systemd, not container)
+   sudo systemctl show jellyfin | grep -i nice
 
-   # If not set, consider adding priority to Jellyfin compose
+   # If not set, consider adding Nice= to the systemd unit
    ```
 
 4. **Monitor During Playback**:

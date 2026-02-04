@@ -13,6 +13,7 @@ repos:
         name: Fix end of files
       - id: check-yaml
         name: Check YAML syntax
+        args: ['--unsafe']  # Allow Python tags in mkdocs.yml (mermaid2 plugin)
         files: ^(mkdocs\.yml|\..*\.ya?ml)$
       - id: check-added-large-files
         name: Check for large files
