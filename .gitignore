@@ -38,3 +38,15 @@ node_modules/
 
 # Claude Code local files
 .claude/
+
+# Security: Prevent accidental commit of sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets/
+.secrets/
+*.age
+!*.age.example
