@@ -56,43 +56,79 @@ When you first access Bazarr, you'll see a setup wizard.
 
 **Settings → Providers** <!-- markdownlint-disable-line MD036 -->
 
-### Recommended Providers for English Subtitles
+### Core Providers
 
-1. **OpenSubtitles.com** (Best database, requires free account)
+1. **OpenSubtitles.com** (Largest database, requires free account)
    - Click "Add" → OpenSubtitles.com
    - Username: Your OpenSubtitles username (create at opensubtitles.com)
    - Password: Your OpenSubtitles password
    - Click "Add"
-   - **Note**: Free tier has rate limits
+   - **Note**: Free tier has daily download limits; best for hash-matching
 
-2. **Addic7ed** (TV shows - high quality, requires free account)
-   - Click "Add" → Addic7ed
-   - Username: Your Addic7ed username (create at addic7ed.com)
-   - Password: Your Addic7ed password
+2. **Gestdown** (Addic7ed proxy - no account needed)
+   - Click "Add" → Gestdown
+   - No configuration needed
    - Click "Add"
-   - **Note**: Best for TV shows, community-curated
+   - **Note**: Proxies Addic7ed with caching, avoids rate limits. Best for TV shows
 
 3. **Podnapisi** (No configuration needed)
    - Click "Add" → Podnapisi
    - No configuration needed
    - Click "Add"
+   - **Note**: Good quality, reliable
 
-4. **SuperSubtitles** (No configuration needed)
-   - Click "Add" → SuperSubtitles
-   - No configuration needed
-   - Click "Add"
+### Anime Providers
 
-5. **Subdl** (Requires API key)
-   - Click "Add" → Subdl
-   - API Key: Get from subdl.com (requires free account)
-   - Click "Add"
-   - **Note**: Skip if you don't want to create an account
+Anime providers require AniDB integration to look up anime IDs.
 
-6. **subf2m.co** (Requires User-Agent header)
-   - Click "Add" → subf2m.co
-   - User-Agent: `Mozilla/5.0` (or any browser user-agent string)
+**Step 1: Register an AniDB HTTP API Client** <!-- markdownlint-disable-line MD036 -->
+
+1. Create an account at [anidb.net](https://anidb.net) if needed
+2. Log in and go to [API Client Page](http://anidb.net/perl-bin/animedb.pl?show=client)
+3. Click **Add New Project** tab
+4. Enter a project name (e.g., "mybazarr") → click **+ Add Project**
+5. On the project page, click **Add Client** (top right)
+6. Enter a unique client name (e.g., "mybazarrclient")
+7. Set Version to `1` → click **Add Client**
+
+**Step 2: Configure AniDB Integration in Bazarr** <!-- markdownlint-disable-line MD036 -->
+
+**Settings → Providers → Integrations** <!-- markdownlint-disable-line MD036 -->
+
+1. Find the **AniDB** section
+2. **Client**: Your client name in **lowercase** (e.g., `mybazarrclient`)
+3. **Client Version**: `1` (or the version you registered)
+
+> **Important:** The client name must be lowercase regardless of how AniDB displays it.
+
+**Step 3: Enable Anime Providers** <!-- markdownlint-disable-line MD036 -->
+
+1. **Animetosho** (Anime subtitles)
+   - Click "Add" → Animetosho
+   - Search Threshold: `6` (default, increase if missing subtitles)
+   - Click "Enable"
+   - **Note**: Skips non-anime content; other providers still work for those
+
+2. **Jimaku** (Japanese subtitles - requires free API key)
+   - Create account at [jimaku.cc](https://jimaku.cc)
+   - Go to account settings → API section → generate API key
+   - Click "Add" → Jimaku.cc
+   - **API key**: Paste your Jimaku API key
+   - **Search by name if no AniList ID**: ✅ Enabled (recommended for better coverage)
+   - Click "Enable"
+   - **Note**: Good for Japanese fansubs; subtitles may have quality/timing variations
+
+### AI-Generated Subtitles (Optional)
+
+1. **Whisper** (Self-hosted AI transcription/translation)
+   - Requires running [SubGen](https://github.com/McCloudS/subgen) container
+   - Click "Add" → Whisper
+   - Endpoint: `http://<subgen-host>:9000` (adjust to your setup)
+   - Timeout: `3600` (1 hour - needed for long movies)
    - Click "Add"
-   - **Note**: May be unreliable
+   - **Note**: Generates subtitles from audio when providers fail. Can translate Japanese
+     audio to English. Lower scores (~67% episodes, ~51% movies) - adjust minimum score
+     if using as fallback
 
 ### Provider Priority
 
@@ -100,12 +136,12 @@ Drag providers to set priority (top = highest priority):
 
 **Recommended order:**
 
-1. OpenSubtitles.com (largest database)
-2. Addic7ed (best for TV shows)
-3. Podnapisi (good quality)
-4. Subdl (good coverage)
-5. subf2m.co (backup)
-6. SuperSubtitles (backup)
+1. OpenSubtitles.com (largest database, hash matching)
+2. Gestdown (high-quality TV show subs via Addic7ed)
+3. Animetosho (anime-specific)
+4. Jimaku (anime-specific)
+5. Podnapisi (reliable general provider)
+6. Whisper (fallback - generates from audio)
 
 ---
 
@@ -267,6 +303,15 @@ Bazarr automatically:
 1. Check provider status: **System → Providers**
 2. Lower minimum score: **Settings → Sonarr/Radarr** → Change to `70`
 3. Add more providers: **Settings → Providers**
+4. For anime: Verify Sonarr has AniDB IDs (Animetosho needs this)
+
+### Whisper Not Being Used
+
+Whisper generates subtitles with lower scores (~67% for episodes, ~51% for movies).
+If Whisper subtitles aren't downloading automatically:
+
+1. Lower minimum score to `50` in **Settings → Sonarr/Radarr**
+2. Or manually search and select Whisper results
 
 ### Connection Errors to Sonarr/Radarr
 
@@ -279,6 +324,12 @@ Bazarr automatically:
 1. Check language profile: **Settings → Languages**
 2. Verify "Single Language" is enabled
 3. Clear cache: **System → Tasks** → "Clear All Subtitles Cache"
+
+### Anime Subtitles Not Found
+
+1. Ensure Animetosho and Jimaku providers are enabled
+2. Verify Sonarr is using AniDB metadata (helps Animetosho matching)
+3. Try manual search - anime releases often have specific naming
 
 ---
 
