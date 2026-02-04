@@ -30,9 +30,7 @@ Configuration guides for services and infrastructure:
 
 - **[Service Endpoints](configuration/service-endpoints.md)** - All service URLs and ports
 - **[Service Integration Checklist](configuration/service-integration-checklist.md)** - Step-by-step service integration
-
   and testing
-
 - **[User Onboarding Guide](configuration/user-onboarding.md)** - Creating and managing user accounts
 - **[Networking](configuration/networking.md)** - Firewall, Tailscale, network segmentation
 - **[Security](configuration/security.md)** - Authentication, vault, Proxmox API
