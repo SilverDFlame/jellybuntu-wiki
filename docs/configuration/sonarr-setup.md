@@ -20,7 +20,7 @@ Complete setup guide for Sonarr TV show management.
 Proper episode naming ensures Jellyfin correctly identifies seasons and episodes. Incorrect naming formats
 can cause episodes to appear in wrong seasons.
 
-**Settings → Media Management → Episode Naming** <!-- markdownlint-disable-line MD036 -->
+Navigate to **Settings → Media Management → Episode Naming**.
 
 ### Basic Settings
 
@@ -98,7 +98,7 @@ Example: `The Series Title's! - S01E01-E03 - Episode Title WEBDL-1080p`
 
 ## Root Folders
 
-**Settings → Media Management → Root Folders** <!-- markdownlint-disable-line MD036 -->
+Navigate to **Settings → Media Management → Root Folders**.
 
 | Path | Purpose |
 |------|---------|
@@ -108,7 +108,7 @@ Example: `The Series Title's! - S01E01-E03 - Episode Title WEBDL-1080p`
 
 ## Download Clients
 
-**Settings → Download Clients** <!-- markdownlint-disable-line MD036 -->
+Navigate to **Settings → Download Clients**.
 
 ### qBittorrent (Torrents)
 
