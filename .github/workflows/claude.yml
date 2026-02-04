@@ -36,11 +36,13 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           additional_permissions: |
             actions: read
+          claude_args: |
+            --allowedTools "Bash(gh pr *),Bash(markdownlint-cli2 *),Bash(pre-commit *)"
           prompt: |
             Review this documentation PR for the Jellybuntu Wiki:
 
             **Formatting (markdownlint)**:
-            - Lines over 120 chars (code blocks/tables exempt)
+            - Lines over 200 chars (code blocks/tables/headings exempt)
             - Missing blank lines around code blocks and lists
             - Code blocks without language tags
 
