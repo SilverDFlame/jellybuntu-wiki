@@ -56,6 +56,10 @@ Alert rules are pre-configured in `/opt/monitoring/configs/alert_rules.yml` and 
 - NFSServerDown
 - NFSMountFailed
 - BtrfsDiskErrors (NAS RAID degradation)
+- BtrfsMaintenanceStale - No successful maintenance run in 8+ days (warning)
+- BtrfsMaintenanceFailed - Last maintenance run failed (critical)
+- BtrfsScrubErrors - Data integrity errors found during scrub (critical)
+- BtrfsDeviceErrorsFromMaintenance - Device errors detected (critical)
 
 ### Viewing Active Alerts
 

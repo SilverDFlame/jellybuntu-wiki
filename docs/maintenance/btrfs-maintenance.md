@@ -745,6 +745,43 @@ journalctl -u btrfs-balance.service --since "30 days ago"
 journalctl -u btrfs-snapshot-cleanup.service --since "7 days ago"
 ```
 
+## Prometheus Monitoring Integration
+
+Btrfs maintenance scripts export metrics to Prometheus via the node_exporter
+textfile collector on the NAS VM.
+
+### Exported Metrics
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `btrfs_maintenance_last_run_timestamp` | Gauge | Unix timestamp of last maintenance run |
+| `btrfs_maintenance_success` | Gauge | 1 if last run succeeded, 0 if failed |
+| `btrfs_maintenance_duration_seconds` | Gauge | Duration of last maintenance run |
+| `btrfs_maintenance_device_errors_total` | Gauge | Total device errors from `btrfs device stats` |
+| `btrfs_maintenance_scrub_errors_total` | Gauge | Total scrub errors detected |
+
+### How It Works
+
+1. Maintenance scripts write `.prom` files to the textfile collector directory
+2. node_exporter reads these files and exposes the metrics
+3. Prometheus scrapes node_exporter on the NAS VM
+4. Alert rules fire through Alertmanager when thresholds are breached
+
+### Verifying Metrics
+
+```bash
+# Check metrics are being exported
+ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
+  "ls -la /var/lib/node_exporter/textfile_collector/"
+
+# Query metrics in Prometheus
+# http://monitoring.discus-moth.ts.net:9090
+# Query: btrfs_maintenance_success
+```
+
+See [Monitoring Stack Setup](../configuration/monitoring-stack-setup.md) for
+related alert rules.
+
 ## Best Practices
 
 ### DO
