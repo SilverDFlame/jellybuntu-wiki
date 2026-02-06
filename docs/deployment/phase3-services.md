@@ -46,9 +46,9 @@ Deploys modular Docker Compose stack:
 - **qBittorrent** (8080) - **Auto-configured via Web API**:
   - Extracts temporary password from logs
   - Sets download paths (`/data/torrents`)
-  - Creates categories (tv, movies)
+  - Creates categories (tv-sonarr, radarr)
   - **Sets permanent password from secrets file**
-- **SABnzbd** (8081) - Configuration patched after deployment
+- **SABnzbd** (8081) - Configuration patched after deployment (paths use `/data/usenet`)
 
 ### 5. NFS Client Mounts
 
@@ -199,12 +199,12 @@ Phase 3 automatically configures qBittorrent via Web API:
 3. **Authenticate** via API using temp password
 4. **Configure Preferences**:
    - Save path: `/data/torrents`
-   - Incomplete path: `/data/torrents/incomplete`
+   - Temp path: `/data/torrents/incomplete`
    - Enable pre-allocation
    - Enable incomplete file extension
 5. **Create Categories**:
-   - `tv` → `/data/torrents/tv`
-   - `movies` → `/data/torrents/movies`
+   - `tv-sonarr` → `/data/torrents/tv-sonarr`
+   - `radarr` → `/data/torrents/radarr`
 6. **Set Permanent Password** from `vault_services_admin_password`
 7. **Logout** from API
 

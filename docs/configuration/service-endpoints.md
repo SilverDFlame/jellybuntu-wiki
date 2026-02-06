@@ -187,8 +187,19 @@ Some services have dependencies that must be started first:
 - **qBittorrent** depends on **Gluetun** (VPN network namespace)
 - **SABnzbd** depends on **Gluetun** (VPN network namespace)
 - **Unpackerr** depends on **qBittorrent** and **SABnzbd**
+- **Tdarr Node** depends on **Tdarr Server**
+- **Woodpecker Agent** depends on **Woodpecker Server**
 
-Quadlet handles these dependencies automatically via `After=` directives in systemd units.
+Quadlet handles these dependencies automatically via `After=` and `Requires=`
+directives in systemd units. Additionally, `BindsTo=` is used for critical
+dependency pairs to ensure restart propagation:
+
+- If a dependency (e.g., Gluetun, Tdarr Server) fails during boot then
+  recovers, `Requires=` alone does **not** restart the dependent service.
+  `BindsTo=` ensures the dependent container is stopped and restarted when
+  its dependency restarts.
+- **Affected pairs**: tdarr-node/tdarr-server, qbittorrent/gluetun,
+  woodpecker-agent/woodpecker-server
 
 ### Native Services (Jellyfin, Satisfactory)
 
