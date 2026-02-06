@@ -137,7 +137,7 @@ extra:
       link: https://github.com/SilverDFlame/jellybuntu-wiki
       name: Documentation Wiki
 
-copyright: Copyright &copy; 2024-2025 Jellybuntu Project
+copyright: Copyright &copy; 2024-2026 Jellybuntu Project
 
 # Link validation (MkDocs 1.6+)
 # These settings cause warnings to become errors with --strict flag
