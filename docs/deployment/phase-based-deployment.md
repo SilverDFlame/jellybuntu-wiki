@@ -80,7 +80,7 @@ logical separation of concerns. Each phase can be run independently and has clea
 
 - Deploys Home Assistant (Docker)
 - Deploys Satisfactory game server (SteamCMD)
-- Deploys media services (Sonarr, Radarr, Prowlarr, Jellyseerr, Flaresolverr)
+- Deploys media services (Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr)
 - Deploys download clients (qBittorrent, SABnzbd)
 - **Auto-configures qBittorrent** via Web API
 - Mounts NFS storage on all client VMs

@@ -60,7 +60,7 @@ podman stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 | SABnzbd | <5% | 40-80% | 150-300MB | Unpack heavy |
 | Jellyfin | <5% | 200-400% | 500MB-2GB | Transcoding multi-core |
 | Gluetun | <2% | 5-10% | 50-100MB | VPN overhead |
-| FlareSolverr | <5% | 50-100% | 500MB-1GB | Chrome browser |
+| Byparr | <5% | 30-80% | 300-600MB | Camoufox browser |
 
 ## Setting Resource Limits
 
@@ -131,7 +131,7 @@ huntarr:
   limits: {cpus: '0.25', memory: 128M}
 homarr:
   limits: {cpus: '0.25', memory: 256M}
-flaresolverr:
+byparr:
   limits: {cpus: '1.0', memory: 1536M}
 recyclarr:
   limits: {cpus: '0.5', memory: 256M}

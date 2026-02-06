@@ -18,7 +18,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Bazarr**: http://media-services.discus-moth.ts.net:6767
 - **Huntarr**: http://media-services.discus-moth.ts.net:9705
 - **Homarr**: http://media-services.discus-moth.ts.net:7575
-- **Flaresolverr**: http://media-services.discus-moth.ts.net:8191
+- **Byparr**: http://media-services.discus-moth.ts.net:8191
 - **qBittorrent**: http://download-clients.discus-moth.ts.net:8080
 - **SABnzbd**: http://download-clients.discus-moth.ts.net:8081
 - **AdGuard Home**: http://nas.discus-moth.ts.net:80 (DNS: 100.65.73.89:53)
@@ -45,7 +45,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Bazarr**: http://192.168.0.13:6767
 - **Huntarr**: http://192.168.0.13:9705
 - **Homarr**: http://192.168.0.13:7575
-- **Flaresolverr**: http://192.168.0.13:8191
+- **Byparr**: http://192.168.0.13:8191
 - **qBittorrent**: http://192.168.0.14:8080
 - **SABnzbd**: http://192.168.0.14:8081
 - **AdGuard Home**: http://192.168.0.15:80 (DNS: 192.168.0.15:53)
@@ -69,7 +69,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 | Monitoring Services (.16) | **Quadlet** (rootless Podman) | Prometheus, Alertmanager, Grafana (Uptime Kuma on external) |
 | Home Assistant | **Quadlet** (rootless Podman) | LinuxServer.io image |
 | Satisfactory | Native (systemd) | SteamCMD + systemd service |
-| Flaresolverr | **Quadlet** (rootless Podman) | Cloudflare bypass |
+| Byparr | **Quadlet** (rootless Podman) | Cloudflare bypass |
 | Homarr | **Quadlet** (rootless Podman) | Service dashboard |
 | Recyclarr | **Quadlet** (rootless Podman) | Quality profiles sync |
 | Unbound | **Quadlet** (rootless Podman) | DNS resolver |
@@ -187,8 +187,19 @@ Some services have dependencies that must be started first:
 - **qBittorrent** depends on **Gluetun** (VPN network namespace)
 - **SABnzbd** depends on **Gluetun** (VPN network namespace)
 - **Unpackerr** depends on **qBittorrent** and **SABnzbd**
+- **Tdarr Node** depends on **Tdarr Server**
+- **Woodpecker Agent** depends on **Woodpecker Server**
 
-Quadlet handles these dependencies automatically via `After=` directives in systemd units.
+Quadlet handles these dependencies automatically via `After=` and `Requires=`
+directives in systemd units. Additionally, `BindsTo=` is used for critical
+dependency pairs to ensure restart propagation:
+
+- If a dependency (e.g., Gluetun, Tdarr Server) fails during boot then
+  recovers, `Requires=` alone does **not** restart the dependent service.
+  `BindsTo=` ensures the dependent container is stopped and restarted when
+  its dependency restarts.
+- **Affected pairs**: tdarr-node/tdarr-server, qbittorrent/gluetun,
+  woodpecker-agent/woodpecker-server
 
 ### Native Services (Jellyfin, Satisfactory)
 
@@ -237,11 +248,11 @@ ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # Check all services
 
-systemctl --user status sonarr radarr prowlarr jellyseerr flaresolverr recyclarr
+systemctl --user status sonarr radarr prowlarr jellyseerr byparr recyclarr
 
 # Restart all
 
-systemctl --user restart sonarr radarr prowlarr jellyseerr flaresolverr recyclarr
+systemctl --user restart sonarr radarr prowlarr jellyseerr byparr recyclarr
 ```
 
 #### Download Clients VM (192.168.0.14)
@@ -362,7 +373,7 @@ journalctl --user -u unifi-app -f
 | Bazarr | .13 | 6767 | HTTP | Web UI |
 | Huntarr | .13 | 9705 | HTTP | Web UI |
 | Homarr | .13 | 7575 | HTTP | Dashboard |
-| Flaresolverr | .13 | 8191 | HTTP | API |
+| Byparr | .13 | 8191 | HTTP | API |
 | qBittorrent | .14 | 8080 | HTTP | Web UI |
 | qBittorrent | .14 | Dynamic* | TCP/UDP | Incoming (PIA-assigned) |
 | SABnzbd | .14 | 8081 | HTTP | Web UI |

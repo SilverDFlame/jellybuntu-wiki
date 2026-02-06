@@ -171,7 +171,7 @@ sudo ufw allow 9696/tcp comment 'Prowlarr'
 # Jellyseerr
 sudo ufw allow 5055/tcp comment 'Jellyseerr'
 
-# Flaresolverr (localhost only - no rule needed)
+# Byparr (localhost only - no rule needed)
 ```
 
 #### Download Clients (192.168.0.14)
@@ -518,7 +518,7 @@ vm_network_dns:
 | Radarr | 7878 | TCP | Local + Tailscale |
 | Prowlarr | 9696 | TCP | Local + Tailscale |
 | Jellyseerr | 5055 | TCP | Local + Tailscale |
-| Flaresolverr | 8191 | TCP | Localhost only |
+| Byparr | 8191 | TCP | Localhost only |
 | qBittorrent Web | 8080 | TCP | Local + Tailscale |
 | qBittorrent Incoming | 6881 | TCP/UDP | Public |
 | SABnzbd | 8081 | TCP | Local + Tailscale |

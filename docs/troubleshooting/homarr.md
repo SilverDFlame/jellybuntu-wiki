@@ -319,7 +319,7 @@ For services on media-services VM (same as Homarr):
 | Jellyseerr | `http://localhost:5055` | 5055 |
 | Bazarr | `http://localhost:6767` | 6767 |
 | Huntarr | `http://localhost:9705` | 9705 |
-| Flaresolverr | `http://localhost:8191` | 8191 |
+| Byparr | `http://localhost:8191` | 8191 |
 
 For services on other VMs:
 

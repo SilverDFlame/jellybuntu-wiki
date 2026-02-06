@@ -34,9 +34,9 @@ Prowlarr (Indexers) → Sonarr/Radarr (Automation) → Download Clients → Unpa
   - Private: Add your private trackers (if any)
 - [ ] Test each indexer after adding
 
-### 1.3 Configure FlareSolverr (for Cloudflare-protected indexers)
+### 1.3 Configure Byparr (for Cloudflare-protected indexers)
 
-- [ ] Settings → Indexers → FlareSolverr
+- [ ] Settings → Indexers → FlareSolverr (Prowlarr uses FlareSolverr label for Byparr)
 - [ ] Tags: (leave empty for all)
 - [ ] Host: `http://localhost:8191/`
 - [ ] Test → Save

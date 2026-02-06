@@ -39,16 +39,16 @@ Deploys modular Docker Compose stack:
 - **Radarr** (7878) - Movie management
 - **Prowlarr** (9696) - Indexer management
 - **Jellyseerr** (5055) - Request management
-- **Flaresolverr** (8191) - Cloudflare bypass
+- **Byparr** (8191) - Cloudflare bypass
 
 ### 4. Download Clients (Docker)
 
 - **qBittorrent** (8080) - **Auto-configured via Web API**:
   - Extracts temporary password from logs
   - Sets download paths (`/data/torrents`)
-  - Creates categories (tv, movies)
+  - Creates categories (tv-sonarr, radarr)
   - **Sets permanent password from secrets file**
-- **SABnzbd** (8081) - Configuration patched after deployment
+- **SABnzbd** (8081) - Configuration patched after deployment (paths use `/data/usenet`)
 
 ### 5. NFS Client Mounts
 
@@ -120,7 +120,7 @@ Expected containers:
 - radarr
 - prowlarr
 - jellyseerr
-- flaresolverr
+- byparr
 - recyclarr
 
 ### Check Docker Containers (Download Clients)
@@ -199,12 +199,12 @@ Phase 3 automatically configures qBittorrent via Web API:
 3. **Authenticate** via API using temp password
 4. **Configure Preferences**:
    - Save path: `/data/torrents`
-   - Incomplete path: `/data/torrents/incomplete`
+   - Temp path: `/data/torrents/incomplete`
    - Enable pre-allocation
    - Enable incomplete file extension
 5. **Create Categories**:
-   - `tv` → `/data/torrents/tv`
-   - `movies` → `/data/torrents/movies`
+   - `tv-sonarr` → `/data/torrents/tv-sonarr`
+   - `radarr` → `/data/torrents/radarr`
 6. **Set Permanent Password** from `vault_services_admin_password`
 7. **Logout** from API
 
@@ -348,9 +348,10 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 - [`playbooks/core/05-configure-satisfactory-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/05-configure-satisfactory-role.yml)
 - [`playbooks/core/06-configure-media-services-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/06-configure-media-services-role.yml)
 - [`playbooks/core/07-configure-download-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/07-configure-download-clients-role.yml)
-- [`playbooks/core/08-configure-flaresolverr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/08-configure-flaresolverr-role.yml)
 - [`playbooks/core/10-configure-nfs-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/10-configure-nfs-clients-role.yml)
 - [`playbooks/core/11-configure-jellyfin-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/11-configure-jellyfin-role.yml)
+- [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml) -
+  Post-wizard API configuration (run after initial setup)
 
 **Roles**:
 
@@ -377,7 +378,6 @@ services/compose/
     ├── radarr.yml
     ├── prowlarr.yml
     ├── jellyseerr.yml
-    ├── flaresolverr.yml
     ├── recyclarr.yml
     ├── qbittorrent.yml
     └── sabnzbd.yml
@@ -420,6 +420,9 @@ After Phase 3, you still need to manually:
 3. Configure download clients in Prowlarr/Sonarr/Radarr
 4. Add indexers to Prowlarr
 5. Run Phase 4 for Recyclarr and security hardening
+6. Complete Jellyfin initial wizard, then run
+   [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml)
+   to automate remaining Jellyfin configuration (libraries, encoding, plugins)
 
 See [post-deployment.md](post-deployment.md) for manual configuration steps.
 

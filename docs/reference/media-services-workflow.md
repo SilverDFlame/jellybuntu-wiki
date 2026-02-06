@@ -88,7 +88,7 @@ The media services are deployed using phase-based playbooks that automate the en
 3. **Media Services** (playbook 06-configure-media-services-role):
    - Installs Docker on media-services VM (.13)
    - Mounts NFS from Btrfs NAS: `/mnt/data` → `192.168.0.15:/mnt/storage/data`
-   - Deploys Sonarr (8989), Radarr (7878), Prowlarr (9696), Jellyseerr (5055), Flaresolverr (8191), Recyclarr
+   - Deploys Sonarr (8989), Radarr (7878), Prowlarr (9696), Jellyseerr (5055), Byparr (8191), Recyclarr
    - Creates Docker Compose file with proper volume mappings
 
 4. **Download Clients** (playbook 07-configure-download-clients-role):
@@ -98,10 +98,11 @@ The media services are deployed using phase-based playbooks that automate the en
    - Applies SABnzbd configuration automatically
    - **qBittorrent auto-configured**: Categories (tv, movies) with proper paths, Automatic Torrent Management enabled
 
-5. **Flaresolverr** (playbook 08-configure-flaresolverr-role):
+5. **Byparr** (deployed as part of playbook 06-configure-media-services-role):
    - Cloudflare bypass for indexers (port 8191)
+   - Uses Camoufox browser (Firefox-based)
 
-6. **Recyclarr** (playbook 09-configure-recyclarr-role):
+6. **Recyclarr** (playbook 08-configure-recyclarr-role):
    - Custom formats and quality profiles from Trash Guides
    - Requires API keys in secrets file
 

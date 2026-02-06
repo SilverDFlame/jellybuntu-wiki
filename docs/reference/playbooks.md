@@ -99,7 +99,7 @@ Run all phases at once (skips Phase 4):
 
 - Home Assistant (04)
 - Satisfactory game server (05)
-- Media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, FlareSolverr (06)
+- Media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr (06)
 - Download clients: qBittorrent, SABnzbd (07)
 - NFS client mounts on service VMs (09)
 - Jellyfin with transcoding optimizations (10)
@@ -256,7 +256,7 @@ Run all phases at once (skips Phase 4):
 - Jellyseerr (5055) - Media request management
 - Bazarr (6767) - Subtitle automation
 - Huntarr (9705) - Missing content discovery
-- Flaresolverr (8191) - Cloudflare bypass
+- Byparr (8191) - Cloudflare bypass
 - Recyclarr - TRaSH Guides quality profiles sync
 - Homarr - Application dashboard
 
@@ -649,6 +649,42 @@ dig @nas.discus-moth.ts.net google.com
 
 **Note**: Deployed in Phase 2 because Phase 3 services (media-services, download-clients) pull container
 images from this registry.
+
+---
+
+### 23-configure-jellyfin-config-role.yml
+
+**Target**: jellyfin
+**Role**: jellyfin_config
+
+**Purpose**: Automated post-wizard Jellyfin configuration via API
+
+**Requires**: Jellyfin initial setup wizard completed (admin account created)
+
+**What It Does**:
+
+- Configures system settings and NVENC hardware encoding
+- Creates media libraries (Movies, TV Shows, Anime) with TMDb, AniDB, OMDb fetchers
+- Schedules tasks for off-peak hours
+- Installs plugins: AniDB, Intro Skipper, Chapter Segments Provider
+
+**Version Pin**: Jellyfin pinned to 10.10.x (`jellyfin_version_pin`) due to performance
+issues in 10.11.x ([Issue #58](https://github.com/SilverDFlame/jellybuntu/issues/58))
+
+**Role**: [`roles/jellyfin_config/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin_config)
+
+---
+
+### 24-configure-unifi-controller-role.yml
+
+**Target**: unifi_controller
+**Role**: podman_app
+
+**Service**: UniFi Network Controller (MongoDB 7.0 + LinuxServer UniFi app)
+**Port**: 8443 (HTTPS Web UI), 8080 (Device Inform), 3478 (STUN), 10001 (Discovery)
+**URL**: https://unifi-controller.discus-moth.ts.net:8443
+
+**Purpose**: Self-hosted UniFi Network Controller for managing APs and network devices
 
 ---
 
