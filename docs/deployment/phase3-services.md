@@ -350,7 +350,8 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 - [`playbooks/core/07-configure-download-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/07-configure-download-clients-role.yml)
 - [`playbooks/core/10-configure-nfs-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/10-configure-nfs-clients-role.yml)
 - [`playbooks/core/11-configure-jellyfin-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/11-configure-jellyfin-role.yml)
-- [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml) - Post-wizard API configuration (run after initial setup)
+- [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml) -
+  Post-wizard API configuration (run after initial setup)
 
 **Roles**:
 
