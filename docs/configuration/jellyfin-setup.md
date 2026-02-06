@@ -51,6 +51,47 @@ The playbook:
 5. **Configure Metadata**: Select preferred metadata providers
 6. **Complete Setup**: Finish the wizard
 
+## Automated API Configuration
+
+After completing the initial setup wizard and creating an admin account, the
+[`jellyfin_config`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin_config)
+Ansible role can automate the remaining Jellyfin configuration via the API.
+
+### Prerequisites
+
+- Manual initial setup **must** be completed first (admin account + wizard)
+- Jellyfin must be running and accessible
+
+### What It Configures
+
+- **System settings**: Server name, language, encoding preferences
+- **NVENC hardware encoding**: GPU-accelerated transcoding via GTX 1080
+- **Media libraries**: Movies, TV Shows, and Anime with metadata fetchers
+  (TMDb, AniDB, OMDb)
+- **Scheduled tasks**: Optimize task timing for off-peak hours
+- **Plugins**: AniDB, Intro Skipper, Chapter Segments Provider
+
+### Running the Configuration
+
+```bash
+./bin/runtime/ansible-run.sh playbooks/core/23-configure-jellyfin-config-role.yml
+```
+
+> **Note**: This playbook is idempotent and safe to re-run. It will skip
+> configuration that already matches the desired state.
+
+### Version Pinning
+
+Jellyfin is pinned to the **10.10.x** release series via the
+`jellyfin_version_pin` variable. Version 10.11.x has known performance
+regressions tracked in
+[Issue #58](https://github.com/SilverDFlame/jellybuntu/issues/58).
+
+### Reference
+
+- **Role**: [`roles/jellyfin_config/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin_config)
+- **Playbook**: [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml)
+
 ### Library Configuration
 
 #### Movies Library

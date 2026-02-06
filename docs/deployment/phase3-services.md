@@ -350,6 +350,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 - [`playbooks/core/07-configure-download-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/07-configure-download-clients-role.yml)
 - [`playbooks/core/10-configure-nfs-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/10-configure-nfs-clients-role.yml)
 - [`playbooks/core/11-configure-jellyfin-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/11-configure-jellyfin-role.yml)
+- [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml) - Post-wizard API configuration (run after initial setup)
 
 **Roles**:
 
@@ -418,6 +419,9 @@ After Phase 3, you still need to manually:
 3. Configure download clients in Prowlarr/Sonarr/Radarr
 4. Add indexers to Prowlarr
 5. Run Phase 4 for Recyclarr and security hardening
+6. Complete Jellyfin initial wizard, then run
+   [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml)
+   to automate remaining Jellyfin configuration (libraries, encoding, plugins)
 
 See [post-deployment.md](post-deployment.md) for manual configuration steps.
 
