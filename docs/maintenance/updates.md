@@ -46,7 +46,7 @@ Most services run in Docker containers. Updates require pulling new images and r
 
 ### Media Services VM (192.168.0.13)
 
-Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Flaresolverr, Recyclarr
+Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr, Recyclarr
 
 **Update all services**:
 
@@ -661,7 +661,7 @@ The Jellybuntu infrastructure uses a **hybrid versioning approach** based on ser
 
 **Specialized Services**:
 
-- **FlareSolverr** (v3.3.21) - Cloudflare bypass
+- **Byparr** (v2.0.1) - Cloudflare bypass (Camoufox-based)
   - Bypass mechanism fragile across updates
   - Only update when Cloudflare blocks current version
 
@@ -713,7 +713,7 @@ The Jellybuntu infrastructure uses a **hybrid versioning approach** based on ser
 | **Gluetun** | `v3.41.0` | **Pinned** | VPN critical, port forwarding fragile |
 | **AdGuard Home** | `v0.107.68` | **Pinned** | Critical DNS infra, config changes |
 | **Unbound** | `1.24.1-0` | **Pinned** | Critical DNS resolver, DNSSEC fragile |
-| **FlareSolverr** | `v3.3.21` | **Pinned** | Cloudflare bypass, fragile |
+| **Byparr** | `2.0.1` | **Pinned** | Cloudflare bypass, fragile |
 | **Prometheus** | `v3.5.0` | **Pinned** | Query compatibility |
 | **Grafana** | `12.2.0` | **Pinned** | Dashboard compatibility |
 | **Uptime Kuma** | `2` | **Major pin** | Semantic versioning |

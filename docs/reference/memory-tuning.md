@@ -48,7 +48,7 @@ Based on measured production usage patterns:
 
 | Service      | Limit | Reservation | Typical Usage | Workload Characteristics           |
 |--------------|-------|-------------|---------------|------------------------------------|
-| FlareSolverr | 1GB   | 512MB       | 400-700MB     | Chromium-based, memory hungry      |
+| Byparr       | 1.5GB | 768MB       | 300-600MB     | Camoufox (Firefox-based)           |
 | Homarr       | 256MB | 128MB       | 50-150MB      | Dashboard, lightweight             |
 | Huntarr      | 512MB | 256MB       | 100-200MB     | Periodic processing                |
 | cAdvisor     | 256MB | 128MB       | 30-50MB       | Monitoring, stable                 |
@@ -147,11 +147,12 @@ deploy:
 - Monitor during peak download times
 - Consider limiting concurrent downloads if memory-constrained
 
-### Chromium-Based Services (FlareSolverr)
+### Browser-Based Services (Byparr)
 
 **Characteristics:**
 
-- Higher baseline memory (Chromium overhead)
+- Uses Camoufox (Firefox-based) browser for challenge solving
+- Lower baseline than Chrome-based alternatives
 - Spikes when solving captchas
 - Memory grows with browser instances
 
@@ -161,15 +162,15 @@ deploy:
 deploy:
   resources:
     limits:
-      memory: 1G
+      memory: 1.5G
     reservations:
-      memory: 512M
+      memory: 768M
 ```
 
 **Tuning Guidance:**
 
-- Minimum 512MB for Chromium overhead
-- 1GB recommended for production
+- 768MB reservation for Camoufox overhead
+- 1.5GB limit recommended for production
 - Monitor for memory leaks (restart periodically if needed)
 - Consider session limits to control browser instances
 
@@ -220,13 +221,13 @@ Container Limits:
   Prowlarr:     512MB
   Bazarr:       1GB
   Jellyseerr:   1GB
-  FlareSolverr: 1GB
+  Byparr:       1.5GB
   Homarr:       256MB
   cAdvisor:     256MB
   Huntarr:      512MB
   Recyclarr:    256MB
   ------------
-  Total:        ~6.5GB
+  Total:        ~7GB
 
 OS Overhead:    1GB
 File Cache:     1GB (15%)

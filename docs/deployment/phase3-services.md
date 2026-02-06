@@ -39,7 +39,7 @@ Deploys modular Docker Compose stack:
 - **Radarr** (7878) - Movie management
 - **Prowlarr** (9696) - Indexer management
 - **Jellyseerr** (5055) - Request management
-- **Flaresolverr** (8191) - Cloudflare bypass
+- **Byparr** (8191) - Cloudflare bypass
 
 ### 4. Download Clients (Docker)
 
@@ -120,7 +120,7 @@ Expected containers:
 - radarr
 - prowlarr
 - jellyseerr
-- flaresolverr
+- byparr
 - recyclarr
 
 ### Check Docker Containers (Download Clients)
@@ -348,7 +348,6 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 - [`playbooks/core/05-configure-satisfactory-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/05-configure-satisfactory-role.yml)
 - [`playbooks/core/06-configure-media-services-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/06-configure-media-services-role.yml)
 - [`playbooks/core/07-configure-download-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/07-configure-download-clients-role.yml)
-- [`playbooks/core/08-configure-flaresolverr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/08-configure-flaresolverr-role.yml)
 - [`playbooks/core/10-configure-nfs-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/10-configure-nfs-clients-role.yml)
 - [`playbooks/core/11-configure-jellyfin-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/11-configure-jellyfin-role.yml)
 
@@ -377,7 +376,6 @@ services/compose/
     ├── radarr.yml
     ├── prowlarr.yml
     ├── jellyseerr.yml
-    ├── flaresolverr.yml
     ├── recyclarr.yml
     ├── qbittorrent.yml
     └── sabnzbd.yml

@@ -99,7 +99,7 @@ Run all phases at once (skips Phase 4):
 
 - Home Assistant (04)
 - Satisfactory game server (05)
-- Media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, FlareSolverr (06)
+- Media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr (06)
 - Download clients: qBittorrent, SABnzbd (07)
 - NFS client mounts on service VMs (09)
 - Jellyfin with transcoding optimizations (10)
@@ -256,7 +256,7 @@ Run all phases at once (skips Phase 4):
 - Jellyseerr (5055) - Media request management
 - Bazarr (6767) - Subtitle automation
 - Huntarr (9705) - Missing content discovery
-- Flaresolverr (8191) - Cloudflare bypass
+- Byparr (8191) - Cloudflare bypass
 - Recyclarr - TRaSH Guides quality profiles sync
 - Homarr - Application dashboard
 

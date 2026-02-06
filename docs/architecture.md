@@ -58,7 +58,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Resources: 4 cores, 8GB RAM, 50GB disk
   - IP: 192.168.0.13
   - Stack: Rootless Podman with Quadlet
-  - Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Huntarr, Homarr, Flaresolverr, Recyclarr
+  - Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Huntarr, Homarr, Byparr, Recyclarr
   - Priority: Medium (cpu_units: 1024)
 
 - **Download Clients** (VMID 402)
@@ -137,7 +137,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 - Bazarr: Subtitle automation
 - Huntarr: Missing content discovery
 - Homarr: Dashboard for service overview
-- Flaresolverr: Cloudflare bypass
+- Byparr: Cloudflare bypass
 - Recyclarr: Custom formats and quality profiles
 
 **Download Clients**: Rootless Podman with Quadlet systemd services:
@@ -259,7 +259,7 @@ jellyseerr.container
 bazarr.container
 huntarr.container
 homarr.container
-flaresolverr.container
+byparr.container
 recyclarr.container
 
 # Download Clients VM (~/.config/containers/systemd/)

@@ -1,7 +1,7 @@
 # Media Services Maintenance
 
 Maintenance procedures for the media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Huntarr,
-Homarr, Flaresolverr, and Recyclarr.
+Homarr, Byparr, and Recyclarr.
 
 > **IMPORTANT**: All media services run as **rootless Podman containers with Quadlet** on the media-services VM
 > (192.168.0.13). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
@@ -17,7 +17,7 @@ Homarr, Flaresolverr, and Recyclarr.
 | Bazarr | 6767 | Subtitle management |
 | Huntarr | 9705 | Missing media hunter |
 | Homarr | 7575 | Dashboard |
-| Flaresolverr | 8191 | Cloudflare bypass |
+| Byparr | 8191 | Cloudflare bypass |
 | Recyclarr | N/A | Quality profile sync |
 
 ## Routine Maintenance
@@ -90,11 +90,11 @@ podman pull docker.io/fallenbagel/jellyseerr:latest
 podman pull docker.io/linuxserver/bazarr:latest
 podman pull ghcr.io/huntarr/huntarr:latest
 podman pull ghcr.io/ajnart/homarr:latest
-podman pull ghcr.io/flaresolverr/flaresolverr:latest
+podman pull ghcr.io/thephaseless/byparr:2.0.1
 podman pull docker.io/recyclarr/recyclarr:latest
 
 # Restart all services
-systemctl --user restart sonarr radarr prowlarr jellyseerr bazarr huntarr homarr flaresolverr
+systemctl --user restart sonarr radarr prowlarr jellyseerr bazarr huntarr homarr byparr
 
 # Verify all services are running
 podman ps
@@ -345,7 +345,7 @@ podman stats sonarr --no-stream
 ### Slow Searches
 
 1. Check Prowlarr indexer health
-2. Verify FlareSolverr is running (for Cloudflare-protected sites)
+2. Verify Byparr is running (for Cloudflare-protected sites)
 3. Check network connectivity to indexers
 
 ## API Reference

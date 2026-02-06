@@ -98,9 +98,9 @@ ss -tlnp | grep 9696
 # Test from container
 podman exec prowlarr wget -O- https://example-indexer.com
 
-# Check Flaresolverr if using Cloudflare bypass
-systemctl --user status flaresolverr
-podman ps | grep flaresolverr
+# Check Byparr if using Cloudflare bypass
+systemctl --user status byparr
+podman ps | grep byparr
 curl http://localhost:8191
 ```
 
@@ -112,9 +112,9 @@ curl http://localhost:8191
    - Check indexer status page
 
 2. **Cloudflare protection**:
-   - Ensure Flaresolverr is running
-   - Configure indexer to use Flaresolverr
-   - Settings > Indexers > [Indexer] > FlareSolverr: `http://localhost:8191`
+   - Ensure Byparr is running
+   - Configure indexer to use Byparr
+   - Settings > Indexers > [Indexer] > FlareSolverr: `http://byparr:8191`
 
 3. **Rate limiting**:
    - Reduce search frequency
@@ -227,26 +227,26 @@ curl http://download-clients.discus-moth.ts.net:8081
      - Port: `8081`
      - API Key: From SABnzbd Config > General > Security
 
-### 6. Flaresolverr Issues
+### 6. Byparr Issues
 
 **Symptoms**:
 
 - Cloudflare-protected indexers fail
 - Timeout errors on protected sites
-- FlareSolverr connection errors
+- FlareSolverr connection errors in Prowlarr
 
 **Diagnosis**:
 
 ```bash
-# Check Flaresolverr is running
-systemctl --user status flaresolverr
-podman ps | grep flaresolverr
+# Check Byparr is running
+systemctl --user status byparr
+podman ps | grep byparr
 
 # View logs
-journalctl --user -u flaresolverr -f
-podman logs flaresolverr --tail 50
+journalctl --user -u byparr -f
+podman logs byparr --tail 50
 
-# Test Flaresolverr
+# Test Byparr
 curl -X POST http://localhost:8191/v1 \
   -H "Content-Type: application/json" \
   -d '{"cmd":"request.get","url":"http://example.com"}'
@@ -254,20 +254,20 @@ curl -X POST http://localhost:8191/v1 \
 
 **Solutions**:
 
-1. **Flaresolverr not running**:
+1. **Byparr not running**:
 
    ```bash
-   systemctl --user start flaresolverr
-   systemctl --user enable flaresolverr
+   systemctl --user start byparr
+   systemctl --user enable byparr
    ```
 
-2. **Wrong Flaresolverr URL in indexer**:
-   - Edit indexer > FlareSolverr URL: `http://localhost:8191`
-   - All services on same VM, so localhost works
+2. **Wrong Byparr URL in indexer**:
+   - Edit indexer > FlareSolverr URL: `http://byparr:8191`
+   - All services on same VM
 
-3. **Flaresolverr timeout**:
+3. **Byparr timeout**:
    - Increase timeout in indexer settings
-   - Restart Flaresolverr: `systemctl --user restart flaresolverr`
+   - Restart Byparr: `systemctl --user restart byparr`
 
 ## Advanced Troubleshooting
 
@@ -352,7 +352,7 @@ If issues persist:
 ## See Also
 
 - [Sonarr/Radarr Troubleshooting](sonarr-radarr.md)
-- [Flaresolverr Troubleshooting](flaresolverr.md)
+- [Byparr Troubleshooting](byparr.md)
 - [Download Clients Troubleshooting](download-clients.md)
 - [Podman Troubleshooting](podman.md)
 - [Networking Troubleshooting](networking.md)

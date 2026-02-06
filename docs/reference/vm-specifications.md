@@ -192,7 +192,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - Bazarr (subtitle management)
 - Huntarr (missing content discovery)
 - Homarr (dashboard)
-- Flaresolverr (Cloudflare bypass)
+- Byparr (Cloudflare bypass)
 - Recyclarr (custom formats/quality profiles)
 
 **Ports:**
@@ -203,7 +203,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 | 7878 | TCP | Radarr Web UI | Local + Tailscale |
 | 9696 | TCP | Prowlarr Web UI | Local + Tailscale |
 | 5055 | TCP | Jellyseerr Web UI | Local + Tailscale |
-| 8191 | TCP | Flaresolverr API | Local + Tailscale |
+| 8191 | TCP | Byparr API | Local + Tailscale |
 
 **Storage:**
 

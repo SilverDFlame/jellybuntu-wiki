@@ -1,18 +1,21 @@
-# FlareSolverr Troubleshooting
+# Byparr Troubleshooting
 
-FlareSolverr is a proxy service that bypasses Cloudflare and DDoS-GUARD protection, allowing Prowlarr to access indexers
-that would otherwise be blocked.
+Byparr is a proxy service that bypasses Cloudflare and DDoS-GUARD protection, allowing Prowlarr to access indexers
+that would otherwise be blocked. It uses the Camoufox browser (Firefox-based) for challenge solving.
 
-> **IMPORTANT**: FlareSolverr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> **IMPORTANT**: Byparr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
 - **VM**: media-services (192.168.0.13)
 - **Port**: 8191
-- **Container**: flaresolverr
+- **Container**: byparr
+- **Image**: `ghcr.io/thephaseless/byparr:2.0.1` (pinned)
+- **Browser**: Camoufox (Firefox-based)
 - **Purpose**: Bypass Cloudflare protection for torrent indexers
 - **Deployment**: Rootless Podman with Quadlet
+- **Resources**: 1.5GB memory limit / 768MB reservation
 
 ## Access
 
@@ -26,16 +29,16 @@ that would otherwise be blocked.
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # Check service status
-systemctl --user status flaresolverr
+systemctl --user status byparr
 
 # View logs
-journalctl --user -u flaresolverr -f
+journalctl --user -u byparr -f
 
 # Check if container is running
-podman ps | grep flaresolverr
+podman ps | grep byparr
 
 # Check resource usage
-podman stats flaresolverr --no-stream
+podman stats byparr --no-stream
 
 # Test endpoint
 curl http://localhost:8191/
@@ -43,73 +46,73 @@ curl http://localhost:8191/
 
 ## How It Works
 
-### Normal Indexer Access (Without FlareSolverr)
+### Normal Indexer Access (Without Byparr)
 
 1. Prowlarr makes HTTP request to indexer
 2. Indexer responds with search results
 3. Prowlarr processes and forwards to Sonarr/Radarr
 
-### Protected Indexer Access (With FlareSolverr)
+### Protected Indexer Access (With Byparr)
 
 1. Prowlarr detects Cloudflare challenge
-2. Prowlarr forwards request to FlareSolverr
-3. FlareSolverr uses headless Chrome to solve challenge
-4. FlareSolverr returns solved cookies/content to Prowlarr
+2. Prowlarr forwards request to Byparr
+3. Byparr uses Camoufox (Firefox-based) to solve challenge
+4. Byparr returns solved cookies/content to Prowlarr
 5. Prowlarr uses cookies to access indexer normally
 
 ## Prowlarr Integration
 
-### Configure FlareSolverr in Prowlarr
+### Configure Byparr in Prowlarr
 
 1. **Open Prowlarr**: http://media-services.discus-moth.ts.net:9696
 
 2. **Navigate to Settings**:
-   - Settings → Indexers → FlareSolverr
+   - Settings > Indexers > FlareSolverr
 
-3. **Add FlareSolverr**:
+3. **Add Byparr**:
    - **Tags**: Leave empty (applies to all indexers) or add specific tag
-   - **Host**: `http://localhost:8191/` (same VM)
+   - **Host**: `http://byparr:8191/`
    - **Request Timeout**: `60` seconds (default)
    - Click **Test** to verify
    - Click **Save**
 
-### Configure Indexers to Use FlareSolverr
+### Configure Indexers to Use Byparr
 
 **Automatic** (Recommended):
 
 - Most Cloudflare-protected indexers auto-detect need
-- Prowlarr will automatically use FlareSolverr when needed
+- Prowlarr will automatically use Byparr when needed
 
 **Manual** (if needed):
 
-1. Settings → Indexers → (Select indexer)
+1. Settings > Indexers > (Select indexer)
 2. Scroll to **Tags**
-3. Add flaresolverr tag (if you tagged FlareSolverr)
+3. Add flaresolverr tag (if you tagged the proxy)
 4. Save
 
 ### Verify Integration
 
 1. **Test Indexer**:
-   - Prowlarr → Indexers → (Select indexer)
+   - Prowlarr > Indexers > (Select indexer)
    - Click **Test**
    - Should succeed if indexer uses Cloudflare
 
 2. **Search Test**:
-   - Prowlarr → Search
+   - Prowlarr > Search
    - Enter search term
    - Watch for results from Cloudflare-protected indexers
 
-3. **Check FlareSolverr Logs**:
+3. **Check Byparr Logs**:
 
    ```bash
-   journalctl --user -u flaresolverr -f
+   journalctl --user -u byparr -f
    ```
 
    - Should show requests when Prowlarr uses it
 
 ## Common Issues
 
-### 1. FlareSolverr Not Responding
+### 1. Byparr Not Responding
 
 **Symptoms**:
 
@@ -121,14 +124,13 @@ curl http://localhost:8191/
 
 ```bash
 # Check service status
-systemctl --user status flaresolverr
+systemctl --user status byparr
 
 # Check logs for errors
-journalctl --user -u flaresolverr -n 100
+journalctl --user -u byparr -n 100
 
 # Test endpoint directly
 curl http://localhost:8191/
-# Should return: {"msg":"FlareSolverr is ready!","version":"3.3.21","userAgent":"..."}
 ```
 
 **Solutions**:
@@ -136,8 +138,8 @@ curl http://localhost:8191/
 1. **Service not running**:
 
    ```bash
-   systemctl --user start flaresolverr
-   systemctl --user enable flaresolverr
+   systemctl --user start byparr
+   systemctl --user enable byparr
    ```
 
 2. **Port conflict**:
@@ -146,7 +148,7 @@ curl http://localhost:8191/
    # Check what's using port 8191
    sudo lsof -i :8191
 
-   # If conflict, stop other service or change FlareSolverr port
+   # If conflict, stop other service or change Byparr port
    ```
 
 3. **Network connectivity from Prowlarr**:
@@ -156,10 +158,10 @@ curl http://localhost:8191/
    podman exec prowlarr curl http://localhost:8191/
    ```
 
-4. **Restart FlareSolverr**:
+4. **Restart Byparr**:
 
    ```bash
-   systemctl --user restart flaresolverr
+   systemctl --user restart byparr
    ```
 
 ### 2. Indexer Still Being Blocked
@@ -167,34 +169,34 @@ curl http://localhost:8191/
 **Symptoms**:
 
 - Indexer search returns "Cloudflare blocked"
-- Indexer test fails even with FlareSolverr configured
+- Indexer test fails even with Byparr configured
 
 **Diagnosis**:
 
 ```bash
-# Check FlareSolverr logs during indexer test
-journalctl --user -u flaresolverr -f
+# Check Byparr logs during indexer test
+journalctl --user -u byparr -f
 
 # Then test indexer in Prowlarr
 ```
 
 **Solutions**:
 
-1. **FlareSolverr not configured in Prowlarr**:
-   - Verify Prowlarr → Settings → Indexers → FlareSolverr is configured
-   - Test the FlareSolverr connection
+1. **Byparr not configured in Prowlarr**:
+   - Verify Prowlarr > Settings > Indexers > FlareSolverr is configured
+   - Test the connection
 
-2. **Indexer not using FlareSolverr**:
+2. **Indexer not using Byparr**:
    - Some indexers don't auto-detect need
    - Manually tag indexer with flaresolverr tag
 
-3. **FlareSolverr solving failed**:
-   - Check logs for "Challenge solving failed"
+3. **Challenge solving failed**:
+   - Check logs for solving errors
    - Cloudflare may have updated protections
-   - Update FlareSolverr to latest version
+   - Update Byparr to latest version
 
 4. **Increase timeout**:
-   - Prowlarr → Settings → Indexers → FlareSolverr
+   - Prowlarr > Settings > Indexers > FlareSolverr
    - Increase **Request Timeout** to 90-120 seconds
    - Save and test again
 
@@ -202,43 +204,39 @@ journalctl --user -u flaresolverr -f
 
 **Symptoms**:
 
-- FlareSolverr consuming 500MB-1GB+ RAM
-- System slowdown when FlareSolverr active
+- Byparr consuming excessive RAM
+- System slowdown when Byparr active
 
 **Diagnosis**:
 
 ```bash
 # Check resource usage
-podman stats flaresolverr --no-stream
+podman stats byparr --no-stream
 
-# Check for memory leaks
-journalctl --user -u flaresolverr | grep -i memory
+# Check for memory issues
+journalctl --user -u byparr | grep -i memory
 ```
 
 **Explanation**:
 
-- FlareSolverr uses headless Chrome (Chromium)
-- Chrome is memory-intensive by design
-- 500MB-1GB is normal during active use
+- Byparr uses Camoufox (Firefox-based browser)
+- Memory usage is typically lower than Chrome-based solutions
+- Container has 1.5GB memory limit / 768MB reservation
 - Memory released after requests complete
 
 **Solutions**:
 
 1. **Normal behavior**:
-   - High memory during indexer searches is expected
+   - Some memory usage during indexer searches is expected
    - Drops after searches complete
-   - Monitor but no action needed if < 1.5GB
+   - Monitor but no action needed if within container limits
 
 2. **Memory leak** (if memory keeps growing):
 
    ```bash
    # Restart service to reclaim memory
-   systemctl --user restart flaresolverr
+   systemctl --user restart byparr
    ```
-
-3. **Consider dedicated VM** (if persistent issues):
-   - Move FlareSolverr to separate VM if resource constrained
-   - Update Prowlarr config with new FlareSolverr URL
 
 ### 4. Slow Indexer Searches
 
@@ -249,32 +247,25 @@ journalctl --user -u flaresolverr | grep -i memory
 
 **Explanation**:
 
-- FlareSolverr must launch Chrome, solve challenge, fetch results
+- Byparr must launch Camoufox, solve challenge, fetch results
 - Much slower than direct HTTP requests
 - 15-30 seconds is normal for Cloudflare-protected indexers
 
 **Solutions**:
 
 1. **Increase timeout** (if searches fail):
-   - Prowlarr → Settings → Indexers → FlareSolverr
+   - Prowlarr > Settings > Indexers > FlareSolverr
    - Set **Request Timeout**: 90-120 seconds
 
-2. **Optimize Chrome args** (already set):
-
-   ```yaml
-   environment:
-     - CHROME_ARGS=--no-sandbox,--disable-dev-shm-usage
-   ```
-
-3. **Use non-Cloudflare indexers when possible**:
+2. **Use non-Cloudflare indexers when possible**:
    - Prioritize indexers without Cloudflare
-   - Reduces dependency on FlareSolverr
+   - Reduces dependency on Byparr
 
-4. **Accept slower speeds**:
+3. **Accept slower speeds**:
    - Tradeoff for accessing protected indexers
    - Search results eventually arrive
 
-### 5. FlareSolverr Crashes or Restarts
+### 5. Byparr Crashes or Restarts
 
 **Symptoms**:
 
@@ -286,10 +277,10 @@ journalctl --user -u flaresolverr | grep -i memory
 
 ```bash
 # Check service restart count
-systemctl --user status flaresolverr
+systemctl --user status byparr
 
 # Check for crash logs
-journalctl --user -u flaresolverr | grep -i "error\|crash\|fatal"
+journalctl --user -u byparr | grep -i "error\|crash\|fatal"
 
 # Check system resources
 free -h
@@ -305,7 +296,7 @@ df -h
    free -h
 
    # If low, restart service
-   systemctl --user restart flaresolverr
+   systemctl --user restart byparr
 
    # Consider increasing VM RAM if persistent
    ```
@@ -320,41 +311,36 @@ df -h
    podman system prune -a
    ```
 
-3. **Chrome crash**:
-   - Check logs for "Chrome failed to start"
-   - Verify `--no-sandbox` flag is set
-   - May need to update FlareSolverr image
-
-4. **Update FlareSolverr**:
+3. **Update Byparr**:
 
    ```bash
-   podman pull ghcr.io/flaresolverr/flaresolverr:latest
-   systemctl --user restart flaresolverr
+   podman pull ghcr.io/thephaseless/byparr:2.0.1
+   systemctl --user restart byparr
    ```
 
 ### 6. Can't Solve Captcha/Challenge
 
 **Symptoms**:
 
-- FlareSolverr logs show "Challenge solving failed"
+- Byparr logs show challenge solving failed
 - Indexer returns captcha page
 
 **Diagnosis**:
 
 ```bash
 # Check logs for challenge details
-journalctl --user -u flaresolverr | grep -i "challenge\|captcha"
+journalctl --user -u byparr | grep -i "challenge\|captcha"
 ```
 
 **Solutions**:
 
 1. **Challenge type unsupported**:
-   - FlareSolverr handles Cloudflare JS challenges
+   - Byparr handles Cloudflare JS challenges
    - Does NOT handle reCAPTCHA or interactive captchas
-   - If indexer requires manual captcha, FlareSolverr can't help
+   - If indexer requires manual captcha, Byparr can't help
 
 2. **Cloudflare updated protection**:
-   - Update FlareSolverr to latest version
+   - Update Byparr to latest version
    - Check GitHub issues for known problems
 
 3. **IP banned/rate-limited**:
@@ -366,7 +352,7 @@ journalctl --user -u flaresolverr | grep -i "challenge\|captcha"
    - If specific indexer consistently fails
    - Find alternative indexer without Cloudflare
 
-## Testing FlareSolverr
+## Testing Byparr
 
 ### Manual API Test
 
@@ -386,7 +372,7 @@ curl -X POST http://localhost:8191/v1 \
 
 ### Test from Prowlarr
 
-1. Prowlarr → Settings → Indexers → FlareSolverr
+1. Prowlarr > Settings > Indexers > FlareSolverr
 2. Click **Test**
 3. Should return success message
 
@@ -394,83 +380,36 @@ curl -X POST http://localhost:8191/v1 \
 
 1. Find a Cloudflare-protected indexer in Prowlarr
 2. Run a search in Prowlarr
-3. Watch FlareSolverr logs: `journalctl --user -u flaresolverr -f`
+3. Watch Byparr logs: `journalctl --user -u byparr -f`
 4. Should see request, challenge solving, and response
 
-## Performance Optimization
-
-### Already Applied Optimizations
-
-The deployment includes optimized Chrome arguments:
-
-```yaml
-environment:
-  - CHROME_ARGS=--no-sandbox,--disable-dev-shm-usage
-```
-
-- `--no-sandbox`: Allows Chrome to run in containers
-- `--disable-dev-shm-usage`: Prevents shared memory issues
-
-### Additional Tuning (Optional)
-
-**Reduce logging** (if logs too verbose):
-
-```yaml
-environment:
-  - LOG_LEVEL=warn  # Only warnings and errors
-  - LOG_HTML=false  # Don't log HTML responses
-```
-
-**Increase browser instances** (if many simultaneous requests):
-
-```yaml
-environment:
-  - CHROME_ARGS=--no-sandbox,--disable-dev-shm-usage,--max-processes=5
-```
-
 ## Logs and Debugging
-
-### Enable Debug Logging
-
-```yaml
-environment:
-  - LOG_LEVEL=debug
-  - LOG_HTML=true  # Log HTML responses (very verbose!)
-```
-
-Restart: `systemctl --user restart flaresolverr`
 
 ### Log Patterns
 
 **Successful Request**:
 
 ```text
-[INFO] Solving challenge for https://example-indexer.com
-[INFO] Challenge solved successfully in 15s
+Solving challenge for https://example-indexer.com
+Challenge solved successfully
 ```
 
 **Failed Request**:
 
 ```text
-[ERROR] Challenge solving failed: Timeout
-[ERROR] Failed to bypass Cloudflare
+Challenge solving failed: Timeout
+Failed to bypass Cloudflare
 ```
 
-**Chrome Crash**:
+## When to Use Byparr
 
-```text
-[FATAL] Chrome crashed or failed to start
-```
-
-## When to Use FlareSolverr
-
-**Use FlareSolverr for**:
+**Use Byparr for**:
 
 - Indexers with Cloudflare "Checking your browser" page
 - Indexers with DDoS-GUARD protection
 - Indexers that fail with "403 Forbidden"
 
-**Don't need FlareSolverr for**:
+**Don't need Byparr for**:
 
 - Indexers without protection (most private trackers)
 - Indexers with simple username/password auth
@@ -478,7 +417,7 @@ Restart: `systemctl --user restart flaresolverr`
 
 ## Alternative Solutions
 
-If FlareSolverr doesn't work:
+If Byparr doesn't work:
 
 1. **Use VPN** (Gluetun already deployed):
    - Different IP may bypass restrictions
@@ -493,20 +432,20 @@ If FlareSolverr doesn't work:
    - Extract cookies
    - Manually add to Prowlarr indexer config
 
-## Update FlareSolverr
+## Update Byparr
 
 ```bash
 # SSH to media-services VM
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
-# Pull latest image
-podman pull ghcr.io/flaresolverr/flaresolverr:latest
+# Pull pinned image
+podman pull ghcr.io/thephaseless/byparr:2.0.1
 
 # Restart service
-systemctl --user restart flaresolverr
+systemctl --user restart byparr
 
 # Verify version
-journalctl --user -u flaresolverr | grep "version"
+journalctl --user -u byparr | grep "version"
 ```
 
 ## See Also

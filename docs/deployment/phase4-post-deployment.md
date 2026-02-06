@@ -320,7 +320,7 @@ Each VM has custom firewall rules:
 - 7878 (Radarr): Local + Tailscale
 - 9696 (Prowlarr): Local + Tailscale
 - 5055 (Jellyseerr): Local + Tailscale
-- 8191 (Flaresolverr): Localhost only
+- 8191 (Byparr): Localhost only
 
 ### Download Clients (402)
 

@@ -83,7 +83,7 @@ Service-specific troubleshooting guides:
 - **[Sonarr/Radarr](troubleshooting/sonarr-radarr.md)** - Media management, API, indexer issues
 - **[Prowlarr](troubleshooting/prowlarr.md)** - Indexer connectivity and sync issues
 - **[Download Clients](troubleshooting/download-clients.md)** - qBittorrent and SABnzbd issues
-- **[FlareSolverr](troubleshooting/flaresolverr.md)** - Cloudflare bypass issues
+- **[Byparr](troubleshooting/byparr.md)** - Cloudflare bypass issues
 - **[Recyclarr](troubleshooting/recyclarr.md)** - Quality profile sync troubleshooting
 - **[VPN/Gluetun](troubleshooting/vpn-gluetun.md)** - VPN connectivity and port forwarding
 - **[Tdarr](troubleshooting/tdarr.md)** - Transcoding issues, worker problems, library management

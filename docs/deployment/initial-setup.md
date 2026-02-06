@@ -566,7 +566,7 @@ ping nas.discus-moth.ts.net
 - Satisfactory game server deployed (SteamCMD)
 - Media services deployed (Docker):
   - Sonarr, Radarr, Prowlarr
-  - Jellyseerr, Flaresolverr
+  - Jellyseerr, Byparr
 - Download clients deployed (Docker):
   - **qBittorrent** - Automatically configured via Web API:
     - Sets download paths and preferences
@@ -582,7 +582,6 @@ ping nas.discus-moth.ts.net
 - [`playbooks/core/05-configure-satisfactory-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/05-configure-satisfactory-role.yml)
 - [`playbooks/core/06-configure-media-services-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/06-configure-media-services-role.yml)
 - [`playbooks/core/07-configure-download-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/07-configure-download-clients-role.yml) - **Includes qBittorrent API configuration**
-- [`playbooks/core/08-configure-flaresolverr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/08-configure-flaresolverr-role.yml)
 - [`playbooks/core/10-configure-nfs-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/10-configure-nfs-clients-role.yml)
 - [`playbooks/core/11-configure-jellyfin-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/11-configure-jellyfin-role.yml)
 
