@@ -35,14 +35,14 @@ The media services are deployed using phase-based playbooks that automate the en
 - Media Services VM (VMID 401, .13) - Sonarr, Radarr, Prowlarr, Jellyseerr
 - Download Clients VM (VMID 402, .14) - qBittorrent, SABnzbd
 
-### Phase 2: Bootstrap (playbooks/main-phase2-bootstrap.yml)
+### Phase 2: Bootstrap (playbooks/phases/phase2-bootstrap.yml)
 
 **Purpose**: Configure Btrfs NAS storage and Tailscale VPN
 
 **Execution**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/main-phase2-bootstrap.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 ```
 
 **What It Does**:

@@ -414,7 +414,7 @@ systemctl --user stop tdarr-server tdarr-node
    ssh ansible@jellyfin.discus-moth.ts.net "mount | grep /mnt/data"
 
    # Re-mount if needed:
-   ./bin/runtime/ansible-run.sh playbooks/10-configure-nfs-clients-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/networking/nfs-clients.yml
    ```
 
 3. **File Permissions**:

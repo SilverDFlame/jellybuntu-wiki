@@ -32,7 +32,7 @@ The Trash Guides folder structure is automatically configured during Phase 2 (Bt
 
 ```bash
 # Phase 2: Creates folder structure on Btrfs NAS
-./bin/runtime/ansible-run.sh playbooks/main-phase2-bootstrap.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 
 # Phase 3: Mounts NFS and deploys services
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
@@ -281,7 +281,7 @@ Save and exit (`:wq` in vim).
 ### Step 2: Run the Recyclarr Configuration Playbook
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/09-configure-recyclarr-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/recyclarr.yml
 ```
 
 Or run as part of Phase 3:

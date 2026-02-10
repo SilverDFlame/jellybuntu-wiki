@@ -272,7 +272,7 @@ sops -d group_vars/all.sops.yaml | grep services_admin
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
   "cd /opt/download-clients && docker compose down"
 rm -rf /opt/download-clients/services/qbittorrent/config
-./bin/runtime/ansible-run.sh playbooks/07-configure-download-clients-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
 ```
 
 ### Jellyfin Won't Start

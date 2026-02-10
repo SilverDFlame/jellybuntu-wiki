@@ -293,8 +293,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
 **Files**:
 
 - [`playbooks/services/recyclarr.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/recyclarr.yml) - Recyclarr configuration
-- [`playbooks/system/system-hardening.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/system/system-hardening.yml) - Firewall setup
-- [`playbooks/system/system-hardening.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/system/system-hardening.yml) - Auto-updates
+- [`playbooks/system/system-hardening.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/system/system-hardening.yml) - Firewall setup + auto-updates
 
 **Roles**:
 

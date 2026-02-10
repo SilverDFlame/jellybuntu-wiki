@@ -328,7 +328,7 @@ Complete disaster recovery from scratch:
 
    # Deploy Phase 1-2 (VMs + Networking)
    ./bin/runtime/ansible-run.sh playbooks/phases/phase1-infrastructure.yml
-   ./bin/runtime/ansible-run.sh playbooks/main-phase2-bootstrap.yml
+   ./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
    ```
 
 3. **Stop Services Before Restore**:
