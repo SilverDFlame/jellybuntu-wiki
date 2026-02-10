@@ -329,7 +329,7 @@ systemctl --user start woodpecker-agent
 ### Redeploy via Ansible
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/18-configure-woodpecker-ci-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/woodpecker-ci.yml
 ```
 
 ### Check Quadlet Configuration

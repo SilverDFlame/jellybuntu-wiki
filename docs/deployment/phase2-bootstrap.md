@@ -1,4 +1,4 @@
-# Phase 2: Networking Configuration
+# Phase 2: Bootstrap Configuration
 
 Configure storage infrastructure and VPN mesh network.
 
@@ -51,7 +51,7 @@ Phase 2 sets up network storage (NAS with Btrfs RAID1 + NFS) and establishes the
 ## Running Phase 2
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 ```
 
 ## Expected Output
@@ -410,9 +410,9 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 
 **Files**:
 
-- [`playbooks/core/02-configure-nas-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/02-configure-nas-role.yml) - NAS configuration
-- [`playbooks/core/03-configure-tailscale-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/03-configure-tailscale-role.yml) - Tailscale installation
-- [`playbooks/core/14-configure-adguard-home-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/14-configure-adguard-home-role.yml) - AdGuard Home deployment
+- [`playbooks/infrastructure/nas.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/infrastructure/nas.yml) - NAS configuration
+- [`playbooks/networking/tailscale.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/networking/tailscale.yml) - Tailscale installation
+- [`playbooks/networking/adguard-home.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/networking/adguard-home.yml) - AdGuard Home deployment
 
 **Roles**:
 
@@ -461,7 +461,7 @@ Phase 2 is idempotent:
 
 ```bash
 # Safe to re-run
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 ```
 
 **Note**: Re-running won't recreate Btrfs array if it exists, but will reconfigure NFS and Tailscale.

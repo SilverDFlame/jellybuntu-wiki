@@ -221,7 +221,7 @@ proxmox_node: "your_actual_node_name"
 
 ## Playbook Details
 
-**File**: [`playbooks/core/01-provision-vms.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/01-provision-vms.yml)
+**File**: [`playbooks/infrastructure/provision-vms.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/infrastructure/provision-vms.yml)
 
 **Variables** (from [`playbooks/vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/vars.yml)):
 
@@ -265,7 +265,7 @@ ssh root@jellybuntu.discus-moth.ts.net "qm stop 100 && qm destroy 100"
 After Phase 1 completes:
 
 1. ✅ Verify all VMs running
-2. ➡️ Proceed to [Phase 2: Networking](phase2-networking.md)
+2. ➡️ Proceed to [Phase 2: Bootstrap](phase2-bootstrap.md)
 
 ## Reference
 

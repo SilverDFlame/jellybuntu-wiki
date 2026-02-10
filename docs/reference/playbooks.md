@@ -18,8 +18,8 @@ Run complete phases in order for organized deployment:
 # Phase 1: Infrastructure
 ./bin/runtime/ansible-run.sh playbooks/phases/phase1-infrastructure.yml
 
-# Phase 2: Networking
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+# Phase 2: Bootstrap
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 
 # Phase 3: Services
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
@@ -36,7 +36,7 @@ Run complete phases in order for organized deployment:
 Run specific playbooks for targeted updates:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/06-configure-media-services-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/media-services.yml
 ```
 
 ### Complete Deployment
@@ -66,7 +66,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### phase2-networking.yml
+### phase2-bootstrap.yml
 
 **Includes**: 00, 02, 03, 12, 20
 
@@ -616,16 +616,9 @@ dig @nas.discus-moth.ts.net google.com
 
 ---
 
-### 19-configure-minio-role.yml
+### ~~19-configure-minio-role.yml~~ (Removed)
 
-**Target**: nas
-**Role**: podman_app
-
-**Service**: MinIO Object Storage
-**Ports**: 9000 (S3 API), 9001 (Console)
-**URL**: http://nas.discus-moth.ts.net:9001
-
-**Purpose**: S3-compatible object storage for Terraform state backend
+MinIO was removed as part of the directory restructure (Issue #62). Terraform state reverted to local backend.
 
 ---
 
@@ -741,7 +734,7 @@ Per-VM configuration:
 ansible all -m ping -i inventory.ini
 
 # Run specific playbook
-./bin/runtime/ansible-run.sh playbooks/core/NN-playbook-name-role.yml
+./bin/runtime/ansible-run.sh playbooks/<category>/<name>.yml
 
 # Dry run (check mode)
 ./bin/runtime/ansible-run.sh playbooks/main.yml --check

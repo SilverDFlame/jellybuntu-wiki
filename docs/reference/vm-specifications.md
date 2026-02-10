@@ -347,9 +347,9 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Deployment Playbooks:**
 
-- [`playbooks/core/15-provision-monitoring-vm.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/15-provision-monitoring-vm.yml) - Creates VMID 500
-- [`playbooks/core/16-deploy-monitoring-exporters.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/16-deploy-monitoring-exporters.yml) - Installs exporters on all VMs
-- [`playbooks/core/17-configure-monitoring-stack.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/17-configure-monitoring-stack.yml) - Deploys Prometheus/Grafana/Uptime Kuma
+- [`playbooks/infrastructure/provision-vms.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/infrastructure/provision-vms.yml) - Creates VMID 500
+- [`playbooks/monitoring/exporters.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/monitoring/exporters.yml) - Installs exporters on all VMs
+- [`playbooks/monitoring/stack.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/monitoring/stack.yml) - Deploys Prometheus/Grafana/Uptime Kuma
 - [`playbooks/phases/phase5-monitoring.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/phases/phase5-monitoring.yml) - Orchestrates all three
 
 ---

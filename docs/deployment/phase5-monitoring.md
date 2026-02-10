@@ -111,10 +111,10 @@ For granular control or troubleshooting (after OpenTofu provisioning):
 
 ```bash
 # Step 1: Deploy exporters on all existing VMs
-./bin/runtime/ansible-run.sh playbooks/core/15-deploy-monitoring-exporters.yml
+./bin/runtime/ansible-run.sh playbooks/monitoring/exporters.yml
 
 # Step 2: Deploy monitoring stack (Prometheus, Grafana, Uptime Kuma)
-./bin/runtime/ansible-run.sh playbooks/core/16-configure-monitoring-stack.yml
+./bin/runtime/ansible-run.sh playbooks/monitoring/stack.yml
 ```
 
 ### Option 3: Manual Deployment (Not Recommended)

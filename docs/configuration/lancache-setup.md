@@ -11,7 +11,7 @@ speeding up downloads for Steam, Epic Games, Origin, Battle.net, and other gamin
 - **VM**: lancache (VMID 700, 192.168.0.18)
 - **Ports**: 80 (HTTP cache), 443 (SNI proxy), 53 (DNS)
 - **Deployment**: Rootful Podman with systemd
-- **Playbook**: [`playbooks/core/deploy-lancache.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/deploy-lancache.yml)
+- **Playbook**: [`playbooks/services/lancache.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/lancache.yml)
 
 ## Architecture
 
@@ -62,7 +62,7 @@ Lancache caches downloads from:
 
 ```bash
 # Deploy Lancache
-./bin/runtime/ansible-run.sh playbooks/core/deploy-lancache.yml
+./bin/runtime/ansible-run.sh playbooks/services/lancache.yml
 ```
 
 ### Quadlet Configuration Files

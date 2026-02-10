@@ -101,7 +101,7 @@ anonymous access behavior:
 Nexus cannot pull its own image from itself during initial deployment. The playbook uses `docker.io` directly:
 
 ```yaml
-# playbooks/core/20-configure-nexus-role.yml
+# playbooks/services/nexus.yml
 container_image: "docker.io/sonatype/nexus3:3.87.1"  # NOT through Nexus
 ```
 

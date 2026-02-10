@@ -164,7 +164,7 @@ tofu apply -var="proxmox_password=$(sops -d ../../group_vars/all.sops.yaml | gre
 **Alternative: Use Ansible playbook wrapper** <!-- markdownlint-disable-line MD036 -->
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/01-provision-vms.yml
+./bin/runtime/ansible-run.sh playbooks/infrastructure/provision-vms.yml
 ```
 
 **Outputs:**
@@ -186,8 +186,8 @@ Run the phase-based playbooks in order:
 # Phase 1: Infrastructure provisioning (if not done via OpenTofu)
 ./bin/runtime/ansible-run.sh playbooks/phases/phase1-infrastructure.yml
 
-# Phase 2: Networking (NAS + Tailscale)
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+# Phase 2: Bootstrap (NAS + Tailscale)
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 
 # Phase 3: Services (media stack)
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml

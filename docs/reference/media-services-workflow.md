@@ -16,14 +16,14 @@ deployment is fully automated through phase-based playbooks:
 
 The media services are deployed using phase-based playbooks that automate the entire setup:
 
-### Phase 1: Infrastructure (playbooks/main-phase1-infrastructure.yml)
+### Phase 1: Infrastructure (playbooks/phases/phase1-infrastructure.yml)
 
 **Purpose**: Provision all VMs on Proxmox
 
 **Execution**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/main-phase1-infrastructure.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase1-infrastructure.yml
 ```
 
 **What It Creates**:
@@ -35,14 +35,14 @@ The media services are deployed using phase-based playbooks that automate the en
 - Media Services VM (VMID 401, .13) - Sonarr, Radarr, Prowlarr, Jellyseerr
 - Download Clients VM (VMID 402, .14) - qBittorrent, SABnzbd
 
-### Phase 2: Networking (playbooks/main-phase2-networking.yml)
+### Phase 2: Bootstrap (playbooks/phases/phase2-bootstrap.yml)
 
 **Purpose**: Configure Btrfs NAS storage and Tailscale VPN
 
 **Execution**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/main-phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 ```
 
 **What It Does**:
@@ -65,14 +65,14 @@ The media services are deployed using phase-based playbooks that automate the en
 - ✅ All VMs accessible via Tailscale
 - ✅ Ready for service deployment
 
-### Phase 3: Services (playbooks/main-phase3-services.yml)
+### Phase 3: Services (playbooks/phases/phase3-services.yml)
 
 **Purpose**: Deploy all applications with NFS storage
 
 **Execution**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/main-phase3-services.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
 ```
 
 **What It Deploys**:

@@ -632,7 +632,7 @@ adguard_home_version: "v0.107.69"
 **4. Re-run playbook**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/14-configure-adguard-home-role.yml
+./bin/runtime/ansible-run.sh playbooks/networking/adguard-home.yml
 ```
 
 **5. Verify functionality**:

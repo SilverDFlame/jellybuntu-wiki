@@ -342,16 +342,15 @@ Even if no drift is detected, review the pipeline logs weekly to ensure:
 2. Check SOPS key format (should be `AGE-SECRET-KEY-1...`)
 3. Verify `vault.yml` is encrypted with correct AGE key
 
-### Pipeline Fails with MinIO Connection Error
+### Pipeline Fails with State Access Error
 
-**Error**: `Failed to upload state to S3`
+**Error**: `Failed to access Terraform state`
 
 **Resolution**:
 
-1. Verify NAS VM (192.168.0.15) is running
-2. Check MinIO is running: `ssh nas.discus-moth.ts.net "systemctl --user status minio"`
-3. Verify MinIO credentials in SOPS vault
-4. Test MinIO connection: `curl http://nas.discus-moth.ts.net:9000`
+Terraform state is now stored locally (MinIO was removed in Issue #62). The drift detection
+pipeline needs access to the local `.tfstate` file. See the main repo's `infrastructure/terraform/backend.tf`
+for current backend configuration.
 
 ### Pipeline Shows Unexpected Drift
 

@@ -769,7 +769,7 @@ nano roles/adguard_home/defaults/main.yml
 # To:     adguard_home_version: "v0.107.69"
 
 # Re-run playbook
-./bin/runtime/ansible-run.sh playbooks/core/14-configure-adguard-home-role.yml
+./bin/runtime/ansible-run.sh playbooks/networking/adguard-home.yml
 
 # Verify
 ssh ansible@nas.discus-moth.ts.net "docker exec adguardhome /opt/adguardhome/AdGuardHome --version"
@@ -785,7 +785,7 @@ nano roles/unbound/defaults/main.yml
 # To:     unbound_version: "1.24.2-0"
 
 # Re-run playbook
-./bin/runtime/ansible-run.sh playbooks/core/19-configure-unbound-role.yml
+./bin/runtime/ansible-run.sh playbooks/networking/unbound.yml
 
 # Verify
 ssh ansible@nas.discus-moth.ts.net "docker exec unbound unbound -V"
@@ -815,10 +815,10 @@ If updating infrastructure configuration via Ansible:
 
 ```bash
 # Update specific service
-./bin/runtime/ansible-run.sh playbooks/core/06-configure-media-services-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/media-services.yml
 
 # Update Jellyfin config
-./bin/runtime/ansible-run.sh playbooks/core/11-configure-jellyfin-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/jellyfin.yml
 
 # Update all (safe, idempotent)
 ./bin/runtime/ansible-run.sh playbooks/main.yml

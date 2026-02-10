@@ -87,7 +87,7 @@ journalctl --user -u tdarr-node -f
    # Expected: 8265/tcp ALLOW Anywhere
 
    # If missing, re-run playbook:
-   ./bin/runtime/ansible-run.sh playbooks/core/15-configure-tdarr-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/services/tdarr.yml
    ```
 
 3. **Wrong Network Mode**:
@@ -280,7 +280,7 @@ journalctl --user -u tdarr-node -f
    # Expected: "Memory": 2147483648 (2GB in bytes)
 
    # If 0, limits not applied - re-deploy:
-   ./bin/runtime/ansible-run.sh playbooks/core/15-configure-tdarr-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/services/tdarr.yml
    ```
 
 ### Issue: Slow Transcode Speed
@@ -414,7 +414,7 @@ systemctl --user stop tdarr-server tdarr-node
    ssh ansible@jellyfin.discus-moth.ts.net "mount | grep /mnt/data"
 
    # Re-mount if needed:
-   ./bin/runtime/ansible-run.sh playbooks/10-configure-nfs-clients-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/networking/nfs-clients.yml
    ```
 
 3. **File Permissions**:
@@ -589,7 +589,7 @@ sudo rm -rf tdarr/*
 
 # Re-deploy via Ansible
 exit
-./bin/runtime/ansible-run.sh playbooks/core/15-configure-tdarr-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/tdarr.yml
 ```
 
 ### Database Corruption
@@ -673,7 +673,7 @@ When asking for help, collect:
 - **Setup Guide**: `docs/configuration/tdarr-setup.md`
 - **Deployment Plan**: `docs/plans/current-plan.md`
 - **Feasibility Analysis**: `docs/troubleshooting/tdarr-feasibility-analysis.md`
-- **Playbook**: [`playbooks/core/15-configure-tdarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/15-configure-tdarr-role.yml)
+- **Playbook**: [`playbooks/services/tdarr.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/tdarr.yml)
 
 ## Rollback Procedures
 

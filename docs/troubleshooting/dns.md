@@ -321,7 +321,7 @@ sudo lsof -i :53 -i :80
    cat ~/.config/containers/systemd/adguard-home.container
 
    # If config is invalid, restore from backup or re-deploy
-   # Run playbook: ./bin/runtime/ansible-run.sh playbooks/14-configure-adguard-home-role.yml
+   # Run playbook: ./bin/runtime/ansible-run.sh playbooks/networking/adguard-home.yml
    ```
 
 2. **Out of memory**:

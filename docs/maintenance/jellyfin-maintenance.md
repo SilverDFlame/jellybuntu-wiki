@@ -93,7 +93,7 @@ sudo journalctl -u jellyfin -n 50 | grep -i version
 
 ```bash
 # From ansible controller
-./bin/runtime/ansible-run.sh playbooks/core/deploy-jellyfin.yml
+./bin/runtime/ansible-run.sh playbooks/services/jellyfin.yml
 ```
 
 ### Rollback After Failed Update

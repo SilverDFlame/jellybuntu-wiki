@@ -287,7 +287,7 @@ cat ~/.config/recyclarr/recyclarr.yml
 4. **Re-deploy from Ansible** (if using playbook):
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/deploy-media-services.yml --tags recyclarr
+   ./bin/runtime/ansible-run.sh playbooks/services/media-services.yml --tags recyclarr
    ```
 
 ### 5. Permissions Issues

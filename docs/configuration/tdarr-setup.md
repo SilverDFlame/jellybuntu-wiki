@@ -74,7 +74,7 @@ Tdarr uses a server-node architecture:
 
 ### 1. Access Web UI
 
-After deployment via [`playbooks/core/15-configure-tdarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/15-configure-tdarr-role.yml), access the web UI at:
+After deployment via [`playbooks/services/tdarr.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/tdarr.yml), access the web UI at:
 
 ```text
 http://jellyfin.discus-moth.ts.net:8265
@@ -526,5 +526,5 @@ After initial configuration:
 - **Troubleshooting Guide**: `docs/troubleshooting/tdarr.md`
 - **Feasibility Analysis**: `docs/troubleshooting/tdarr-feasibility-analysis.md`
 - **GPU Passthrough**: `docs/configuration/gpu-passthrough.md`
-- **Playbook**: [`playbooks/core/15-configure-tdarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/15-configure-tdarr-role.yml)
+- **Playbook**: [`playbooks/services/tdarr.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/tdarr.yml)
 - **NVENC Patch**: https://github.com/keylase/nvidia-patch

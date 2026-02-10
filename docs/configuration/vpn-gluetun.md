@@ -211,7 +211,7 @@ To add more providers, see "Adding Additional VPN Providers" below.
 The Gluetun configuration is already integrated into the download-clients playbook. Run the playbook to deploy:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/07-configure-download-clients-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
 ```
 
 **What this does:**
@@ -486,7 +486,7 @@ To switch between pre-configured providers (VyprVPN ↔ Privado):
 2. **Redeploy**:
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/07-configure-download-clients-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
    ```
 
 3. **Verify new provider**:
@@ -556,7 +556,7 @@ To add a new provider (e.g., Mullvad, ProtonVPN):
 5. **Deploy and verify**:
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/07-configure-download-clients-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
    docker exec gluetun wget -qO- ifconfig.me
    ```
 

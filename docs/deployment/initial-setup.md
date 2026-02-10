@@ -471,7 +471,7 @@ You have two options:
 
 ```bash
 ./bin/runtime/ansible-run.sh playbooks/phases/phase1-infrastructure.yml
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
 ```
 
@@ -502,7 +502,7 @@ See [phase-based-deployment.md](phase-based-deployment.md) for detailed phase in
 
 **Playbooks executed**:
 
-- [`playbooks/core/01-provision-vms.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/01-provision-vms.yml) - Creates all 8 VMs
+- [`playbooks/infrastructure/provision-vms.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/infrastructure/provision-vms.yml) - Creates all 8 VMs
 
 **Verification**:
 
@@ -516,10 +516,10 @@ ssh root@jellybuntu.discus-moth.ts.net "qm status 300"  # NAS
 ssh root@jellybuntu.discus-moth.ts.net "qm status 400"  # Jellyfin
 ```
 
-### Deployment Phase 2: Networking Configuration (4-6 minutes)
+### Deployment Phase 2: Bootstrap Configuration (4-6 minutes)
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 ```
 
 **What happens**:
@@ -536,8 +536,8 @@ ssh root@jellybuntu.discus-moth.ts.net "qm status 400"  # Jellyfin
 
 **Playbooks executed**:
 
-- [`playbooks/core/02-configure-nas-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/02-configure-nas-role.yml) - Btrfs + NFS setup
-- [`playbooks/core/03-configure-tailscale-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/03-configure-tailscale-role.yml) - VPN mesh network
+- [`playbooks/infrastructure/nas.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/infrastructure/nas.yml) - Btrfs + NFS setup
+- [`playbooks/networking/tailscale.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/networking/tailscale.yml) - VPN mesh network
 
 **Verification**:
 
@@ -578,12 +578,12 @@ ping nas.discus-moth.ts.net
 
 **Playbooks executed**:
 
-- [`playbooks/core/04-configure-home-assistant-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/04-configure-home-assistant-role.yml)
-- [`playbooks/core/05-configure-satisfactory-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/05-configure-satisfactory-role.yml)
-- [`playbooks/core/06-configure-media-services-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/06-configure-media-services-role.yml)
-- [`playbooks/core/07-configure-download-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/07-configure-download-clients-role.yml) - **Includes qBittorrent API configuration**
-- [`playbooks/core/10-configure-nfs-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/10-configure-nfs-clients-role.yml)
-- [`playbooks/core/11-configure-jellyfin-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/11-configure-jellyfin-role.yml)
+- [`playbooks/services/home-assistant.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/home-assistant.yml)
+- [`playbooks/services/satisfactory.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/satisfactory.yml)
+- [`playbooks/services/media-services.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/media-services.yml)
+- [`playbooks/services/download-clients.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/download-clients.yml) - **Includes qBittorrent API configuration**
+- [`playbooks/networking/nfs-clients.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/networking/nfs-clients.yml)
+- [`playbooks/services/jellyfin.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin.yml)
 
 **NOT included in Phase 3** (will run in Deployment Phase 4 after manual configuration):
 
@@ -755,9 +755,9 @@ Now that API keys are configured, run **Deployment Phase 4 playbook** for final 
 
 **Playbooks executed**:
 
-- [`playbooks/core/09-configure-recyclarr-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/09-configure-recyclarr-role.yml)
-- [`playbooks/core/12-configure-ufw-firewall-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/12-configure-ufw-firewall-role.yml)
-- [`playbooks/core/13-configure-unattended-upgrades-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/13-configure-unattended-upgrades-role.yml)
+- [`playbooks/services/recyclarr.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/recyclarr.yml)
+- [`playbooks/system/system-hardening.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/system/system-hardening.yml)
+- [`playbooks/system/system-hardening.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/system/system-hardening.yml)
 
 **Access Note**:
 After Deployment Phase 4, SSH is accessible via both Tailscale and local network:
@@ -786,7 +786,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
 All phases complete:
 
 - ✅ Deployment Phase 1: VMs provisioned
-- ✅ Deployment Phase 2: Networking configured
+- ✅ Deployment Phase 2: Bootstrap configured
 - ✅ Deployment Phase 3: Services deployed (including qBittorrent auto-config)
 - ✅ Manual configuration completed
 - ✅ Deployment Phase 4: Security hardened
@@ -1016,7 +1016,7 @@ After completing initial setup:
 ### Phase Playbooks
 
 - [`playbooks/phases/phase1-infrastructure.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/phases/phase1-infrastructure.yml) - Provision VMs
-- [`playbooks/phases/phase2-networking.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/phases/phase2-networking.yml) - Configure NAS + Tailscale
+- [`playbooks/phases/phase2-bootstrap.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/phases/phase2-bootstrap.yml) - Configure NAS + Tailscale
 - [`playbooks/phases/phase3-services.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/phases/phase3-services.yml) - Deploy all services + qBittorrent auto-config
 - [`playbooks/phases/phase4-post-deployment.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/phases/phase4-post-deployment.yml) - Security hardening (after manual config)
 

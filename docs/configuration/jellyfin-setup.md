@@ -13,7 +13,7 @@ interface for managing movies, TV shows, music, and photos.
 - **Deployment**: Native systemd service (not containerized)
 - **Config Path**: `/etc/jellyfin/` and `/var/lib/jellyfin/`
 - **Media Path**: `/mnt/data/media/` (NFS mount)
-- **Playbook**: [`playbooks/core/deploy-jellyfin.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/deploy-jellyfin.yml)
+- **Playbook**: [`playbooks/services/jellyfin.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin.yml)
 
 ## Access
 
@@ -26,7 +26,7 @@ interface for managing movies, TV shows, music, and photos.
 
 ```bash
 # Deploy Jellyfin
-./bin/runtime/ansible-run.sh playbooks/core/deploy-jellyfin.yml
+./bin/runtime/ansible-run.sh playbooks/services/jellyfin.yml
 ```
 
 The playbook:
@@ -74,7 +74,7 @@ Ansible role can automate the remaining Jellyfin configuration via the API.
 ### Running the Configuration
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/23-configure-jellyfin-config-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/jellyfin-config.yml
 ```
 
 > **Note**: This playbook is idempotent and safe to re-run. It will skip
@@ -90,7 +90,7 @@ regressions tracked in
 ### Reference
 
 - **Role**: [`roles/jellyfin_config/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin_config)
-- **Playbook**: [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml)
+- **Playbook**: [`playbooks/services/jellyfin-config.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin-config.yml)
 
 ### Library Configuration
 
@@ -344,7 +344,7 @@ sudo apt update
 sudo apt upgrade jellyfin
 
 # Or via Ansible
-./bin/runtime/ansible-run.sh playbooks/core/deploy-jellyfin.yml
+./bin/runtime/ansible-run.sh playbooks/services/jellyfin.yml
 ```
 
 ## Backup and Restore

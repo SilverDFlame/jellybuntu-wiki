@@ -42,7 +42,7 @@ Use the dedicated utility playbook to perform a hard reset:
 ./bin/runtime/ansible-run.sh playbooks/utility/reset-ufw-corrupted.yml --limit=nas
 
 # Step 2: Immediately restore proper firewall rules
-./bin/runtime/ansible-run.sh playbooks/core/02-configure-nas-role.yml -e "ufw_reset=true"
+./bin/runtime/ansible-run.sh playbooks/infrastructure/nas.yml -e "ufw_reset=true"
 ```
 
 **⚠️ WARNING:** The hard reset temporarily opens SSH to all IPs. Step 2 must be run immediately to
@@ -85,7 +85,7 @@ UFW state may be cached or not properly reloaded after rule changes.
 Force a reset and reapply:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/12-configure-ufw-firewall-role.yml -e "ufw_reset=true"
+./bin/runtime/ansible-run.sh playbooks/system/system-hardening.yml -e "ufw_reset=true"
 ```
 
 The `ufw_reset=true` flag tells the role to:
@@ -142,7 +142,7 @@ ssh ansible@hostname "sudo ufw status numbered"
 5. Fix rules and re-run playbook with reset:
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/12-configure-ufw-firewall-role.yml -e "ufw_reset=true"
+   ./bin/runtime/ansible-run.sh playbooks/system/system-hardening.yml -e "ufw_reset=true"
    ```
 
 **If you don't have console access:**
@@ -194,7 +194,7 @@ ssh ansible@hostname "sudo ufw status | grep 100.64"
 If missing, re-run firewall configuration:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/12-configure-ufw-firewall-role.yml -e "ufw_reset=true"
+./bin/runtime/ansible-run.sh playbooks/system/system-hardening.yml -e "ufw_reset=true"
 ```
 
 ---

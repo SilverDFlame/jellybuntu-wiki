@@ -11,7 +11,7 @@ switches, and gateways.
 - **VM**: unifi-controller (VMID 800, 192.168.0.19)
 - **Ports**: 8443 (Web UI), 8080 (Device Inform), 3478 (STUN), 10001 (Discovery)
 - **Deployment**: Quadlet/Podman with MongoDB 7.0
-- **Playbook**: [`playbooks/core/deploy-unifi-controller.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/deploy-unifi-controller.yml)
+- **Playbook**: [`playbooks/services/unifi-controller.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/unifi-controller.yml)
 
 ## Access
 
@@ -37,7 +37,7 @@ switches, and gateways.
 
 ```bash
 # Deploy UniFi Controller
-./bin/runtime/ansible-run.sh playbooks/core/deploy-unifi-controller.yml
+./bin/runtime/ansible-run.sh playbooks/services/unifi-controller.yml
 ```
 
 The playbook:

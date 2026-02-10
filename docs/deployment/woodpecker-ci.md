@@ -27,13 +27,13 @@ as a rootless Podman deployment on a dedicated VM with GitHub integration via OA
 ### Option 1: Via Phase C (Recommended)
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/phases/phase-c-advanced.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase4-post-deployment.yml
 ```
 
 ### Option 2: Individual Playbook
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/18-configure-woodpecker-ci-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/woodpecker-ci.yml
 ```
 
 ## GitHub OAuth Setup

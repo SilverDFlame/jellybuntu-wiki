@@ -70,7 +70,7 @@ Configure VMs to start automatically after Proxmox host boots.
 Autostart configuration is applied automatically when you run playbook `01-provision-vms.yml`:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/01-provision-vms.yml
+./bin/runtime/ansible-run.sh playbooks/infrastructure/provision-vms.yml
 ```
 
 This configures all VMs with proper boot order and startup delays based on dependencies.
