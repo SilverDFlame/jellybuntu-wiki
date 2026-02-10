@@ -45,7 +45,7 @@ jobs:
             Review this documentation PR for the Jellybuntu Wiki. Focus on:
 
             **Formatting (markdownlint)**:
-            - Lines over 200 chars (code blocks/tables/headings exempt)
+            - IMPORTANT: The MD013 line length limit for this project is 200 characters, NOT 120. Do NOT flag lines under 200 characters as violations.
             - Missing blank lines around code blocks and lists
             - Code blocks without language tags
 
