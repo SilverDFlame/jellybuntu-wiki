@@ -148,7 +148,7 @@ cat ~/SatisfactoryDedicatedServer/buildinfo.txt
 
 ```bash
 # From ansible controller
-./bin/runtime/ansible-run.sh playbooks/core/deploy-satisfactory.yml
+./bin/runtime/ansible-run.sh playbooks/services/satisfactory.yml
 ```
 
 ### Verify Update

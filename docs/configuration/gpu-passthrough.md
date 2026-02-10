@@ -26,7 +26,7 @@ transcoding, significantly reducing CPU load and improving transcode performance
 Run the Proxmox host configuration playbook:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-proxmox-host.yml
+./bin/runtime/ansible-run.sh playbooks/infrastructure/proxmox-host.yml
 ```
 
 This configures:
@@ -98,7 +98,7 @@ jellyfin_gpu_enabled: true
 jellyfin_ramdisk_enabled: true
 
 # Run the playbook
-./bin/runtime/ansible-run.sh playbooks/core/10-configure-jellyfin-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/jellyfin.yml
 ```
 
 Verify driver installation:
@@ -122,7 +122,7 @@ In Jellyfin web UI:
 Tdarr automatically detects GPU if available. Run the Tdarr playbook:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/15-configure-tdarr-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/tdarr.yml
 ```
 
 The playbook will:

@@ -153,7 +153,7 @@ podman logs qbittorrent --tail 100
    - Check sidebar for `tv` and `movies` categories
    - `tv` → Save path: `/data/torrents/tv`
    - `movies` → Save path: `/data/torrents/movies`
-   - If missing, re-run: `./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml`
+   - If missing, re-run: `./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml`
 
 3. **Configure in Sonarr/Radarr**:
    - Settings > Download Clients > [qBittorrent]
@@ -414,7 +414,7 @@ podman exec gluetun wget -qO- ifconfig.me
    - Verify credentials in secrets file are correct
    - WireGuard: Check private key and address
    - OpenVPN: Check username and password
-   - Redeploy: `./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml`
+   - Redeploy: `./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml`
 
 2. **VPN provider server issues**:
 
@@ -510,7 +510,7 @@ curl -I http://localhost:8081  # SABnzbd
 
 1. **Gluetun not exposing ports**:
    - Check [`services/compose/services/gluetun.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/services/compose/services/gluetun.yml) has correct port mappings
-   - Redeploy: `./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml`
+   - Redeploy: `./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml`
 
 2. **SABnzbd wrong port**:
    - SABnzbd should listen on port 8081 internally (not 8080)
@@ -799,7 +799,7 @@ cat /opt/download-clients/port-sync.log
 1. **Re-run deployment playbook** (fixes all configuration):
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
    ```
 
 2. **Force immediate port sync**:
@@ -982,7 +982,7 @@ podman exec sabnzbd cat /config/sabnzbd.ini | grep "^direct_unpack"
 1. **Re-run playbook to fix configuration**:
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
    ```
 
 2. **Manual fix** (if needed):
@@ -1332,7 +1332,7 @@ cat ~/.config/containers/systemd/qbittorrent.container
 4. **Re-run deployment playbook**:
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml
+   ./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
    ```
 
 #### Port Binding Issues

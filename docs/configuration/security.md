@@ -73,20 +73,20 @@ ssh-keygen -t ed25519 -f ~/.ssh/ansible_ci -C "CI Automation - Woodpecker"
 
 ### Key Distribution
 
-Use [`playbooks/core/00-configure-ssh-keys.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/00-configure-ssh-keys.yml) for all SSH key management:
+Use [`playbooks/system/ssh-keys.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/system/ssh-keys.yml) for all SSH key management:
 
 ```bash
 # Deploy to all hosts (Proxmox + all VMs)
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml
+./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml
 
 # Deploy to Proxmox only
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml --tags proxmox
+./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml --tags proxmox
 
 # Deploy to VMs only
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml --tags vms
+./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml --tags vms
 
 # Deploy to specific hosts
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml --limit jellyfin,media-services
+./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml --limit jellyfin,media-services
 ```
 
 **Golden image** (CI key only):
@@ -136,7 +136,7 @@ ssh-add ~/.ssh/ansible_homelab
 2. Deploy to all hosts:
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml
+   ./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml
    ```
 
 3. If key should be in golden image (CI keys only), regenerate user-data and rebuild:
@@ -157,7 +157,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/ansible_homelab_new -C "Ansible User - CachyOS"
 # 2. Update group_vars/all.yml with new public key
 
 # 3. Deploy to all hosts (adds new key, removes old due to exclusive: true)
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml
+./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml
 
 # 4. Verify new key works
 ssh -i ~/.ssh/ansible_homelab_new ansible@media-services.discus-moth.ts.net
@@ -178,7 +178,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/ansible_ci_new -C "CI Automation - Woodpecker"
 # 3. Add new private key to Woodpecker secret (ssh_ci_private_key)
 
 # 4. Deploy to all hosts
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml
+./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml
 
 # 5. Regenerate golden image user-data and rebuild
 mise run packer:generate-userdata
@@ -730,7 +730,7 @@ sudo journalctl -u sshd -n 100
 ssh-keygen -R hostname
 
 # Deploy new keys to all hosts (removes old keys due to exclusive: true)
-./bin/runtime/ansible-run.sh playbooks/core/00-configure-ssh-keys.yml
+./bin/runtime/ansible-run.sh playbooks/system/ssh-keys.yml
 
 # If CI key compromised, regenerate golden image
 mise run packer:generate-userdata

@@ -14,7 +14,7 @@ multiplayer sessions.
 - **Deployment**: Native systemd user service with SteamCMD
 - **Install Path**: `~/SatisfactoryDedicatedServer/`
 - **Save Path**: `~/.config/Epic/FactoryGame/Saved/SaveGames/`
-- **Playbook**: [`playbooks/core/deploy-satisfactory.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/deploy-satisfactory.yml)
+- **Playbook**: [`playbooks/services/satisfactory.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/satisfactory.yml)
 
 ## Access
 
@@ -27,7 +27,7 @@ multiplayer sessions.
 
 ```bash
 # Deploy Satisfactory server
-./bin/runtime/ansible-run.sh playbooks/core/deploy-satisfactory.yml
+./bin/runtime/ansible-run.sh playbooks/services/satisfactory.yml
 ```
 
 The playbook:

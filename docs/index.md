@@ -17,7 +17,7 @@ Step-by-step deployment guides for the infrastructure:
 - **[Initial Setup](deployment/initial-setup.md)** - Bootstrap script, Ansible vault, SSH keys
 - **[Phase-Based Deployment](deployment/phase-based-deployment.md)** - Complete deployment workflow guide
 - **[Phase 1: Infrastructure](deployment/phase1-infrastructure.md)** - VM provisioning on Proxmox
-- **[Phase 2: Networking](deployment/phase2-networking.md)** - NAS + Tailscale configuration
+- **[Phase 2: Bootstrap](deployment/phase2-bootstrap.md)** - NAS + Tailscale configuration
 - **[Phase 3: Services](deployment/phase3-services.md)** - Media services and download clients
 - **[Phase 4: Post-Deployment](deployment/phase4-post-deployment.md)** - Firewall and auto-updates
 - **[Phase 5: Monitoring](deployment/phase5-monitoring.md)** - Prometheus/Grafana/Uptime Kuma (optional)
@@ -161,15 +161,15 @@ Detailed reference documentation:
 │   ├── main.yml                      # Complete deployment (all phases)
 │   ├── phases/                       # Phase-based orchestration
 │   │   ├── phase1-infrastructure.yml
-│   │   ├── phase2-networking.yml
+│   │   ├── phase2-bootstrap.yml
 │   │   ├── phase3-services.yml
 │   │   ├── phase4-post-deployment.yml
 │   │   └── phase5-monitoring.yml
-│   ├── core/                         # Individual role playbooks (01-14, 15-17)
-│   │   ├── 01-provision-vms.yml
-│   │   ├── 02-configure-nas-role.yml
-│   │   ├── 03-configure-tailscale-role.yml
-│   │   └── ...
+│   ├── system/                       # Cross-cutting VM configuration
+│   ├── infrastructure/               # Provisioning and storage
+│   ├── networking/                   # VPN, DNS, storage mounts
+│   ├── services/                     # Application deployments
+│   ├── monitoring/                   # Observability stack
 │   └── utility/                      # One-off utilities
 ├── roles/                            # Ansible roles (reusable)
 │   ├── podman_app/                   # Quadlet container deployment

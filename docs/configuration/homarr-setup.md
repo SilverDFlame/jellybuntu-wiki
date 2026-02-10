@@ -12,7 +12,7 @@ service status monitoring, integrations with popular applications, and a clean i
 - **Port**: 7575
 - **Deployment**: Rootless Podman with Quadlet
 - **Config Path**: `~/.config/homarr/`
-- **Playbook**: [`playbooks/core/deploy-media-services.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/deploy-media-services.yml)
+- **Playbook**: [`playbooks/services/media-services.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/media-services.yml)
 
 ## Access
 
@@ -25,10 +25,10 @@ service status monitoring, integrations with popular applications, and a clean i
 
 ```bash
 # Deploy all media services including Homarr
-./bin/runtime/ansible-run.sh playbooks/core/deploy-media-services.yml
+./bin/runtime/ansible-run.sh playbooks/services/media-services.yml
 
 # Or deploy Homarr specifically
-./bin/runtime/ansible-run.sh playbooks/core/deploy-media-services.yml --tags homarr
+./bin/runtime/ansible-run.sh playbooks/services/media-services.yml --tags homarr
 ```
 
 ### Quadlet Configuration

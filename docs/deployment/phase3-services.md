@@ -344,13 +344,13 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 
 **Files**:
 
-- [`playbooks/core/04-configure-home-assistant-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/04-configure-home-assistant-role.yml)
-- [`playbooks/core/05-configure-satisfactory-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/05-configure-satisfactory-role.yml)
-- [`playbooks/core/06-configure-media-services-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/06-configure-media-services-role.yml)
-- [`playbooks/core/07-configure-download-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/07-configure-download-clients-role.yml)
-- [`playbooks/core/10-configure-nfs-clients-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/10-configure-nfs-clients-role.yml)
-- [`playbooks/core/11-configure-jellyfin-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/11-configure-jellyfin-role.yml)
-- [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml) -
+- [`playbooks/services/home-assistant.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/home-assistant.yml)
+- [`playbooks/services/satisfactory.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/satisfactory.yml)
+- [`playbooks/services/media-services.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/media-services.yml)
+- [`playbooks/services/download-clients.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/download-clients.yml)
+- [`playbooks/networking/nfs-clients.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/networking/nfs-clients.yml)
+- [`playbooks/services/jellyfin.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin.yml)
+- [`playbooks/services/jellyfin-config.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin-config.yml) -
   Post-wizard API configuration (run after initial setup)
 
 **Roles**:
@@ -421,7 +421,7 @@ After Phase 3, you still need to manually:
 4. Add indexers to Prowlarr
 5. Run Phase 4 for Recyclarr and security hardening
 6. Complete Jellyfin initial wizard, then run
-   [`playbooks/core/23-configure-jellyfin-config-role.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/23-configure-jellyfin-config-role.yml)
+   [`playbooks/services/jellyfin-config.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin-config.yml)
    to automate remaining Jellyfin configuration (libraries, encoding, plugins)
 
 See [post-deployment.md](post-deployment.md) for manual configuration steps.
@@ -441,10 +441,10 @@ To re-run specific service:
 
 ```bash
 # Re-deploy just media services
-./bin/runtime/ansible-run.sh playbooks/core/06-configure-media-services-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/media-services.yml
 
 # Re-configure just qBittorrent
-./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
 ```
 
 ## Success Criteria

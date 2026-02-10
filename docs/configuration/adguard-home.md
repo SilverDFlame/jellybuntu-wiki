@@ -809,7 +809,7 @@ Not currently enabled, but can be configured:
 - [DNS Troubleshooting Guide](../troubleshooting/dns.md) - Common DNS issues and diagnostics
 - [Service Endpoints](service-endpoints.md) - All service URLs and IPs
 - [Network Configuration](networking.md) - Network architecture and firewall rules
-- [Phase 2 Deployment](../deployment/phase2-networking.md) - How AdGuard Home was deployed
+- [Phase 2 Deployment](../deployment/phase2-bootstrap.md) - How AdGuard Home was deployed
 
 ---
 

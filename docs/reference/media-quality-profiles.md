@@ -32,10 +32,10 @@ The Trash Guides folder structure is automatically configured during Phase 2 (Bt
 
 ```bash
 # Phase 2: Creates folder structure on Btrfs NAS
-./bin/runtime/ansible-run.sh playbooks/main-phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/main-phase2-bootstrap.yml
 
 # Phase 3: Mounts NFS and deploys services
-./bin/runtime/ansible-run.sh playbooks/main-phase3-services.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
 ```
 
 No manual folder structure configuration is needed.
@@ -287,7 +287,7 @@ Save and exit (`:wq` in vim).
 Or run as part of Phase 3:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/main-phase3-services.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
 ```
 
 This playbook will:

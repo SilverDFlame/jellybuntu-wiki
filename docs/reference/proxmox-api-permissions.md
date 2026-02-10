@@ -214,7 +214,7 @@ To switch from root@pam to ansible@pve:
 5. **Run a playbook test**:
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/01-provision-vms.yml --check
+   ./bin/runtime/ansible-run.sh playbooks/infrastructure/provision-vms.yml --check
    ```
 
 ## Security Best Practices

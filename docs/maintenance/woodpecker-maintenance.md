@@ -503,7 +503,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@automation.discus-moth.ts.net \
 **3. Update version in playbook**:
 
 ```bash
-nano playbooks/core/17-configure-woodpecker-role.yml
+nano playbooks/services/woodpecker-ci.yml
 
 # Update image tags:
 containers:
@@ -516,7 +516,7 @@ containers:
 **4. Re-deploy**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/17-configure-woodpecker-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/woodpecker-ci.yml
 ```
 
 **5. Verify services**:

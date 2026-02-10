@@ -110,7 +110,7 @@ If storage is growing too fast:
 
 ```bash
 # Edit monitoring playbook
-nano playbooks/core/18-configure-monitoring-role.yml
+nano playbooks/monitoring/stack.yml
 
 # Find prometheus container environment and modify:
 environment:
@@ -123,7 +123,7 @@ environment:
 **2. Re-deploy Prometheus**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/18-configure-monitoring-role.yml --tags prometheus
+./bin/runtime/ansible-run.sh playbooks/monitoring/stack.yml --tags prometheus
 ```
 
 **3. Verify new settings**:
@@ -214,7 +214,7 @@ Alert rules are defined in Prometheus configuration files deployed via the monit
 
 ```bash
 # Edit alert rules
-nano playbooks/core/18-configure-monitoring-role.yml
+nano playbooks/monitoring/stack.yml
 
 # Add alert rule in prometheus_config:
 groups:
@@ -229,7 +229,7 @@ groups:
           summary: "Disk usage above 80% on {{ $labels.instance }}"
 
 # Re-deploy
-./bin/runtime/ansible-run.sh playbooks/core/18-configure-monitoring-role.yml
+./bin/runtime/ansible-run.sh playbooks/monitoring/stack.yml
 ```
 
 ## Grafana Maintenance
@@ -321,14 +321,14 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
 
 ```bash
 # Edit monitoring playbook to add plugin
-nano playbooks/core/18-configure-monitoring-role.yml
+nano playbooks/monitoring/stack.yml
 
 # Add to grafana environment:
 environment:
   GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource"
 
 # Re-deploy
-./bin/runtime/ansible-run.sh playbooks/core/18-configure-monitoring-role.yml
+./bin/runtime/ansible-run.sh playbooks/monitoring/stack.yml
 ```
 
 ### User and Access Management
@@ -559,7 +559,7 @@ curl -s https://api.github.com/repos/grafana/grafana/releases/latest | grep tag_
 **2. Update version in playbook**:
 
 ```bash
-nano playbooks/core/18-configure-monitoring-role.yml
+nano playbooks/monitoring/stack.yml
 
 # Update image tags:
 containers:
@@ -578,7 +578,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
 **4. Re-deploy**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/18-configure-monitoring-role.yml
+./bin/runtime/ansible-run.sh playbooks/monitoring/stack.yml
 ```
 
 **5. Verify services**:

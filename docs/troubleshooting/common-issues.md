@@ -357,7 +357,7 @@ sops -d group_vars/all.sops.yaml
    - Re-run failed playbook
 
    ```bash
-   ./bin/runtime/ansible-run.sh playbooks/core/PLAYBOOK.yml
+   ./bin/runtime/ansible-run.sh playbooks/<category>/<playbook>.yml
    ```
 
 3. **Secrets file issues**:
@@ -475,7 +475,7 @@ systemctl --user start sonarr radarr prowlarr jellyseerr
 
 ```bash
 # Most playbooks are idempotent
-./bin/runtime/ansible-run.sh playbooks/core/RELEVANT_PLAYBOOK.yml
+./bin/runtime/ansible-run.sh playbooks/<category>/<playbook>.yml
 ```
 
 ### Check Documentation

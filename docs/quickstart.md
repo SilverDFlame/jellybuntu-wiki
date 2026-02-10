@@ -141,7 +141,7 @@ Edit [`playbooks/vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main
 ./bin/runtime/ansible-run.sh playbooks/phases/phase1-infrastructure.yml
 
 # Phase 2: Configure NAS + Tailscale (4 min)
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 
 # Phase 3: Deploy Services (8 min)
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
@@ -196,7 +196,7 @@ storage at `/mnt/data` with the following structure:
 - `/mnt/data/media/movies` - Movies
 - `/mnt/data/downloads` - Download staging area
 
-See [Phase 2: Networking Guide](deployment/phase2-networking.md) for NAS and NFS configuration details.
+See [Phase 2: Bootstrap Guide](deployment/phase2-bootstrap.md) for NAS and NFS configuration details.
 
 ## Troubleshooting
 

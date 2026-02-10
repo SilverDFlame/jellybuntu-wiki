@@ -76,7 +76,7 @@ export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys-new.txt
 sops -d group_vars/all.sops.yaml | head -10
 
 # Run Ansible to verify it works
-./bin/runtime/ansible-run.sh --check playbooks/core/00-configure-ssh-keys.yml
+./bin/runtime/ansible-run.sh --check playbooks/system/ssh-keys.yml
 ```
 
 ### Step 5: Replace Old Key
@@ -157,10 +157,10 @@ After changing secrets, redeploy to apply new credentials:
 
 ```bash
 # Update qBittorrent password
-./bin/runtime/ansible-run.sh playbooks/core/07-configure-download-clients-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
 
 # Update Recyclarr with new API keys
-./bin/runtime/ansible-run.sh playbooks/core/09-configure-recyclarr-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/recyclarr.yml
 ```
 
 ### Step 10: Audit and Document
@@ -185,7 +185,7 @@ sops -d group_vars/all.sops.yaml | head -5
 cat .sops.yaml
 
 # Test Ansible integration
-./bin/runtime/ansible-run.sh --check playbooks/core/00-configure-ssh-keys.yml
+./bin/runtime/ansible-run.sh --check playbooks/system/ssh-keys.yml
 ```
 
 ## Troubleshooting

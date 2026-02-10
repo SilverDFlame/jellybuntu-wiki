@@ -12,7 +12,7 @@ create custom dashboards, and build powerful automations.
 - **Port**: 8123
 - **Deployment**: Rootless Podman with Quadlet
 - **Config Path**: `~/.config/homeassistant/`
-- **Playbook**: [`playbooks/core/deploy-home-assistant.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/core/deploy-home-assistant.yml)
+- **Playbook**: [`playbooks/services/home-assistant.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/home-assistant.yml)
 
 ## Access
 
@@ -25,7 +25,7 @@ create custom dashboards, and build powerful automations.
 
 ```bash
 # Deploy Home Assistant
-./bin/runtime/ansible-run.sh playbooks/core/deploy-home-assistant.yml
+./bin/runtime/ansible-run.sh playbooks/services/home-assistant.yml
 ```
 
 ### Quadlet Configuration

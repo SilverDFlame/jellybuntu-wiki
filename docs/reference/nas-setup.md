@@ -77,16 +77,16 @@ Network:      192.168.0.0/24 + Tailscale (100.64.0.0/10)
 cd /home/olieran/coding/mirrors/jellybuntu
 
 # 1. Provision NAS VM (via cloud-init)
-./bin/runtime/ansible-run.sh playbooks/core/01-provision-vms.yml
+./bin/runtime/ansible-run.sh playbooks/infrastructure/provision-vms.yml
 
 # 2. Configure NAS storage and services
-./bin/runtime/ansible-run.sh playbooks/core/02-configure-nas-role.yml
+./bin/runtime/ansible-run.sh playbooks/infrastructure/nas.yml
 
 # 3. Configure Tailscale VPN
-./bin/runtime/ansible-run.sh playbooks/core/03-configure-tailscale-role.yml
+./bin/runtime/ansible-run.sh playbooks/networking/tailscale.yml
 
 # 4. Configure NFS clients
-./bin/runtime/ansible-run.sh playbooks/core/10-configure-nfs-clients-role.yml
+./bin/runtime/ansible-run.sh playbooks/networking/nfs-clients.yml
 ```
 
 ### What Gets Configured

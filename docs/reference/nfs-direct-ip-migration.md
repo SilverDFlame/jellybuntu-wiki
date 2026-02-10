@@ -123,7 +123,7 @@ Changes made to:
 ### 2. Apply NFS Changes
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/core/09-configure-nfs-clients-role.yml
+./bin/runtime/ansible-run.sh playbooks/networking/nfs-clients.yml
 ```
 
 ### 3. Remove Tailscale Dependencies
@@ -163,7 +163,7 @@ sudo mount -t nfs nas.discus-moth.ts.net:/mnt/storage/data /mnt/data \
 
 # Full configuration rollback
 git checkout main -- group_vars/all.yml host_vars/lancache.yml
-./bin/runtime/ansible-run.sh playbooks/core/09-configure-nfs-clients-role.yml
+./bin/runtime/ansible-run.sh playbooks/networking/nfs-clients.yml
 # Re-apply Tailscale dependency fix from archive
 ./bin/runtime/ansible-run.sh playbooks/archive/utility/fix-nfs-tailscale-dependency.yml
 ```

@@ -40,7 +40,7 @@ To update a LinuxServer container:
 podman pull lscr.io/linuxserver/sonarr:latest
 
 # Recreate container (via Ansible)
-./bin/runtime/ansible-run.sh playbooks/core/06-configure-media-services-role.yml
+./bin/runtime/ansible-run.sh playbooks/services/media-services.yml
 ```
 
 ## Official/Upstream Images

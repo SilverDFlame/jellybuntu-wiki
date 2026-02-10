@@ -44,7 +44,7 @@ logical separation of concerns. Each phase can be run independently and has clea
 
 ---
 
-### Phase 2: Networking Configuration (4-6 minutes)
+### Phase 2: Bootstrap Configuration (4-6 minutes)
 
 **Purpose**: Configure storage infrastructure and VPN mesh network
 
@@ -58,7 +58,7 @@ logical separation of concerns. Each phase can be run independently and has clea
 **Command**:
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 ```
 
 **Success Criteria**:
@@ -68,7 +68,7 @@ logical separation of concerns. Each phase can be run independently and has clea
 - All VMs connected to Tailscale
 - VMs accessible via Tailscale hostnames
 
-**Detailed Guide**: [Phase 2: Networking](phase2-networking.md)
+**Detailed Guide**: [Phase 2: Bootstrap](phase2-bootstrap.md)
 
 ---
 
@@ -171,8 +171,8 @@ See [post-deployment.md](post-deployment.md) for detailed steps.
 # Phase 1: Infrastructure
 ./bin/runtime/ansible-run.sh playbooks/phases/phase1-infrastructure.yml
 
-# Phase 2: Networking
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+# Phase 2: Bootstrap
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 
 # Phase 3: Services
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
@@ -230,7 +230,7 @@ See [Phase 1 Guide](phase1-infrastructure.md#troubleshooting)
 - **NFS exports fail**: Verify NFS server installed, firewall rules
 - **Tailscale fails**: Check API key, key expiration, network access
 
-See [Phase 2 Guide](phase2-networking.md#troubleshooting)
+See [Phase 2 Guide](phase2-bootstrap.md#troubleshooting)
 
 ### Phase 3 Issues
 
@@ -287,7 +287,7 @@ You can re-run any phase independently:
 
 ```bash
 # Re-run just Phase 2 (e.g., after changing NAS configuration)
-./bin/runtime/ansible-run.sh playbooks/phases/phase2-networking.yml
+./bin/runtime/ansible-run.sh playbooks/phases/phase2-bootstrap.yml
 
 # Re-run just Phase 3 (e.g., after adding a new service)
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
