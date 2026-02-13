@@ -2,7 +2,7 @@
 
 Troubleshooting guide for Unpackerr archive extraction issues.
 
-> **IMPORTANT**: Unpackerr runs as a **rootless Podman container with Quadlet** on Download Clients VM (192.168.0.14).
+> **IMPORTANT**: Unpackerr runs as a **rootless Podman container with Quadlet** on Download Clients VM (192.168.30.14).
 Use `systemctl --user` and `journalctl --user` commands, NOT `docker` commands.
 
 ## Quick Checks

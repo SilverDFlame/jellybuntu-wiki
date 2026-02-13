@@ -45,7 +45,7 @@ while keeping services accessible via Tailscale.
 Internet
   |
   └─> Tailscale Network (unchanged)
-      └─> download-clients.discus-moth.ts.net (192.168.0.14)
+      └─> download-clients.discus-moth.ts.net (192.168.30.14)
             ├─> Gluetun VPN Container
             │     └─> qBittorrent (network_mode: "service:gluetun")
             │           └─> Web UI: Port 8080
@@ -355,7 +355,7 @@ docker exec gluetun cat /gluetun/firewall-config.json
 
 ```json
 {
-  "outbound_subnets": ["192.168.0.0/24", "100.64.0.0/10"]
+  "outbound_subnets": ["192.168.30.0/24", "100.64.0.0/10"]
 }
 ```
 
@@ -365,7 +365,7 @@ docker exec gluetun cat /gluetun/firewall-config.json
 
 The `FIREWALL_OUTBOUND_SUBNETS` in `gluetun.yml` should include:
 
-- `192.168.0.0/24` (local network)
+- `192.168.30.0/24` (local network)
 - `100.64.0.0/10` (Tailscale CGNAT range)
 
 **Check Gluetun port mappings:**
@@ -389,7 +389,7 @@ cat /opt/download-clients/services/sabnzbd/sabnzbd.ini | grep host_whitelist
 **Expected:**
 
 ```text
-host_whitelist = download-clients.discus-moth.ts.net, 192.168.0.14, localhost, 127.0.0.1, sabnzbd
+host_whitelist = download-clients.discus-moth.ts.net, 192.168.30.14, localhost, 127.0.0.1, sabnzbd
 ```
 
 **If missing:** Re-run the download-clients playbook.

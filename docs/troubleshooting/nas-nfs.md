@@ -5,7 +5,7 @@ Troubleshooting guide for Btrfs NAS and NFS mount issues.
 ## Quick Checks
 
 ```bash
-# On NAS (192.168.0.15 / nas.discus-moth.ts.net)
+# On NAS (192.168.30.15 / nas.discus-moth.ts.net)
 # Check Btrfs filesystem
 sudo btrfs filesystem show /mnt/storage
 sudo btrfs filesystem usage /mnt/storage
@@ -37,10 +37,10 @@ touch /mnt/data/test.txt && rm /mnt/data/test.txt
 ```bash
 # Test connectivity
 ping nas.discus-moth.ts.net
-ping 192.168.0.15
+ping 192.168.30.15
 
 # Check if SSH port is open
-nc -zv 192.168.0.15 22
+nc -zv 192.168.30.15 22
 
 # From Proxmox, check VM is running
 qm status 300
@@ -259,7 +259,7 @@ showmount -e localhost
    cat /etc/exports
 
    # Should contain:
-   # /mnt/storage/data 192.168.0.0/24(rw,sync,no_subtree_check,no_root_squash)
+   # /mnt/storage/data 192.168.30.0/24(rw,sync,no_subtree_check,no_root_squash)
    # /mnt/storage/data 100.64.0.0/10(rw,sync,no_subtree_check,no_root_squash)
 
    # Reload exports
@@ -273,7 +273,7 @@ showmount -e localhost
    sudo ufw status
 
    # Should allow NFS from trusted networks
-   sudo ufw allow from 192.168.0.0/24 to any port 2049
+   sudo ufw allow from 192.168.30.0/24 to any port 2049
    sudo ufw allow from 100.64.0.0/10 to any port 2049
    ```
 
@@ -291,16 +291,16 @@ showmount -e localhost
 
 ```bash
 # Test connectivity to NAS (use direct IP for NFS)
-ping 192.168.0.15
+ping 192.168.30.15
 
 # Check if NFS server is accessible
-showmount -e 192.168.0.15
+showmount -e 192.168.30.15
 
 # Test NFS port
-nc -zv 192.168.0.15 2049
+nc -zv 192.168.30.15 2049
 
 # Check mount command (direct IP for reliability)
-sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/data -vvv
+sudo mount -t nfs 192.168.30.15:/mnt/storage/data /mnt/data -vvv
 ```
 
 **Solutions**:
@@ -308,10 +308,10 @@ sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/data -vvv
 1. **NFS server not reachable**:
    - Verify NAS VM is running
    - Check network connectivity
-   - Use direct IP: `192.168.0.15:/mnt/storage/data` (recommended for reliability)
+   - Use direct IP: `192.168.30.15:/mnt/storage/data` (recommended for reliability)
 
 2. **Wrong mount path**:
-   - Should be: `192.168.0.15:/mnt/storage/data`
+   - Should be: `192.168.30.15:/mnt/storage/data`
    - NOT: `/mnt/storage` or `/data`
 
 3. **Permissions denied**:
@@ -322,7 +322,7 @@ sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/data -vvv
 
    ```bash
    sudo mkdir -p /mnt/data
-   sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/data
+   sudo mount -t nfs 192.168.30.15:/mnt/storage/data /mnt/data
    ```
 
 ### 2. NFS Mount Read-Only or Permission Denied
@@ -401,7 +401,7 @@ sudo mount -a
 
    ```bash
    # Add to /etc/fstab (use direct IP for reliability)
-   192.168.0.15:/mnt/storage/data /mnt/data nfs defaults,_netdev 0 0
+   192.168.30.15:/mnt/storage/data /mnt/data nfs defaults,_netdev 0 0
 
    # Test
    sudo mount -a
@@ -432,7 +432,7 @@ time dd if=/dev/zero of=/mnt/data/testfile bs=1M count=100
 nfsstat -m
 
 # Check network
-ping -c 10 192.168.0.15
+ping -c 10 192.168.30.15
 ```
 
 **Solutions**:
@@ -505,7 +505,7 @@ sudo rpcdebug -m nfs -s all
 sudo rpcdebug -m rpc -s all
 
 # Mount with verbose logging (direct IP for reliability)
-sudo mount -t nfs -vvv 192.168.0.15:/mnt/storage/data /mnt/data
+sudo mount -t nfs -vvv 192.168.30.15:/mnt/storage/data /mnt/data
 
 # Check kernel logs
 dmesg | grep -i nfs | tail -20

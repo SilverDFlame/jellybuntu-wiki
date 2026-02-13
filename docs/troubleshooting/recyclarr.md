@@ -3,12 +3,12 @@
 Recyclarr automatically syncs quality profiles and custom formats from TRaSH Guides to Sonarr and Radarr, ensuring
 optimal media quality configurations.
 
-> **IMPORTANT**: Recyclarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> **IMPORTANT**: Recyclarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.30.13).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: media-services (192.168.0.13)
+- **VM**: media-services (192.168.30.13)
 - **Container**: recyclarr
 - **Config Path**: `~/.config/recyclarr/`
 - **Deployment**: Rootless Podman with Quadlet

@@ -4,11 +4,11 @@ UniFi Network Controller provides centralized management for Ubiquiti UniFi netw
 switches, and gateways.
 
 > **IMPORTANT**: UniFi Controller runs as **Quadlet/Podman containers** (rootless) on the unifi-controller VM
-> (192.168.0.19). Use `systemctl --user` commands for service management.
+> (192.168.10.19). Use `systemctl --user` commands for service management.
 
 ## Overview
 
-- **VM**: unifi-controller (VMID 800, 192.168.0.19)
+- **VM**: unifi-controller (VMID 800, 192.168.10.19)
 - **Ports**: 8443 (Web UI), 8080 (Device Inform), 3478 (STUN), 10001 (Discovery)
 - **Deployment**: Quadlet/Podman with MongoDB 7.0
 - **Playbook**: [`playbooks/services/unifi-controller.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/unifi-controller.yml)
@@ -16,8 +16,8 @@ switches, and gateways.
 ## Access
 
 - **Web UI**: https://unifi-controller.discus-moth.ts.net:8443
-- **Local Network**: https://192.168.0.19:8443
-- **Device Inform URL**: http://192.168.0.19:8080/inform
+- **Local Network**: https://192.168.10.19:8443
+- **Device Inform URL**: http://192.168.10.19:8080/inform
 
 ## Port Requirements
 
@@ -89,7 +89,7 @@ Located at `~/.config/containers/systemd/`:
 ### 2. Configure Controller Settings
 
 1. Go to **Settings → System**
-2. Set **Controller Hostname/IP**: `192.168.0.19`
+2. Set **Controller Hostname/IP**: `192.168.10.19`
 3. Enable **Override Inform Host** if using Tailscale access
 
 ### 3. Set Inform URL for Device Adoption
@@ -97,7 +97,7 @@ Located at `~/.config/containers/systemd/`:
 For devices to find the controller:
 
 1. Go to **Settings → System → Advanced**
-2. Set **Inform Host**: `192.168.0.19`
+2. Set **Inform Host**: `192.168.10.19`
 3. Port should remain `8080`
 
 ## Device Adoption
@@ -120,7 +120,7 @@ For devices not automatically discovered:
 ssh ubnt@<device-ip>
 
 # Set inform URL
-set-inform http://192.168.0.19:8080/inform
+set-inform http://192.168.10.19:8080/inform
 ```
 
 ### Adoption from Another Controller
@@ -128,7 +128,7 @@ set-inform http://192.168.0.19:8080/inform
 1. SSH to device and run:
 
    ```bash
-   set-inform http://192.168.0.19:8080/inform
+   set-inform http://192.168.10.19:8080/inform
    ```
 
 2. Device will appear in new controller

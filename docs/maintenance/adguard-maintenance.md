@@ -21,7 +21,7 @@ AdGuard Home is a network-wide DNS ad blocker and privacy protection service run
 
 **Deployment Details**:
 
-- **Host**: NAS VM (192.168.0.15 / nas.discus-moth.ts.net)
+- **Host**: NAS VM (192.168.30.15 / nas.discus-moth.ts.net)
 - **Container**: Rootless Podman with Quadlet
 - **Data Location**: `/opt/adguard/`
   - Configuration: `/opt/adguard/conf/AdGuardHome.yaml`

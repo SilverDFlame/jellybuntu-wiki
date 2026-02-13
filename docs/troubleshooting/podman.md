@@ -348,7 +348,7 @@ podman exec sonarr ping -c 3 google.com
 
    ```bash
    # Add DNS to .container file
-   # PodmanArgs=--dns 192.168.0.15
+   # PodmanArgs=--dns 192.168.30.15
    ```
 
 3. **Use container names for inter-container communication**:

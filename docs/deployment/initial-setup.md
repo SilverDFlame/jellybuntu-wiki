@@ -74,15 +74,15 @@ iso_storage: "your-iso-storage"     # Default: local
 **Network Bridge**:
 
 - Bridge `vmbr0` must exist and be connected to your LAN
-- VMs will use static IPs in the `192.168.0.10-17` range by default
+- VMs will use static IPs across VLAN subnets (192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24)
 - Verify with: `ip addr show vmbr0`
 
 If using a different bridge or IP range, update [`playbooks/vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/vars.yml):
 
 ```yaml
 vm_network_bridge: "vmbr0"          # Your bridge name
-vm_network_subnet: "192.168.0.0/24" # Your subnet
-vm_network_gateway: "192.168.0.1"   # Your gateway
+vm_network_subnet: "192.168.10.0/24" # Your management VLAN subnet
+vm_network_gateway: "192.168.10.1"   # Your management VLAN gateway
 ```
 
 **VM ID Range**:
@@ -422,17 +422,17 @@ Check [`playbooks/vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/mai
 
 ```yaml
 # Network configuration
-vm_network_gateway: "192.168.0.1"
+vm_network_gateway: "192.168.10.1"
 vm_network_dns:
   - "9.9.9.9"
-  - "192.168.0.1"
+  - "192.168.10.1"
 ```
 
 **Update if needed**:
 
 - Gateway address
 - DNS servers
-- Subnet (default: 192.168.0.0/24)
+- Subnet (default: 192.168.10.0/24 management VLAN)
 
 ### Step 3: Review Inventory
 
@@ -767,7 +767,7 @@ After Deployment Phase 4, SSH is accessible via both Tailscale and local network
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # Via local network (fallback for Tailscale outages):
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.13
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.13
 ```
 
 **Verification**:

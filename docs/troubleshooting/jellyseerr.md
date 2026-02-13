@@ -2,7 +2,7 @@
 
 Common issues and solutions for Jellyseerr request management.
 
-> **IMPORTANT**: Jellyseerr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> **IMPORTANT**: Jellyseerr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.30.13).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Quick Diagnostics
@@ -90,7 +90,7 @@ sudo ufw status | grep 5055
 # Test Jellyfin connectivity from media-services VM
 curl http://jellyfin.discus-moth.ts.net:8096/health
 # or
-curl http://192.168.0.12:8096/health
+curl http://192.168.30.12:8096/health
 
 # Should return: {"status":"Healthy"}
 ```
@@ -98,7 +98,7 @@ curl http://192.168.0.12:8096/health
 **Solutions**:
 
 1. **Wrong Jellyfin URL**:
-   - Use internal network address: `http://192.168.0.12:8096`
+   - Use internal network address: `http://192.168.30.12:8096`
    - Or Tailscale hostname: `http://jellyfin.discus-moth.ts.net:8096`
    - **Don't use** `localhost` or `127.0.0.1`
 
@@ -118,7 +118,7 @@ curl http://192.168.0.12:8096/health
    ```bash
    # From media-services VM, ping Jellyfin
    ping jellyfin.discus-moth.ts.net
-   ping 192.168.0.12
+   ping 192.168.30.12
    ```
 
 4. **Jellyfin API authentication**:
@@ -138,11 +138,11 @@ curl http://192.168.0.12:8096/health
 ```bash
 # Test Sonarr API
 curl -H "X-Api-Key: YOUR_SONARR_API_KEY" \
-  http://192.168.0.13:8989/api/v3/system/status
+  http://192.168.30.13:8989/api/v3/system/status
 
 # Test Radarr API
 curl -H "X-Api-Key: YOUR_RADARR_API_KEY" \
-  http://192.168.0.13:7878/api/v3/system/status
+  http://192.168.30.13:7878/api/v3/system/status
 ```
 
 **Solutions**:
@@ -154,8 +154,8 @@ curl -H "X-Api-Key: YOUR_RADARR_API_KEY" \
    - Copy/paste carefully (no extra spaces)
 
 2. **Wrong URL**:
-   - Use: `http://192.168.0.13:8989` for Sonarr
-   - Use: `http://192.168.0.13:7878` for Radarr
+   - Use: `http://192.168.30.13:8989` for Sonarr
+   - Use: `http://192.168.30.13:7878` for Radarr
    - Or Tailscale: `http://media-services.discus-moth.ts.net:8989`
    - **Don't include** `/api` in the base URL
 

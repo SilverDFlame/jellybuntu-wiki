@@ -40,7 +40,7 @@ module "jellyfin" {
   cores     = 4
   memory    = 8192
   disk_size = "80G"
-  ip_address = "192.168.0.12"
+  ip_address = "192.168.30.12"
 }
 ```
 
@@ -55,7 +55,7 @@ module "satisfactory" {
   cpu_affinity = "2-3"  # Dedicate cores 2-3
   cores        = 2
   memory       = 6144
-  ip_address   = "192.168.0.11"
+  ip_address   = "192.168.40.11"
 }
 ```
 
@@ -73,7 +73,7 @@ module "nas" {
     { size = "500G", storage_pool = "local-zfs" }
   ]
   startup_order = 1  # Start first
-  ip_address    = "192.168.0.15"
+  ip_address    = "192.168.30.15"
 }
 ```
 

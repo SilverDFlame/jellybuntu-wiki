@@ -492,7 +492,7 @@ vault_radarr_api_key: "..."
 
 **Service Ports**:
 
-- ✅ Local network (192.168.0.0/24)
+- ✅ Own VLAN + Management VLAN (192.168.10.0/24)
 - ✅ Tailscale network
 - ❌ Public internet (except game servers)
 
@@ -523,7 +523,7 @@ sudo ufw status verbose
 **Add rule**:
 
 ```bash
-sudo ufw allow from 192.168.0.0/24 to any port 8080 proto tcp
+sudo ufw allow from 192.168.10.0/24 to any port 8080 proto tcp
 ```
 
 **Delete rule**:
@@ -787,6 +787,48 @@ mv ~/.config/sops/age/keys-new.txt ~/.config/sops/age/keys.txt
 5. Restore from backup if needed
 6. Implement additional controls
 
+## Security Hardening (Feb 2026)
+
+The following hardening improvements were applied across the infrastructure in February 2026.
+
+### Shell Injection Prevention
+
+- **Tailscale role**: Changed from `shell` module to `command` with `argv` parameter to prevent
+  shell injection via untrusted input
+- **Curl calls**: Switched to `--data-urlencode` to safely encode user-supplied values
+
+### Credential Leak Prevention
+
+- **`no_log: true`**: Added to all tasks that handle passwords, API keys, or tokens to prevent
+  credential exposure in Ansible output and logs
+
+### NFS Security
+
+- **Default changed**: NFS exports now default to `root_squash` instead of `no_root_squash`
+- **Explicit opt-in**: Only Lancache uses `no_root_squash` (required for its `chown` operations)
+- See [NAS Setup](../reference/nas-setup.md) for export configuration details
+
+### UniFi Port Restrictions
+
+- Ports 8080 (Device Inform), 3478 (STUN), and 10001 (Device Discovery) restricted to
+  `unifi_allowed_networks` instead of being open to all
+- Only networks with UniFi devices need access to these management ports
+
+### Temp File Safety
+
+- Five scripts migrated from hardcoded `/tmp/` paths to `mktemp` for safe temporary file creation
+- Prevents symlink attacks and race conditions in shared `/tmp/` directory
+
+### File Permission Tightening
+
+- `qbt_prefs.json`: Changed from 0644 to 0600 (contains credentials)
+- PIA port forwarding script: Changed from 0755 to 0700 (contains API logic)
+
+### Bootstrap Hardening
+
+- Credential cleanup trap added to `setup.sh` to remove sensitive files on exit or error
+- SSH arguments made array-safe to prevent word splitting vulnerabilities
+
 ## Security Resources
 
 ### Internal Documentation
@@ -821,8 +863,8 @@ mv ~/.config/sops/age/keys-new.txt ~/.config/sops/age/keys.txt
 
 > **Design Decision: LAN Fallback for SSH**
 >
-> SSH is intentionally allowed from both Tailscale (100.64.0.0/10) and the local network
-> (192.168.0.0/24). This dual-access pattern provides resilience during Tailscale outages
+> SSH is intentionally allowed from both Tailscale (100.64.0.0/10) and the Management VLAN
+> (192.168.10.0/24). This dual-access pattern provides resilience during Tailscale outages
 > or authentication failures. Without LAN fallback, a Tailscale service disruption would
 > completely lock out administrators from their own infrastructure. The security trade-off
 > is acceptable because the local network is already a trusted zone behind a home router.

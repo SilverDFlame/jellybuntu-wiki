@@ -3,24 +3,26 @@
 Byparr is a proxy service that bypasses Cloudflare and DDoS-GUARD protection, allowing Prowlarr to access indexers
 that would otherwise be blocked. It uses the Camoufox browser (Firefox-based) for challenge solving.
 
-> **IMPORTANT**: Byparr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> **IMPORTANT**: Byparr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.30.13).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: media-services (192.168.0.13)
+- **VM**: media-services (192.168.30.13)
 - **Port**: 8191
 - **Container**: byparr
-- **Image**: `ghcr.io/thephaseless/byparr:2.0.1` (pinned)
+- **Image**: `ghcr.io/thephaseless/byparr:2.1.0` (pinned)
 - **Browser**: Camoufox (Firefox-based)
 - **Purpose**: Bypass Cloudflare protection for torrent indexers
 - **Deployment**: Rootless Podman with Quadlet
-- **Resources**: 1.5GB memory limit / 768MB reservation
+- **Resources**: 1.5GB memory limit / 768MB reservation, PID limit 150
+- **Init**: `container_init: true` (tini for zombie reaping)
+- **Concurrency**: uvicorn limited to 3 workers
 
 ## Access
 
 - **Tailscale**: http://media-services.discus-moth.ts.net:8191
-- **Local Network**: http://192.168.0.13:8191
+- **Local Network**: http://192.168.30.13:8191
 
 ## Quick Diagnostics
 
@@ -432,6 +434,78 @@ If Byparr doesn't work:
    - Extract cookies
    - Manually add to Prowlarr indexer config
 
+## Resource Hardening
+
+Byparr includes several resource controls to prevent runaway processes:
+
+| Control | Value | Purpose |
+|---------|-------|---------|
+| PID Limit | 150 | Prevents fork bombs and runaway browser processes |
+| uvicorn Workers | 3 | Limits concurrent request handling |
+| `container_init` | true | Tini init process reaps zombie Camoufox children |
+| Memory Limit | 1.5GB | Hard cap prevents OOM impact on other services |
+
+### Camoufox Reaper
+
+A systemd timer automatically kills stale Camoufox browser processes that exceed 15 minutes:
+
+- **Timer**: Runs every 10 minutes
+- **Action**: Kills Camoufox processes older than 15 minutes
+- **Purpose**: Prevents browser processes from accumulating after failed challenge solves
+
+**Check reaper status**:
+
+```bash
+systemctl --user status camoufox-reaper.timer
+systemctl --user list-timers | grep camoufox
+```
+
+**Manual cleanup** (if stale processes accumulate):
+
+```bash
+# List Camoufox processes
+pgrep -af camoufox
+
+# Kill all Camoufox processes
+pkill -f camoufox
+
+# Restart Byparr
+systemctl --user restart byparr
+```
+
+### 7. Stale Camoufox Processes
+
+**Symptoms**:
+
+- High memory usage from multiple browser processes
+- Byparr becomes slow or unresponsive
+- `podman stats` shows growing memory usage
+
+**Diagnosis**:
+
+```bash
+# Check for stale processes inside the container
+podman exec byparr pgrep -af camoufox
+
+# Check process count
+podman exec byparr ps aux | wc -l
+```
+
+**Solutions**:
+
+1. **Reaper timer should handle this automatically** - verify it's running
+2. **Manual restart** if reaper isn't catching them:
+
+   ```bash
+   systemctl --user restart byparr
+   ```
+
+3. **Check PID limit** - if hitting limit, processes can't spawn:
+
+   ```bash
+   podman inspect byparr | grep -i pid
+   ```
+
 ## Update Byparr
 
 ```bash
@@ -439,7 +513,7 @@ If Byparr doesn't work:
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # Pull pinned image
-podman pull ghcr.io/thephaseless/byparr:2.0.1
+podman pull ghcr.io/thephaseless/byparr:2.1.0
 
 # Restart service
 systemctl --user restart byparr

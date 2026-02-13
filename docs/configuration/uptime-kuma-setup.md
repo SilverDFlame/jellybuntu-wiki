@@ -5,7 +5,7 @@ Jellybuntu infrastructure.
 
 ## Access
 
-- **URL**: http://monitoring.discus-moth.ts.net:3001 (or http://192.168.0.16:3001)
+- **URL**: http://monitoring.discus-moth.ts.net:3001 (or http://192.168.10.16:3001)
 - **First-time Setup**: Required on initial access
 - **Data Persistence**: SQLite database stored in `uptime_kuma_data` volume
 
@@ -53,7 +53,7 @@ Uptime Kuma supports multiple monitor types:
 
 Create monitors for all web services using these details:
 
-#### Media Services VM (192.168.0.13)
+#### Media Services VM (192.168.30.13)
 
 | Service    | Type    | URL/Host                                 | Port | Check Interval |
 |------------|---------|------------------------------------------|------|----------------|
@@ -65,7 +65,7 @@ Create monitors for all web services using these details:
 | Huntarr    | HTTP(s) | http://media-services.discus-moth.ts.net | 9705 | 60s            |
 | Homarr     | HTTP(s) | http://media-services.discus-moth.ts.net | 7575 | 60s            |
 
-#### Download Clients VM (192.168.0.14)
+#### Download Clients VM (192.168.30.14)
 
 | Service     | Type    | URL/Host                                   | Port | Check Interval |
 |-------------|---------|--------------------------------------------|------|----------------|

@@ -2,12 +2,12 @@
 
 Maintenance procedures for the Satisfactory dedicated game server.
 
-> **IMPORTANT**: Satisfactory runs as a **native systemd user service** on the satisfactory-server VM (192.168.0.11).
+> **IMPORTANT**: Satisfactory runs as a **native systemd user service** on the satisfactory-server VM (192.168.40.11).
 > Use `systemctl --user` commands. The server is NOT containerized.
 
 ## Overview
 
-- **VM**: satisfactory-server (VMID 200, 192.168.0.11)
+- **VM**: satisfactory-server (VMID 200, 192.168.40.11)
 - **Ports**: 7777 (Game), 15000 (Beacon), 15777 (Query) - All UDP
 - **Install Path**: `~/SatisfactoryDedicatedServer/`
 - **Save Path**: `~/.config/Epic/FactoryGame/Saved/SaveGames/`

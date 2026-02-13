@@ -2,12 +2,12 @@
 
 Maintenance procedures for the Jellyfin media server.
 
-> **IMPORTANT**: Jellyfin runs as a **native systemd service** on the Jellyfin VM (192.168.0.12).
+> **IMPORTANT**: Jellyfin runs as a **native systemd service** on the Jellyfin VM (192.168.30.12).
 > Use `sudo systemctl` commands, NOT `systemctl --user`. Jellyfin is NOT containerized.
 
 ## Overview
 
-- **VM**: jellyfin (VMID 400, 192.168.0.12)
+- **VM**: jellyfin (VMID 400, 192.168.30.12)
 - **Ports**: 8096 (HTTP), 8920 (HTTPS), 7359 (Discovery)
 - **Config Path**: `/etc/jellyfin/` and `/var/lib/jellyfin/`
 - **Media Path**: `/mnt/data/media/` (NFS mount)

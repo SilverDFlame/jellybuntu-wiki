@@ -20,7 +20,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **Home Assistant** (VMID 100)
   - Resources: 2 cores, 2GB RAM, 40GB disk
-  - IP: 192.168.0.10
+  - IP: 192.168.20.10 (IoT VLAN 20)
   - Stack: Rootless Podman with Quadlet
   - Priority: Medium (cpu_units: 1024)
 
@@ -28,16 +28,24 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **Satisfactory** (VMID 200)
   - Resources: 4 cores (pinned 4-7), 8GB RAM, 60GB disk
-  - IP: 192.168.0.11
+  - IP: 192.168.40.11 (Games VLAN 40)
   - Stack: SteamCMD + systemd service
   - Priority: High (cpu_units: 2048, dedicated cores)
   - Note: Cores 0-3 reserved for future Minecraft server
+
+- **Mumble** (VMID 201)
+  - Resources: 1 core, 1GB RAM, 32GB disk
+  - IP: 192.168.40.20 (Games VLAN 40)
+  - Stack: Rootless Podman with Quadlet
+  - Services: Mumble voice chat server (mumblevoip/mumble-server)
+  - Priority: Low (cpu_units: 512)
+  - Deployment: Phase 4 (optional)
 
 #### Storage Infrastructure
 
 - **NAS** (VMID 300)
   - Resources: 2 cores, 6GB RAM, 32GB OS disk + 3x 6TB passthrough (Btrfs RAID1)
-  - IP: 192.168.0.15
+  - IP: 192.168.30.15 (Media VLAN 30)
   - Stack: Btrfs RAID1 (~9TB usable), NFS server, AdGuard Home, Nexus Repository (Quadlet)
   - Services: NFS, AdGuard Home (DNS), Nexus Repository (container registry)
   - Priority: Medium (cpu_units: 1024)
@@ -47,7 +55,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **Jellyfin** (VMID 400)
   - Resources: 4 cores, 8GB RAM, 80GB disk + GTX 1080 GPU passthrough
-  - IP: 192.168.0.12
+  - IP: 192.168.30.12 (Media VLAN 30)
   - Stack: Native Jellyfin package + Tdarr (Quadlet)
   - Optimizations: NVENC hardware transcoding, RAM disk cache, CPU governor (performance)
   - Services: Jellyfin, Tdarr (media transcoding automation)
@@ -56,14 +64,14 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **Media Services Stack** (VMID 401)
   - Resources: 4 cores, 8GB RAM, 50GB disk
-  - IP: 192.168.0.13
+  - IP: 192.168.30.13 (Media VLAN 30)
   - Stack: Rootless Podman with Quadlet
   - Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Huntarr, Homarr, Byparr, Recyclarr
   - Priority: Medium (cpu_units: 1024)
 
 - **Download Clients** (VMID 402)
   - Resources: 4 cores, 6GB RAM, 60GB disk
-  - IP: 192.168.0.14
+  - IP: 192.168.30.14 (Media VLAN 30)
   - Stack: Rootless Podman with Quadlet
   - Services: qBittorrent, SABnzbd, Gluetun (VPN), Unpackerr
   - Priority: Medium (cpu_units: 1024)
@@ -73,7 +81,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **Monitoring** (VMID 500)
   - Resources: 2 cores, 4GB RAM, 64GB disk
-  - IP: 192.168.0.16
+  - IP: 192.168.10.16 (Management VLAN 10)
   - Stack: Rootless Podman with Quadlet
   - Services: Prometheus, Alertmanager, Grafana, SNMP Exporter, Blackbox Exporter
   - Priority: Medium (cpu_units: 1024)
@@ -85,7 +93,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **Woodpecker CI** (VMID 600)
   - Resources: 2 cores, 8GB RAM, 32GB disk
-  - IP: 192.168.0.17
+  - IP: 192.168.10.17 (Management VLAN 10)
   - Stack: Rootless Podman with Quadlet
   - Services: Woodpecker Server, Woodpecker Agent
   - Priority: Low (cpu_units: 512)
@@ -96,7 +104,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **Lancache** (VMID 700)
   - Resources: 2 cores, 4GB RAM, 32GB disk + NFS cache storage
-  - IP: 192.168.0.18
+  - IP: 192.168.40.18 (Games VLAN 40)
   - Stack: **Rootful Podman** with Quadlet (exception - see [Lancache Rootful Security](#lancache-rootful-security))
   - Services: lancache/monolithic (nginx-based game download cache)
   - Priority: Low (cpu_units: 512)
@@ -108,7 +116,7 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 
 - **UniFi Controller** (VMID 800)
   - Resources: 2 cores, 2GB RAM, 32GB disk
-  - IP: 192.168.0.19
+  - IP: 192.168.10.19 (Management VLAN 10)
   - Stack: Rootless Podman with Quadlet (MongoDB 7.0 + LinuxServer UniFi app)
   - Services: UniFi Network Application (AP and network device management)
   - Priority: Low (cpu_units: 512)
@@ -196,7 +204,7 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 
 1. **High (2048)**: Satisfactory (pinned), Jellyfin (GPU handles transcoding)
 2. **Medium (1024)**: Media Services, Download Clients, NAS, Monitoring, Home Assistant
-3. **Low (512)**: Woodpecker CI
+3. **Low (512)**: Woodpecker CI, Mumble, Lancache, UniFi Controller
 
 ### Storage Architecture
 
@@ -207,15 +215,21 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 
 ### Networking
 
-**Local Network**: 192.168.0.0/24
+**VLAN Architecture**: Segmented network via VLAN-aware bridge on Proxmox
 
-- Gateway: 192.168.0.1
-- DNS: AdGuard Home on NAS (192.168.0.15) via Tailscale custom nameserver
-- Bridge: vmbr0 on Proxmox
+| VLAN | Subnet | Purpose | Gateway |
+|------|--------|---------|---------|
+| VLAN 10 | 192.168.10.0/24 | Management | 192.168.10.1 |
+| VLAN 20 | 192.168.20.0/24 | IoT | 192.168.20.1 |
+| VLAN 30 | 192.168.30.0/24 | Media | 192.168.30.1 |
+| VLAN 40 | 192.168.40.0/24 | Games | 192.168.40.1 |
+
+- DNS: AdGuard Home on NAS (192.168.30.15) via Tailscale custom nameserver
+- Bridge: vmbr0 (VLAN-aware) on Proxmox
 
 **DNS Architecture**:
 
-- **Primary DNS**: AdGuard Home (NAS VM, 192.168.0.15)
+- **Primary DNS**: AdGuard Home (NAS VM, 192.168.30.15)
 - **Upstream Resolvers**:
   1. Tailscale MagicDNS (100.100.100.100) for `*.ts.net` domains
   2. Quad9 DoT (tls://dns.quad9.net) - encrypted DNS
@@ -234,7 +248,7 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 **Security**:
 
 - UFW firewall on all VMs
-- SSH accessible from Tailscale + local network (LAN fallback for outages)
+- SSH accessible from Tailscale + Management VLAN 10 (LAN fallback for outages)
 - Services accessible from both Tailscale and local network
 
 ### Podman Quadlet Architecture
@@ -311,6 +325,7 @@ unpackerr.container
 |------------------|------|--------|----------|---------|----------|-----------|
 | Home Assistant   | 100  | 2      | 2GB      | 40GB    | Medium   | 1024      |
 | Satisfactory     | 200  | 4*     | 8GB      | 60GB    | High     | 2048      |
+| Mumble           | 201  | 1      | 1GB      | 32GB    | Low      | 512       |
 | NAS              | 300  | 2      | 6GB      | 3x6TB** | Medium   | 1024      |
 | Jellyfin         | 400  | 4      | 8GB      | 80GB    | High     | 2048      |
 | Media Services   | 401  | 4      | 8GB      | 50GB    | Medium   | 1024      |
@@ -319,7 +334,7 @@ unpackerr.container
 | Woodpecker CI    | 600  | 2      | 8GB      | 32GB    | Low      | 512       |
 | Lancache         | 700  | 2      | 4GB      | 32GB*** | Low      | 512       |
 | UniFi Controller | 800  | 2      | 2GB      | 32GB    | Low      | 512       |
-| **Total**        |      | **28** | **56GB** |         |          |           |
+| **Total**        |      | **29** | **57GB** |         |          |           |
 
 *Satisfactory cores are pinned to physical cores 4-7 (was 2-3)
 **NAS has 3x 6TB drives in Btrfs RAID1 (~9TB usable)
@@ -345,7 +360,7 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 | GTX 1080 | Passthrough to Jellyfin VM (VMID 400) |
 | Usage | NVENC hardware transcoding for Jellyfin and Tdarr |
 
-**Monitoring VM (Phase 5) and Woodpecker CI (Phase C) are optional
+**Monitoring VM (Phase 5) and Woodpecker CI (Phase 4) are optional
 
 ## Design Decisions
 
@@ -384,49 +399,41 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 ┌──────────────────────────────────────────────────────────────────┐
 │ Proxmox Host (discus-moth.ts.net)                                │
 │ EPYC 7313P: 16 cores/32 threads, 128GB RAM                       │
+│ Bridge: vmbr0 (VLAN-aware)                                       │
 │                                                                  │
-│  ┌──────────────┐  ┌───────────────┐  ┌─────────────────┐       │
-│  │ Home         │  │ Satisfactory  │  │ NAS             │       │
-│  │ Assistant    │  │ (pinned 4-7)  │  │ Btrfs RAID1     │       │
-│  │ .10          │  │ .11           │  │ NFS + AdGuard   │       │
-│  └──────────────┘  └───────────────┘  │ .15 (DNS)       │       │
-│                                        └─────────────────┘       │
-│  ┌──────────────┐  ┌───────────────┐  ┌─────────────────┐       │
-│  │ Jellyfin     │  │ Media         │  │ Download        │       │
-│  │ (4 cores)    │  │ Services      │  │ Clients         │       │
-│  │ .12          │  │ .13           │  │ .14             │       │
-│  └──────────────┘  └───────────────┘  └─────────────────┘       │
+│  ┌─ Management VLAN 10 ─────────────────────────────────┐        │
+│  │ Monitoring (.16)  Woodpecker (.17)  UniFi (.19)      │        │
+│  └──────────────────────────────────────────────────────┘        │
 │                                                                  │
-│  ┌──────────────┐  ┌───────────────┐  ┌─────────────────┐       │
-│  │ Monitoring   │  │ Woodpecker CI │  │ Lancache        │       │
-│  │ Prometheus   │  │ CI/CD Server  │  │ Game DL Cache   │       │
-│  │ .16          │  │ .17           │  │ .18             │       │
-│  └──────────────┘  └───────────────┘  └─────────────────┘       │
+│  ┌─ IoT VLAN 20 ────────┐                                       │
+│  │ Home Assistant (.10)  │                                       │
+│  └───────────────────────┘                                       │
 │                                                                  │
-│  ┌──────────────┐                                                │
-│  │ UniFi        │                                                │
-│  │ Controller   │                                                │
-│  │ .19          │                                                │
-│  └──────────────┘                                                │
+│  ┌─ Media VLAN 30 ──────────────────────────────────────┐        │
+│  │ NAS (.15)  Jellyfin (.12)  Media Svc (.13)  DL (.14) │        │
+│  └──────────────────────────────────────────────────────┘        │
 │                                                                  │
-│  vmbr0 Bridge ─────────────┬─────── 192.168.0.0/24               │
-└────────────────────────────┼─────────────────────────────────────┘
-                             │
-                    ┌────────┴────────┐
-                    │ Gateway/Router  │
-                    │  192.168.0.1    │
-                    └─────────────────┘
-                             │
-                          Internet
-                             │
-                    ┌────────┴────────┐
-                    │   Tailscale     │
-                    │   Mesh VPN      │
-                    │ + MagicDNS      │
-                    └────┬────────────┘
+│  ┌─ Games VLAN 40 ──────────────────────────────────────┐        │
+│  │ Satisfactory (.11)  Mumble (.20)  Lancache (.18)     │        │
+│  └──────────────────────────────────────────────────────┘        │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
                          │
-                    Custom DNS: NAS
-                    (AdGuard Home)
+                ┌────────┴────────┐
+                │ Gateway/Router  │
+                │ (per-VLAN .1)   │
+                └─────────────────┘
+                         │
+                      Internet
+                         │
+                ┌────────┴────────┐
+                │   Tailscale     │
+                │   Mesh VPN      │
+                │ + MagicDNS      │
+                └────┬────────────┘
+                     │
+                Custom DNS: NAS
+                (AdGuard Home)
 ```
 
 ## Lancache Rootful Security
@@ -455,7 +462,7 @@ With rootful Podman:
 |------|------------|
 | Container escape = root access | Isolated VM with no sensitive data; lancache only caches game downloads |
 | Host network mode | Required for lancache anyway; ports 80/443 bound only on local network |
-| no_root_squash on NFS | Limited to single client IP (192.168.0.18/32) |
+| no_root_squash on NFS | Limited to single client IP (192.168.40.18/32) |
 | NFS privilege escalation | Mount options include `nosuid,nodev` to prevent setuid/device attacks |
 | Running as root | NOT `--privileged`; just runs as host root UID without extra capabilities |
 

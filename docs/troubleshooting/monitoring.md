@@ -3,7 +3,7 @@
 Common issues and solutions for the Jellybuntu monitoring infrastructure (Prometheus, Alertmanager, Grafana).
 
 > **IMPORTANT**: Monitoring services run as **rootless Podman containers with Quadlet** on the monitoring VM
-> (192.168.0.16). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+> (192.168.10.16). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 >
 > **Note**: Uptime Kuma has been moved to external monitoring (Oracle Cloud).
 
@@ -66,7 +66,7 @@ ping monitoring.discus-moth.ts.net
 
    # Add missing rules if needed
    ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
-     "sudo ufw allow from 192.168.0.0/24 to any port 3000 proto tcp"
+     "sudo ufw allow from 192.168.10.0/24 to any port 3000 proto tcp"
    ```
 
 4. **Tailscale connectivity issue**:
@@ -76,9 +76,9 @@ ping monitoring.discus-moth.ts.net
    tailscale status | grep monitoring
 
    # Try accessing via local IP instead
-   http://192.168.0.16:3000  # Grafana
-   http://192.168.0.16:9090  # Prometheus
-   http://192.168.0.16:3001  # Uptime Kuma
+   http://192.168.10.16:3000  # Grafana
+   http://192.168.10.16:9090  # Prometheus
+   http://192.168.10.16:3001  # Uptime Kuma
    ```
 
 ### Specific Service Won't Start
@@ -170,7 +170,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
 
    # Allow monitoring VM to access exporter
    ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net \
-     "sudo ufw allow from 192.168.0.16 to any port 9100 proto tcp"
+     "sudo ufw allow from 192.168.10.16 to any port 9100 proto tcp"
    ```
 
 2. **node_exporter not running**:
@@ -204,7 +204,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
 
      ```bash
      ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
-       "podman exec snmp-exporter /bin/snmpget -v3 -l authPriv -u <username> -a SHA -A <authpass> -x AES -X <privpass> 192.168.0.1 sysName.0"
+       "podman exec snmp-exporter /bin/snmpget -v3 -l authPriv -u <username> -a SHA -A <authpass> -x AES -X <privpass> 192.168.10.1 sysName.0"
      ```
 
 5. **Blackbox exporter failing HTTP checks**:
@@ -474,7 +474,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
      "nslookup jellyfin.discus-moth.ts.net"
 
    # Use IP address instead of hostname in monitor URL
-   http://192.168.0.12:8096  # Instead of jellyfin.discus-moth.ts.net
+   http://192.168.30.12:8096  # Instead of jellyfin.discus-moth.ts.net
    ```
 
 2. **Timeout too short**:
@@ -487,7 +487,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
    - Some services redirect (use `200-399`)
 
 4. **Firewall blocking monitoring VM**:
-   - Check if monitoring VM (192.168.0.16) can reach service
+   - Check if monitoring VM (192.168.10.16) can reach service
    - Add firewall rule on target VM if needed
 
 ### Uptime Kuma Web UI Slow or Unresponsive
@@ -623,7 +623,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net "podman stat
    - Approve if pending
 
 3. **Use local IP addresses instead**:
-   - Edit prometheus.yml targets: Replace `jellyfin.discus-moth.ts.net` with `192.168.0.12`
+   - Edit prometheus.yml targets: Replace `jellyfin.discus-moth.ts.net` with `192.168.30.12`
 
 ### Monitoring Can't Reach Proxmox Host
 

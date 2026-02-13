@@ -16,16 +16,16 @@ Custom Btrfs-based NAS replacing TrueNAS Scale for the Jellybuntu homelab.
 
 ```text
 Name:         nas
-IP Address:   192.168.0.15 (DHCP reservation required)
+IP Address:   192.168.30.15 (DHCP reservation required)
 Hostname:     nas.discus-moth.ts.net
 Cores:        2 (shared)
 Memory:       6GB
 Boot Disk:    32GB (SCSI0)
 Data Disks:   500GB (SCSI1) + 500GB (SCSI2)
-Network:      192.168.0.0/24 + Tailscale (100.64.0.0/10)
+Network:      192.168.30.0/24 + Tailscale (100.64.0.0/10)
 ```
 
-> **IMPORTANT**: The NAS IP (192.168.0.15) must be stable. Configure a DHCP reservation
+> **IMPORTANT**: The NAS IP (192.168.30.15) must be stable. Configure a DHCP reservation
 > on your router for the NAS MAC address, or set a static IP on the NAS itself.
 > All NFS client VMs depend on this address.
 
@@ -105,9 +105,10 @@ Playbook `02-configure-nas-role.yml` executes 4 roles:
 ```text
 Path: /mnt/storage/data
 Allowed Networks:
-  - 192.168.0.0/24 (local network)
+  - 192.168.30.0/24 (local network)
   - 100.64.0.0/10 (Tailscale)
-Options: rw,sync,no_subtree_check,no_root_squash
+Options: rw,sync,no_subtree_check,root_squash (default)
+Note: no_root_squash is only used for Lancache (required for chown operations)
 ```
 
 ### Client Mount Points
@@ -122,7 +123,7 @@ Options: rw,sync,no_subtree_check,no_root_squash
 
 ```bash
 # From any client VM (use direct IP for NFS)
-showmount -e 192.168.0.15
+showmount -e 192.168.30.15
 
 # Check mount
 df -h /mnt/data
@@ -132,7 +133,7 @@ touch /mnt/data/test-$(hostname).txt
 rm /mnt/data/test-$(hostname).txt
 ```
 
-> **Note**: NFS mounts use direct IP (192.168.0.15) rather than Tailscale hostname for reliability.
+> **Note**: NFS mounts use direct IP (192.168.30.15) rather than Tailscale hostname for reliability.
 > See [NFS Direct IP Migration](nfs-direct-ip-migration.md) for details.
 
 ## Snapshot Management
@@ -289,7 +290,7 @@ sudo exportfs -v
 sudo ufw status verbose
 
 # Test from client
-showmount -e 192.168.0.15
+showmount -e 192.168.30.15
 ```
 
 ### Permission Issues
@@ -340,7 +341,7 @@ rsync -avhP --delete \
 ## Security
 
 ✅ SSH restricted to Tailscale network (100.64.0.0/10)
-✅ NFS limited to trusted networks (192.168.0.0/24, 100.64.0.0/10)
+✅ NFS limited to trusted networks (192.168.30.0/24, 100.64.0.0/10)
 ✅ UFW firewall configured
 ✅ Automatic security updates enabled
 ✅ No root password login

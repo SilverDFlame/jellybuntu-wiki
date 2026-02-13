@@ -11,14 +11,14 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **CPU Units:** 1024 (medium priority)
 - **Memory:** 2GB (2048MB)
 - **Disk:** 40GB (local-zfs)
-- **Network:** virtio bridge (vmbr0)
+- **Network:** virtio bridge (vmbr0, VLAN 20)
 
 **Network:**
 
-- **IP:** 192.168.0.10
+- **IP:** 192.168.20.10
 - **Hostname:** home-assistant.discus-moth.ts.net
-- **Gateway:** 192.168.0.1
-- **DNS:** 9.9.9.9, 192.168.0.1
+- **Gateway:** 192.168.20.1
+- **DNS:** 9.9.9.9, 192.168.20.1
 
 **Services:**
 
@@ -47,15 +47,15 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **CPU Units:** 2048 (high priority)
 - **Memory:** 8GB (8192MB)
 - **Disk:** 60GB (local-zfs)
-- **Network:** virtio bridge (vmbr0)
+- **Network:** virtio bridge (vmbr0, VLAN 40)
 - **NUMA:** Disabled
 
 **Network:**
 
-- **IP:** 192.168.0.11
+- **IP:** 192.168.40.11
 - **Hostname:** satisfactory-server.discus-moth.ts.net
-- **Gateway:** 192.168.0.1
-- **DNS:** 9.9.9.9, 192.168.0.1
+- **Gateway:** 192.168.40.1
+- **DNS:** 9.9.9.9, 192.168.40.1
 
 **Services:**
 
@@ -70,6 +70,42 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 ---
 
+## Mumble Voice Chat (VMID 201)
+
+**Hardware:**
+
+- **Cores:** 1 (shared)
+- **CPU Type:** host
+- **CPU Units:** 512 (low priority)
+- **Memory:** 1GB (1024MB)
+- **Memory Reservation:** 512MB
+- **Disk:** 32GB (local-zfs)
+- **Network:** virtio bridge (vmbr0, VLAN 40)
+
+**Network:**
+
+- **IP:** 192.168.40.20
+- **Hostname:** mumble.discus-moth.ts.net
+- **Gateway:** 192.168.40.1
+- **DNS:** 9.9.9.9, 192.168.40.1
+
+**Services:**
+
+- Mumble voice chat server (Quadlet/Podman)
+
+**Ports:**
+
+| Port | Protocol | Service | Access |
+|------|----------|---------|--------|
+| 64738 | TCP | Mumble Voice Chat | Local + Tailscale |
+| 64738 | UDP | Mumble Voice Chat | Local + Tailscale |
+
+**Storage:**
+
+- Quadlet files: `~/.config/containers/systemd/`
+
+---
+
 ## NAS - Btrfs RAID1 (VMID 300)
 
 **Hardware:**
@@ -80,14 +116,14 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **Memory:** 6GB (6144MB)
 - **Boot Disk:** 32GB (local-zfs)
 - **Storage Disks:** 3x 6TB (passthrough for Btrfs RAID1)
-- **Network:** virtio bridge (vmbr0)
+- **Network:** virtio bridge (vmbr0, VLAN 30)
 
 **Network:**
 
-- **IP:** 192.168.0.15
+- **IP:** 192.168.30.15
 - **Hostname:** nas.discus-moth.ts.net
-- **Gateway:** 192.168.0.1
-- **DNS:** 9.9.9.9, 192.168.0.1
+- **Gateway:** 192.168.30.1
+- **DNS:** 9.9.9.9, 192.168.30.1
 
 **Services:**
 
@@ -104,10 +140,10 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **NFS Clients:**
 
-- media-services.discus-moth.ts.net (192.168.0.13)
-- download-clients.discus-moth.ts.net (192.168.0.14)
-- jellyfin.discus-moth.ts.net (192.168.0.12)
-- home-assistant.discus-moth.ts.net (192.168.0.10)
+- media-services.discus-moth.ts.net (192.168.30.13)
+- download-clients.discus-moth.ts.net (192.168.30.14)
+- jellyfin.discus-moth.ts.net (192.168.30.12)
+- home-assistant.discus-moth.ts.net (192.168.20.10)
 
 ---
 
@@ -121,7 +157,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **CPU Units:** 2048 (high priority)
 - **Memory:** 8GB (8192MB)
 - **Disk:** 80GB (local-zfs)
-- **Network:** virtio bridge (vmbr0)
+- **Network:** virtio bridge (vmbr0, VLAN 30)
 - **GPU Passthrough:** No (Matrox G200eW is management only)
 
 **CPU Optimizations:**
@@ -133,10 +169,10 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Network:**
 
-- **IP:** 192.168.0.12
+- **IP:** 192.168.30.12
 - **Hostname:** jellyfin.discus-moth.ts.net
-- **Gateway:** 192.168.0.1
-- **DNS:** 9.9.9.9, 192.168.0.1
+- **Gateway:** 192.168.30.1
+- **DNS:** 9.9.9.9, 192.168.30.1
 
 **Services:**
 
@@ -174,14 +210,14 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **CPU Units:** 1024 (medium priority)
 - **Memory:** 8GB (8192MB)
 - **Disk:** 50GB (local-zfs)
-- **Network:** virtio bridge (vmbr0)
+- **Network:** virtio bridge (vmbr0, VLAN 30)
 
 **Network:**
 
-- **IP:** 192.168.0.13
+- **IP:** 192.168.30.13
 - **Hostname:** media-services.discus-moth.ts.net
-- **Gateway:** 192.168.0.1
-- **DNS:** 9.9.9.9, 192.168.0.1
+- **Gateway:** 192.168.30.1
+- **DNS:** 9.9.9.9, 192.168.30.1
 
 **Services (Quadlet/Podman):**
 
@@ -224,14 +260,14 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **CPU Units:** 1024 (medium priority)
 - **Memory:** 6GB (6144MB)
 - **Disk:** 60GB (local-zfs)
-- **Network:** virtio bridge (vmbr0)
+- **Network:** virtio bridge (vmbr0, VLAN 30)
 
 **Network:**
 
-- **IP:** 192.168.0.14
+- **IP:** 192.168.30.14
 - **Hostname:** download-clients.discus-moth.ts.net
-- **Gateway:** 192.168.0.1
-- **DNS:** 9.9.9.9, 192.168.0.1
+- **Gateway:** 192.168.30.1
+- **DNS:** 9.9.9.9, 192.168.30.1
 
 **Services (Quadlet/Podman):**
 
@@ -281,9 +317,9 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Network:**
 
-- IP: 192.168.0.16
+- IP: 192.168.10.16
 - Tailscale: monitoring.discus-moth.ts.net
-- Bridge: vmbr0
+- Bridge: vmbr0 (VLAN 10)
 
 **Services:**
 
@@ -363,14 +399,14 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **CPU Units:** 1024 (medium priority)
 - **Memory:** 4GB (4096MB)
 - **Disk:** 32GB (local-zfs)
-- **Network:** virtio bridge (vmbr0)
+- **Network:** virtio bridge (vmbr0, VLAN 10)
 
 **Network:**
 
-- **IP:** 192.168.0.19
+- **IP:** 192.168.10.19
 - **Hostname:** unifi-controller.discus-moth.ts.net
-- **Gateway:** 192.168.0.1
-- **DNS:** 9.9.9.9, 192.168.0.1
+- **Gateway:** 192.168.10.1
+- **DNS:** 9.9.9.9, 192.168.10.1
 
 **Services (Quadlet/Podman):**
 
@@ -401,6 +437,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 |----|------|-------|---------|----------|-----------|----------|-----|------|---------------|
 | Home Assistant | 100 | 2 | No | host | 1024 | Medium | 2GB | 40GB | - |
 | Satisfactory | 200 | 4 | 4-7 | host | 2048 | High | 8GB | 60GB | numa=0 |
+| Mumble | 201 | 1 | No | host | 512 | Low | 1GB | 32GB | - |
 | NAS (Btrfs RAID1) | 300 | 2 | No | host | 1024 | Medium | 6GB | 32GB + 3x6TB | - |
 | Jellyfin | 400 | 4 | No | host | 2048 | High | 8GB | 80GB | +aes |
 | Media Services | 401 | 4 | No | host | 1024 | Medium | 8GB | 50GB | - |
@@ -409,14 +446,14 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 | Woodpecker CI | 600 | 2 | No | host | 512 | Low | 8GB | 32GB | - |
 | Lancache | 700 | 2 | No | host | 512 | Low | 4GB | 32GB | - |
 | UniFi Controller | 800 | 2 | No | host | 1024 | Medium | 4GB | 32GB | - |
-| **Total** | | **28** | | | | | **58GB** | **482GB + 6TB** | |
+| **Total** | | **29** | | | | | **59GB** | **514GB + 6TB** | |
 
 **Physical Host Resources:**
 
 - 16 physical CPU cores / 32 threads (AMD EPYC 7313P)
 - 128GB RAM
 - NVMe boot + 3x 6TB Btrfs RAID1 (~9TB usable) + 32GB RAM disk (transcoding)
-- ~175% CPU overprovisioning (28 virtual / 16 physical)
+- ~181% CPU overprovisioning (29 virtual / 16 physical)
 
 **CPU Overprovisioning Strategy:**
 
@@ -429,9 +466,9 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 ## Network Configuration
 
 **Bridge:** vmbr0 (Proxmox)
-**Subnet:** 192.168.0.0/24
-**Gateway:** 192.168.0.1
-**DNS:** 9.9.9.9 (Quad9), 192.168.0.1 (local router)
+**Subnet:** VLAN-segmented (see [VLAN Migration](vlan-migration.md))
+**Gateway:** Per-VLAN (192.168.X.1)
+**DNS:** 9.9.9.9 (Quad9), Per-VLAN gateway
 
 **Tailscale Mesh VPN:**
 
@@ -442,15 +479,15 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 **Firewall (UFW):**
 
-- SSH from Tailscale (100.64.0.0/10) + LAN (192.168.0.0/24)
-- Service ports open to local network (192.168.0.0/24) and Tailscale
+- SSH from Tailscale (100.64.0.0/10) + Management VLAN (192.168.10.0/24)
+- Service ports open to local network (192.168.10.0/24) and Tailscale
 - Default deny for other traffic
 
 ---
 
 ## Storage Architecture
 
-**NFS Server:** Btrfs NAS (192.168.0.15)
+**NFS Server:** Btrfs NAS (192.168.30.15)
 
 - Pool: `storage` (Btrfs RAID1, 3x 6TB mirror, ~9TB usable)
 - Export: `/mnt/storage/data`
@@ -495,7 +532,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 - Key: `~/.ssh/ansible_homelab`
 - User: `ansible` (passwordless sudo)
-- After firewall: Tailscale (100.64.0.0/10) + LAN (192.168.0.0/24)
+- After firewall: Tailscale (100.64.0.0/10) + Management VLAN (192.168.10.0/24)
 
 **Proxmox API:**
 

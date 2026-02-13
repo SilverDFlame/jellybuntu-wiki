@@ -117,14 +117,14 @@ ssh root@jellybuntu.discus-moth.ts.net "qm status 400"  # Jellyfin
 
 ```bash
 # Connect via IP addresses (Tailscale not yet configured on VMs)
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.10  # Home Assistant
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.15  # NAS
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.20.10  # Home Assistant
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.15  # NAS
 ```
 
 ### Verify Cloud-Init
 
 ```bash
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.10 "cloud-init status"
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.20.10 "cloud-init status"
 ```
 
 Expected: `status: done`
@@ -195,7 +195,7 @@ ssh root@jellybuntu.discus-moth.ts.net "qm start 100"
 
 ```bash
 # SSH and check status
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.10
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.20.10
 cloud-init status --long
 cat /var/log/cloud-init.log
 

@@ -102,7 +102,7 @@ curl http://$(tailscale ip -4):8096
 
    ```bash
    # Allow Jellyfin port
-   sudo ufw allow from 192.168.0.0/24 to any port 8096
+   sudo ufw allow from 192.168.30.0/24 to any port 8096
    sudo ufw allow from 100.64.0.0/10 to any port 8096
    sudo ufw reload
    ```
@@ -348,7 +348,7 @@ curl http://localhost:8096
    - Secure and private
 
 2. **Port forwarding** (not recommended without HTTPS):
-   - Forward router port 8096 to 192.168.0.12:8096
+   - Forward router port 8096 to 192.168.30.12:8096
    - Set up HTTPS first (Let's Encrypt)
    - Use reverse proxy (Nginx/Caddy)
 

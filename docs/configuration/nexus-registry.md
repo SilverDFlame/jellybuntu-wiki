@@ -7,7 +7,7 @@ Configuration guide for Nexus Repository OSS container registry and artifact cac
 Nexus Repository provides centralized container image caching and artifact management. All CI/CD pipelines and service
 deployments pull container images through Nexus, reducing external dependencies and improving build reliability.
 
-**Location**: NAS VM (192.168.0.15)
+**Location**: NAS VM (192.168.30.15)
 **Ports**:
 
 | Port | Purpose | Authentication |
@@ -69,7 +69,7 @@ Anonymous pulls are enabled on port 5001 for convenience. This means:
 
 **Mitigations in place:**
 
-1. UFW firewall restricts port 5001 to local network (192.168.0.0/24) and Tailscale (100.64.0.0/10)
+1. UFW firewall restricts port 5001 to local network (192.168.30.0/24) and Tailscale (100.64.0.0/10)
 2. Nexus is not exposed to the public internet
 3. Push operations still require authentication
 
@@ -193,6 +193,6 @@ First pulls are slow because Nexus must fetch from upstream. Subsequent pulls us
 ## See Also
 
 - [Nexus Maintenance](../maintenance/nexus-maintenance.md) - Cleanup policies, disk management, scheduled tasks
-- [Playbook 20: Nexus Configuration](../reference/playbooks.md#20-configure-nexus-roleyml)
+- [Nexus Playbook](../reference/playbooks.md#servicesnexusyml)
 - [Service Endpoints](service-endpoints.md)
 - [Nexus Official Documentation](https://help.sonatype.com/en/docker-registry.html)

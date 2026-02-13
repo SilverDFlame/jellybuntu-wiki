@@ -2,7 +2,7 @@
 
 Troubleshooting guide for Huntarr missing content discovery issues.
 
-> **IMPORTANT**: Huntarr runs as a **rootless Podman container with Quadlet** on Media Services VM (192.168.0.13).
+> **IMPORTANT**: Huntarr runs as a **rootless Podman container with Quadlet** on Media Services VM (192.168.30.13).
 Use `systemctl --user` and `journalctl --user` commands, NOT `docker` commands.
 
 ## Quick Checks
@@ -155,7 +155,7 @@ podman logs huntarr
 
 - Browser shows "Connection refused" or times out
 - Can't reach http://media-services.discus-moth.ts.net:9705
-- Can't reach http://192.168.0.13:9705
+- Can't reach http://192.168.30.13:9705
 
 **Diagnosis**:
 
@@ -179,7 +179,7 @@ sudo netstat -tulpn | grep 9705
 
    ```bash
    # Allow Huntarr port
-   sudo ufw allow from 192.168.0.0/24 to any port 9705
+   sudo ufw allow from 192.168.30.0/24 to any port 9705
    sudo ufw allow from 100.64.0.0/10 to any port 9705
    sudo ufw reload
    ```

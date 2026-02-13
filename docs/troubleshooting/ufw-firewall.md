@@ -150,7 +150,7 @@ ssh ansible@hostname "sudo ufw status numbered"
 Use the bastion (NAS) VM to access:
 
 ```bash
-ssh -i ~/.ssh/ansible_homelab -o ProxyJump=ansible@192.168.0.15 ansible@affected-vm-ip
+ssh -i ~/.ssh/ansible_homelab -o ProxyJump=ansible@192.168.30.15 ansible@affected-vm-ip
 ```
 
 See [SSH Bastion Documentation](../reference/ssh-bastion.md) for details.
@@ -244,7 +244,7 @@ The `ufw_firewall` role ([`roles/ufw_firewall/`](https://github.com/SilverDFlame
 1. Merge common firewall ports (from [`group_vars/all.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/group_vars/all.yml)) with host-specific ports (from `host_vars/`)
 2. Set default policies (deny incoming, allow outgoing, deny routed)
 3. Allow SSH from Tailscale network (100.64.0.0/10)
-4. Allow SSH from local network (192.168.0.0/24) as fallback
+4. Allow SSH from local network (192.168.10.0/24) as fallback
 5. Allow service ports from both Tailscale and local networks
 6. Enable UFW firewall
 
@@ -266,7 +266,7 @@ Activate by passing `-e "ufw_reset=true"` to any playbook that includes the UFW 
 
 - **Default deny incoming**: All incoming connections blocked unless explicitly allowed
 - **Tailscale primary**: Services accessible via Tailscale VPN network
-- **Local network fallback**: Critical services (SSH, DNS) accessible from 192.168.0.0/24
+- **Local network fallback**: Critical services (SSH, DNS) accessible from 192.168.10.0/24
 - **No public exposure**: No services exposed to internet (0.0.0.0/0)
 
 ---

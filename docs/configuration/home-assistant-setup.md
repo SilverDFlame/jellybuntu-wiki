@@ -4,11 +4,11 @@ Home Assistant is an open-source home automation platform that allows you to con
 create custom dashboards, and build powerful automations.
 
 > **IMPORTANT**: Home Assistant runs as a **rootless Podman container with Quadlet** on the home-assistant VM
-> (192.168.0.10). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+> (192.168.20.10). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: home-assistant (VMID 100, 192.168.0.10)
+- **VM**: home-assistant (VMID 100, 192.168.20.10)
 - **Port**: 8123
 - **Deployment**: Rootless Podman with Quadlet
 - **Config Path**: `~/.config/homeassistant/`
@@ -17,7 +17,7 @@ create custom dashboards, and build powerful automations.
 ## Access
 
 - **Tailscale**: http://home-assistant.discus-moth.ts.net:8123
-- **Local Network**: http://192.168.0.10:8123
+- **Local Network**: http://192.168.20.10:8123
 
 ## Deployment
 
@@ -114,7 +114,7 @@ config:
 http:
   use_x_forwarded_for: true
   trusted_proxies:
-    - 192.168.0.0/24
+    - 192.168.20.0/24
     - 100.64.0.0/10  # Tailscale
 
 # Include other files
@@ -162,7 +162,7 @@ prometheus:
   namespace: homeassistant
 ```
 
-Access metrics at: `http://192.168.0.10:8123/api/prometheus`
+Access metrics at: `http://192.168.20.10:8123/api/prometheus`
 
 ## Dashboards
 
@@ -402,7 +402,7 @@ systemctl --user restart homeassistant
 http:
   use_x_forwarded_for: true
   trusted_proxies:
-    - 192.168.0.0/24    # Local network
+    - 192.168.20.0/24    # Local network
     - 100.64.0.0/10     # Tailscale
   ip_ban_enabled: true
   login_attempts_threshold: 5

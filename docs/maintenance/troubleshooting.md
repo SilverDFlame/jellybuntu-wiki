@@ -305,8 +305,8 @@ tailscale status
 tailscale ping <vm>.discus-moth.ts.net
 
 # Check local network
-ping 192.168.0.1  # Gateway
-ping 192.168.0.15  # NAS
+ping 192.168.10.1  # Gateway
+ping 192.168.30.15  # NAS
 ping 8.8.8.8  # Internet
 
 # Check firewall

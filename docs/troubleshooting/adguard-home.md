@@ -2,7 +2,7 @@
 
 Troubleshooting guide for AdGuard Home DNS and ad blocking issues.
 
-> **IMPORTANT**: AdGuard Home runs as a **rootless Podman container with Quadlet** on the NAS VM (192.168.0.15).
+> **IMPORTANT**: AdGuard Home runs as a **rootless Podman container with Quadlet** on the NAS VM (192.168.30.15).
 Use `systemctl --user` and `journalctl --user` commands, NOT `docker` commands.
 
 ## Quick Checks
@@ -122,11 +122,11 @@ podman logs adguardhome
 
 ```bash
 # Test DNS resolution from NAS VM
-nslookup google.com 192.168.0.15
+nslookup google.com 192.168.30.15
 nslookup google.com 100.65.73.89  # Tailscale IP
 
 # Test from another machine
-nslookup google.com 192.168.0.15
+nslookup google.com 192.168.30.15
 
 # Check if AdGuard is listening
 sudo netstat -tulpn | grep :53
@@ -155,8 +155,8 @@ journalctl --user -u adguardhome | tail -50
 
    ```bash
    # Allow DNS traffic
-   sudo ufw allow from 192.168.0.0/24 to any port 53 proto tcp
-   sudo ufw allow from 192.168.0.0/24 to any port 53 proto udp
+   sudo ufw allow from 192.168.30.0/24 to any port 53 proto tcp
+   sudo ufw allow from 192.168.30.0/24 to any port 53 proto udp
    sudo ufw allow from 100.64.0.0/10 to any port 53 proto tcp
    sudo ufw allow from 100.64.0.0/10 to any port 53 proto udp
    sudo ufw reload
@@ -190,7 +190,7 @@ journalctl --user -u adguardhome | tail -50
 
 - Browser shows "Connection refused" or times out
 - Can't reach http://nas.discus-moth.ts.net:80
-- Can't reach http://192.168.0.15:80
+- Can't reach http://192.168.30.15:80
 
 **Diagnosis**:
 
@@ -214,7 +214,7 @@ curl http://$(tailscale ip -4):80
 
    ```bash
    # Allow Web UI access
-   sudo ufw allow from 192.168.0.0/24 to any port 80
+   sudo ufw allow from 192.168.30.0/24 to any port 80
    sudo ufw allow from 100.64.0.0/10 to any port 80
    sudo ufw reload
    ```
@@ -264,7 +264,7 @@ curl http://$(tailscale ip -4):80
 cat ~/.config/adguardhome/AdGuardHome.yaml | grep filtering_enabled
 
 # Test if known ad domain is blocked
-nslookup ads.google.com 192.168.0.15
+nslookup ads.google.com 192.168.30.15
 
 # Check blocklist status in logs
 journalctl --user -u adguardhome | grep -i "blocklist\|filter"
@@ -292,7 +292,7 @@ journalctl --user -u adguardhome | grep -i "blocklist\|filter"
    ```bash
    # On client machine, verify DNS server
    nslookup google.com
-   # Should show: Server: 192.168.0.15 or 100.65.73.89
+   # Should show: Server: 192.168.30.15 or 100.65.73.89
 
    # Check client DNS configuration
    cat /etc/resolv.conf   # Linux

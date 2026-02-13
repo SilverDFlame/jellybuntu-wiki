@@ -2,7 +2,7 @@
 
 Troubleshooting guide for Bazarr subtitle management issues.
 
-> **IMPORTANT**: Bazarr runs as a **rootless Podman container with Quadlet** on Media Services VM (192.168.0.13).
+> **IMPORTANT**: Bazarr runs as a **rootless Podman container with Quadlet** on Media Services VM (192.168.30.13).
 Use `systemctl --user` and `journalctl --user` commands, NOT `docker` commands.
 
 ## Quick Checks
@@ -104,7 +104,7 @@ podman logs bazarr
 
 - Browser shows "Connection refused" or times out
 - Can't reach http://media-services.discus-moth.ts.net:6767
-- Can't reach http://192.168.0.13:6767
+- Can't reach http://192.168.30.13:6767
 
 **Diagnosis**:
 
@@ -128,7 +128,7 @@ sudo netstat -tulpn | grep 6767
 
    ```bash
    # Allow Bazarr port
-   sudo ufw allow from 192.168.0.0/24 to any port 6767
+   sudo ufw allow from 192.168.30.0/24 to any port 6767
    sudo ufw allow from 100.64.0.0/10 to any port 6767
    sudo ufw reload
    ```

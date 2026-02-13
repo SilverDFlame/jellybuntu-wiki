@@ -3,7 +3,7 @@
 Troubleshooting guide for Sonarr (TV) and Radarr (Movies) media management issues.
 
 > **IMPORTANT**: Sonarr and Radarr run as **rootless Podman containers with Quadlet** on the media-services VM
-> (192.168.0.13). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+> (192.168.30.13). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Quick Checks
 
@@ -84,8 +84,8 @@ curl http://localhost:7878
 3. **Firewall blocking**:
 
    ```bash
-   sudo ufw allow from 192.168.0.0/24 to any port 8989
-   sudo ufw allow from 192.168.0.0/24 to any port 7878
+   sudo ufw allow from 192.168.30.0/24 to any port 8989
+   sudo ufw allow from 192.168.30.0/24 to any port 7878
    sudo ufw allow from 100.64.0.0/10 to any port 8989
    sudo ufw allow from 100.64.0.0/10 to any port 7878
    sudo ufw reload
@@ -122,14 +122,14 @@ curl http://download-clients.discus-moth.ts.net:8081  # SABnzbd
 podman exec sonarr ping -c 3 download-clients.discus-moth.ts.net
 
 # Test with wget
-podman exec sonarr wget -O- http://192.168.0.14:8080
+podman exec sonarr wget -O- http://192.168.30.14:8080
 ```
 
 **Solutions**:
 
 1. **Wrong hostname/IP**:
    - Use `download-clients.discus-moth.ts.net` (Tailscale)
-   - Or use `192.168.0.14` (local IP)
+   - Or use `192.168.30.14` (local IP)
    - NOT `localhost` or `127.0.0.1`
 
 2. **Wrong port**:
@@ -143,8 +143,8 @@ podman exec sonarr wget -O- http://192.168.0.14:8080
 4. **Test from container**:
 
    ```bash
-   podman exec sonarr wget -O- http://192.168.0.14:8080
-   podman exec radarr wget -O- http://192.168.0.14:8080
+   podman exec sonarr wget -O- http://192.168.30.14:8080
+   podman exec radarr wget -O- http://192.168.30.14:8080
    ```
 
 ### 3. Prowlarr Indexers Not Syncing
@@ -173,7 +173,7 @@ curl http://localhost:9696/api/v1/health
 
 1. **Incorrect Prowlarr settings in Sonarr/Radarr**:
    - Settings > Apps > Add Application
-   - **Prowlarr Server**: `http://localhost:9696` or `http://192.168.0.13:9696`
+   - **Prowlarr Server**: `http://localhost:9696` or `http://192.168.30.13:9696`
    - **Sonarr/Radarr Server**: `http://localhost:8989` or `http://localhost:7878`
    - Verify API keys are correct
 
@@ -508,8 +508,8 @@ systemctl --user start sonarr radarr
 podman exec -it sonarr /bin/bash
 
 # Test connectivity
-ping -c 3 192.168.0.14
-wget -O- http://192.168.0.14:8080
+ping -c 3 192.168.30.14
+wget -O- http://192.168.30.14:8080
 
 # Check DNS resolution
 nslookup download-clients.discus-moth.ts.net

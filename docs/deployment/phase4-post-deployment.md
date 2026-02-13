@@ -136,7 +136,7 @@ To                         Action      From
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
 # This should be BLOCKED (IP address):
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.13
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.13
 # Expected: Connection timeout or "Connection refused"
 ```
 
@@ -165,15 +165,15 @@ ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net
 **Via Local Network** (fallback):
 
 ```bash
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.13
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.12
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.13
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.12
 ```
 
 ### Service Access
 
 Web services accessible from:
 
-- **Local network** (192.168.0.0/24)
+- **Local network** (192.168.10.0/24)
 - **Tailscale network** (100.64.0.0/10)
 
 Services like Sonarr, Radarr, Jellyfin are accessible via browser from both networks.
@@ -283,7 +283,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
   "sudo ufw allow 8989/tcp comment 'Sonarr'"
 
 # Check from which network you're accessing:
-# - Local network (192.168.0.x): Should work
+# - Local VLAN (192.168.{10,20,30,40}.x): Should work
 # - Tailscale (100.x.x.x): Should work
 # - Public internet: Won't work (by design)
 ```
@@ -392,7 +392,7 @@ Re-running will:
 
 ### What You Have Now
 
-- ✅ 6 VMs provisioned and configured
+- ✅ 11 VMs provisioned and configured
 - ✅ Btrfs RAID1 NAS with NFS
 - ✅ Tailscale VPN mesh network
 - ✅ Media automation (Sonarr, Radarr, Prowlarr)
@@ -400,6 +400,10 @@ Re-running will:
 - ✅ Media server (Jellyfin)
 - ✅ Home automation (Home Assistant)
 - ✅ Game server (Satisfactory)
+- ✅ Voice chat (Mumble) - optional
+- ✅ Game download cache (Lancache) - optional
+- ✅ Network management (UniFi Controller)
+- ✅ CI/CD pipelines (Woodpecker CI)
 - ✅ Quality profiles (TRaSH Guides via Recyclarr)
 - ✅ Security hardening (firewall, auto-updates)
 

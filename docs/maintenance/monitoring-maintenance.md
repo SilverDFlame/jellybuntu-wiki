@@ -5,7 +5,7 @@ alert management, and cleanup procedures.
 
 ## Overview
 
-The monitoring stack runs on a dedicated VM (192.168.0.16 / monitoring.discus-moth.ts.net) and provides:
+The monitoring stack runs on a dedicated VM (192.168.10.16 / monitoring.discus-moth.ts.net) and provides:
 
 - **Prometheus**: Metrics collection and time-series database
 - **Grafana**: Visualization dashboards
@@ -443,7 +443,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
 ```bash
 # Test SNMP query directly
 ssh -i ~/.ssh/ansible_homelab ansible@monitoring.discus-moth.ts.net \
-  "curl 'http://localhost:9116/snmp?target=192.168.0.1&module=default'"
+  "curl 'http://localhost:9116/snmp?target=192.168.10.1&module=default'"
 ```
 
 **If SNMP is not working**:

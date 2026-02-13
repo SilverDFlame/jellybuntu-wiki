@@ -3,12 +3,12 @@
 Satisfactory is a first-person open-world factory building game. This guide covers the dedicated server setup for
 multiplayer sessions.
 
-> **IMPORTANT**: Satisfactory runs as a **native systemd user service** on the satisfactory-server VM (192.168.0.11).
+> **IMPORTANT**: Satisfactory runs as a **native systemd user service** on the satisfactory-server VM (192.168.40.11).
 > Use `systemctl --user` commands. The server is NOT containerized.
 
 ## Overview
 
-- **VM**: satisfactory-server (VMID 200, 192.168.0.11)
+- **VM**: satisfactory-server (VMID 200, 192.168.40.11)
 - **Ports**: 7777 (Game/API), 8888 (Server Manager)
 - **Protocol**: TCP
 - **Deployment**: Native systemd user service with SteamCMD
@@ -19,7 +19,7 @@ multiplayer sessions.
 ## Access
 
 - **Tailscale**: satisfactory-server.discus-moth.ts.net:7777
-- **Local Network**: 192.168.0.11:7777
+- **Local Network**: 192.168.40.11:7777
 
 ## Deployment
 
@@ -143,7 +143,7 @@ mAutoSaveOnDisconnect=True
 2. **Connect to server** from Satisfactory game:
    - Server Manager → Add Server
    - Enter: `satisfactory-server.discus-moth.ts.net:7777`
-   - Or: `192.168.0.11:7777`
+   - Or: `192.168.40.11:7777`
 
 3. **Claim the server** (first connection):
    - Set server name

@@ -142,10 +142,10 @@ Expected containers:
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
   "df -h | grep nfs"
 
-# Expected: 192.168.0.15:/mnt/storage/data on /mnt/data
+# Expected: 192.168.30.15:/mnt/storage/data on /mnt/data
 ```
 
-> **Note**: NFS mounts use direct IP (192.168.0.15) for reliability under heavy I/O.
+> **Note**: NFS mounts use direct IP (192.168.30.15) for reliability under heavy I/O.
 > See [NFS Direct IP Migration](../reference/nfs-direct-ip-migration.md).
 
 ### Check Jellyfin Service
@@ -247,7 +247,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 
 # Test manual mount (use direct IP for reliability)
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
-sudo mount 192.168.0.15:/mnt/storage/data /mnt/data
+sudo mount 192.168.30.15:/mnt/storage/data /mnt/data
 ```
 
 ### qBittorrent Configuration Fails

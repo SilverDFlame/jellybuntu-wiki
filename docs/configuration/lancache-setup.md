@@ -3,12 +3,12 @@
 Lancache is a game download caching service that stores game files locally, dramatically reducing bandwidth usage and
 speeding up downloads for Steam, Epic Games, Origin, Battle.net, and other gaming platforms.
 
-> **IMPORTANT**: Lancache runs as a **rootful Podman container** on the lancache VM (192.168.0.18).
+> **IMPORTANT**: Lancache runs as a **rootful Podman container** on the lancache VM (192.168.40.18).
 > This is one of the few services NOT using rootless Podman due to port 53/80/443 requirements.
 
 ## Overview
 
-- **VM**: lancache (VMID 700, 192.168.0.18)
+- **VM**: lancache (VMID 700, 192.168.40.18)
 - **Ports**: 80 (HTTP cache), 443 (SNI proxy), 53 (DNS)
 - **Deployment**: Rootful Podman with systemd
 - **Playbook**: [`playbooks/services/lancache.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/lancache.yml)
@@ -22,7 +22,7 @@ Lancache consists of two main components:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Lancache VM (192.168.0.18)               │
+│                        Lancache VM (192.168.40.18)               │
 │                                                                 │
 │  ┌─────────────────┐       ┌─────────────────────────────────┐  │
 │  │  Lancache DNS   │       │     Lancache Monolithic         │  │
@@ -110,7 +110,7 @@ ContainerName=lancache-dns
 Network=host
 Environment=UPSTREAM_DNS=9.9.9.9
 Environment=USE_GENERIC_CACHE=true
-Environment=LANCACHE_IP=192.168.0.18
+Environment=LANCACHE_IP=192.168.40.18
 
 [Service]
 Restart=always
@@ -177,7 +177,7 @@ For best performance:
 
 ## Client Configuration
 
-For Lancache to work, clients must use Lancache DNS (192.168.0.18) for DNS resolution.
+For Lancache to work, clients must use Lancache DNS (192.168.40.18) for DNS resolution.
 
 ### Option 1: DHCP/Router Configuration (Recommended)
 
@@ -185,7 +185,7 @@ Configure your router/DHCP server to assign Lancache DNS to gaming devices:
 
 1. Access router admin interface
 2. Find DHCP settings
-3. Set primary DNS to: `192.168.0.18`
+3. Set primary DNS to: `192.168.40.18`
 4. Set secondary DNS to: `9.9.9.9` (fallback)
 
 ### Option 2: Per-Device DNS
@@ -194,18 +194,18 @@ Configure your router/DHCP server to assign Lancache DNS to gaming devices:
 
 1. Network Settings → Ethernet/Wi-Fi → IP Settings → Edit
 2. DNS: Manual
-3. Preferred DNS: `192.168.0.18`
+3. Preferred DNS: `192.168.40.18`
 4. Alternate DNS: `9.9.9.9`
 
 **Linux**:
 
 ```bash
 # NetworkManager (GUI or nmcli)
-nmcli con mod "Connection Name" ipv4.dns "192.168.0.18 9.9.9.9"
+nmcli con mod "Connection Name" ipv4.dns "192.168.40.18 9.9.9.9"
 
 # Or edit /etc/resolv.conf (temporary)
 sudo nano /etc/resolv.conf
-# nameserver 192.168.0.18
+# nameserver 192.168.40.18
 # nameserver 9.9.9.9
 ```
 
@@ -217,7 +217,7 @@ sudo nano /etc/resolv.conf
 
 ### Option 3: AdGuard Home Integration
 
-If using AdGuard Home (192.168.0.15), configure DNS rewrites:
+If using AdGuard Home (192.168.30.15), configure DNS rewrites:
 
 1. Open AdGuard Home: http://nas.discus-moth.ts.net
 2. Go to Filters → DNS rewrites
@@ -226,9 +226,9 @@ If using AdGuard Home (192.168.0.15), configure DNS rewrites:
 Example rewrites:
 
 ```text
-*.steamcontent.com → 192.168.0.18
-*.akamaihd.net → 192.168.0.18
-cdn*.epicgames.com → 192.168.0.18
+*.steamcontent.com → 192.168.40.18
+*.akamaihd.net → 192.168.40.18
+cdn*.epicgames.com → 192.168.40.18
 ```
 
 ## Testing the Cache
@@ -239,7 +239,7 @@ cdn*.epicgames.com → 192.168.0.18
 # From a client using Lancache DNS
 nslookup steamcdn-a.akamaihd.net
 
-# Should return 192.168.0.18
+# Should return 192.168.40.18
 ```
 
 ### Test Cache Operation
@@ -296,7 +296,7 @@ sudo podman stats lancache-monolithic lancache-dns --no-stream
 
 Lancache can be monitored with Prometheus using the nginx exporter:
 
-- Metrics endpoint: `http://192.168.0.18:9113/metrics`
+- Metrics endpoint: `http://192.168.40.18:9113/metrics`
 - Grafana dashboard: Search for "nginx" dashboards
 
 ## Performance Tuning
@@ -381,9 +381,9 @@ sudo systemctl start lancache-monolithic
 
 ```bash
 # UFW rules (already configured via playbook)
-sudo ufw allow from 192.168.0.0/24 to any port 80
-sudo ufw allow from 192.168.0.0/24 to any port 443
-sudo ufw allow from 192.168.0.0/24 to any port 53
+sudo ufw allow from 192.168.40.0/24 to any port 80
+sudo ufw allow from 192.168.40.0/24 to any port 443
+sudo ufw allow from 192.168.40.0/24 to any port 53
 ```
 
 ## See Also

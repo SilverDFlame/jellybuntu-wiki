@@ -88,9 +88,9 @@ probe_success{job="blackbox-dns"}
 
 **Affected VMs**:
 
-- home-assistant (192.168.0.10:8180)
-- media-services (192.168.0.13:8180)
-- download-clients (192.168.0.14:8180)
+- home-assistant (192.168.20.10:8180)
+- media-services (192.168.30.13:8180)
+- download-clients (192.168.30.14:8180)
 
 **Alerts Firing** (3-6 alerts):
 
@@ -141,8 +141,8 @@ sudo podman run -d \
 
 **Affected Devices**:
 
-- Mikrotik Router (192.168.0.1)
-- Mikrotik Switch (192.168.0.2)
+- Mikrotik Router (192.168.10.1)
+- Mikrotik Switch (192.168.10.2)
 
 **Alerts Firing** (2 alerts):
 
@@ -168,7 +168,7 @@ set enabled=yes
 
 ```bash
 ssh ansible@monitoring.discus-moth.ts.net
-snmpwalk -v2c -c public 192.168.0.1 sysDescr
+snmpwalk -v2c -c public 192.168.10.1 sysDescr
 ```
 
 1. Update SNMP exporter config if needed:

@@ -4,9 +4,9 @@ Complete reference for all Ansible playbooks in the Jellybuntu infrastructure.
 
 ## Overview
 
-The infrastructure uses **phase-based deployment** with **modular, role-based playbooks**. Playbooks are numbered 00-20
-(00-14 for core infrastructure, 15-19 for advanced/optional services, 20 for container registry in Phase 2) and use
-the `-role` suffix to indicate they leverage reusable roles.
+The infrastructure uses **phase-based deployment** with **modular, role-based playbooks**. Playbooks are organized
+into category-based directories (`system/`, `infrastructure/`, `networking/`, `services/`, `monitoring/`,
+`utility/`) rather than numbered files. Each playbook targets a specific service or function.
 
 ## Deployment Approaches
 
@@ -51,7 +51,7 @@ Run all phases at once (skips Phase 4):
 
 ### phase1-infrastructure.yml
 
-**Includes**: 01-provision-vms.yml
+**Includes**: provision-vms
 
 **Purpose**: Provision all VMs on Proxmox
 
@@ -68,22 +68,22 @@ Run all phases at once (skips Phase 4):
 
 ### phase2-bootstrap.yml
 
-**Includes**: 00, 02, 03, 12, 20
+**Includes**: ssh-keys, nas, tailscale, nexus, adguard-home
 
 **Purpose**: Configure storage, networking, and container registry
 
 **What It Does**:
 
-- Configures SSH authorized keys (playbook 00)
-- Configures Btrfs NAS with RAID1 and NFS server (playbook 02)
-- Installs Tailscale VPN on all VMs (playbook 03)
-- Deploys Nexus container registry on NAS (playbook 20) - required before Phase 3
-- Deploys AdGuard Home DNS on NAS (playbook 12)
+- Configures SSH authorized keys (ssh-keys)
+- Configures Btrfs NAS with RAID1 and NFS server (nas)
+- Installs Tailscale VPN on all VMs (tailscale)
+- Deploys Nexus container registry on NAS (nexus) - required before Phase 3
+- Deploys AdGuard Home DNS on NAS (adguard-home)
 - Sets up automated snapshots and maintenance on NAS
 
 **Duration**: ~10 minutes
 
-**Note**: NAS becomes available at `nas.discus-moth.ts.net` or `192.168.0.15`
+**Note**: NAS becomes available at `nas.discus-moth.ts.net` or `192.168.30.15`
 **Container Registry**: Nexus at nas.discus-moth.ts.net:5001 (required for Phase 3 services)
 **DNS**: AdGuard Home provides network-wide ad blocking at http://nas.discus-moth.ts.net:80
 
@@ -91,18 +91,18 @@ Run all phases at once (skips Phase 4):
 
 ### phase3-services.yml
 
-**Includes**: 09, 04-07, 10 (NFS mounts first, then services)
+**Includes**: nfs-clients, home-assistant, satisfactory, media-services, download-clients, jellyfin
 
 **Purpose**: Deploy all applications and services
 
 **What It Does**:
 
-- Home Assistant (04)
-- Satisfactory game server (05)
-- Media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr (06)
-- Download clients: qBittorrent, SABnzbd (07)
-- NFS client mounts on service VMs (09)
-- Jellyfin with transcoding optimizations (10)
+- NFS client mounts on service VMs (nfs-clients)
+- Home Assistant (home-assistant)
+- Satisfactory game server (satisfactory)
+- Media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr (media-services)
+- Download clients: qBittorrent, SABnzbd (download-clients)
+- Jellyfin with transcoding optimizations (jellyfin)
 
 **Duration**: ~15 minutes
 
@@ -112,14 +112,14 @@ Run all phases at once (skips Phase 4):
 
 ### phase4-post-deployment.yml
 
-**Includes**: 08, 11
+**Includes**: recyclarr, system-hardening
 
 **Purpose**: Final configuration and security hardening
 
 **What It Does**:
 
-- Recyclarr sync with API keys from vault (08)
-- System hardening - UFW firewall + unattended-upgrades (11)
+- Recyclarr sync with API keys from vault (recyclarr)
+- System hardening - UFW firewall + unattended-upgrades (system-hardening)
 
 **Duration**: ~3 minutes
 
@@ -134,17 +134,17 @@ Run all phases at once (skips Phase 4):
 
 ### phase5-monitoring.yml
 
-**Includes**: 13, 14
+**Includes**: exporters, stack
 
 **Purpose**: Deploy comprehensive infrastructure monitoring (optional)
 
 **What It Does**:
 
-- Deploys node_exporter on all VMs and Proxmox host (13)
-- Deploys cAdvisor on Podman VMs for container metrics (13)
-- Configures Prometheus for metrics collection (14)
-- Deploys Grafana with pre-configured dashboards (14)
-- Sets up Uptime Kuma for service monitoring and alerting (14)
+- Deploys node_exporter on all VMs and Proxmox host (exporters)
+- Deploys cAdvisor on Podman VMs for container metrics (exporters)
+- Configures Prometheus for metrics collection (stack)
+- Deploys Grafana with pre-configured dashboards (stack)
+- Sets up Uptime Kuma for service monitoring and alerting (stack)
 
 **Duration**: ~15-30 minutes
 
@@ -152,7 +152,7 @@ Run all phases at once (skips Phase 4):
 
 - Phase 2 completed (Tailscale networking required)
 - Phase 3 recommended but not required (for Podman container monitoring)
-- **Monitoring VM**: Use OpenTofu for provisioning (VMID 500, 4 cores, 6GB RAM, 192.168.0.16)
+- **Monitoring VM**: Use OpenTofu for provisioning (VMID 500, 4 cores, 6GB RAM, 192.168.10.16)
 
 **Notes**:
 
@@ -165,7 +165,7 @@ Run all phases at once (skips Phase 4):
 
 ## Individual Playbooks
 
-### 01-provision-vms.yml
+### infrastructure/provision-vms.yml
 
 **Target**: Proxmox host
 **Role**: Uses Proxmox modules directly
@@ -184,9 +184,9 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 02-configure-nas-role.yml
+### infrastructure/nas.yml
 
-**Target**: nas (192.168.0.15)
+**Target**: nas (192.168.30.15)
 **Roles**: btrfs_storage, nfs_server, btrfs_snapshots, btrfs_maintenance
 
 **Creates**:
@@ -210,7 +210,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 03-configure-tailscale-role.yml
+### networking/tailscale.yml
 
 **Target**: All Ubuntu VMs
 **Role**: tailscale
@@ -221,7 +221,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 04-configure-home-assistant-role.yml
+### services/home-assistant.yml
 
 **Target**: home_assistant
 **Roles**: podman_app
@@ -232,7 +232,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 05-configure-satisfactory-role.yml
+### services/satisfactory.yml
 
 **Target**: satisfactory_server
 **Role**: Custom tasks (SteamCMD)
@@ -243,7 +243,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 06-configure-media-services-role.yml
+### services/media-services.yml
 
 **Target**: media_services
 **Roles**: nfs_client, podman_app
@@ -264,7 +264,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 07-configure-download-clients-role.yml
+### services/download-clients.yml
 
 **Target**: download_clients
 **Roles**: nfs_client, podman_app
@@ -288,7 +288,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 08-configure-recyclarr-role.yml
+### services/recyclarr.yml
 
 **Target**: media_services
 **Role**: podman_app
@@ -300,7 +300,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 09-configure-nfs-clients-role.yml
+### networking/nfs-clients.yml
 
 **Target**: jellyfin, media_services, download_clients
 **Role**: nfs_client
@@ -310,7 +310,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 10-configure-jellyfin-role.yml
+### services/jellyfin.yml
 
 **Target**: jellyfin
 **Roles**: Custom tasks, nfs_client
@@ -329,7 +329,7 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 11-configure-system-hardening-role.yml
+### system/system-hardening.yml
 
 **Target**: All Ubuntu VMs (production_vms)
 **Roles**: ufw_firewall, unattended_upgrades
@@ -337,7 +337,7 @@ Run all phases at once (skips Phase 4):
 **Configures**:
 
 - UFW firewall (SSH from Tailscale + local network)
-- Service ports open to local network (192.168.0.0/24) + Tailscale
+- Service ports open to local network (VLAN subnets) + Tailscale
 - Default deny incoming policy
 - Automatic security update installation
 - No auto-reboot (manual reboots for kernel updates)
@@ -349,9 +349,9 @@ Run all phases at once (skips Phase 4):
 
 ---
 
-### 12-configure-adguard-home-role.yml
+### networking/adguard-home.yml
 
-**Target**: nas (192.168.0.15)
+**Target**: nas (192.168.30.15)
 **Roles**: adguard_home
 
 **Service**: AdGuard Home (Quadlet/Podman)
@@ -387,14 +387,14 @@ Run all phases at once (skips Phase 4):
 1. Access Web UI at http://nas.discus-moth.ts.net:80
 2. Login with credentials from vault (`vault_services_admin_username` / `vault_services_admin_password`)
 3. **Optional**: Configure Tailscale custom DNS nameserver (NAS Tailscale IP) for network-wide ad blocking
-4. **Optional**: Deploy Unbound (playbook 16-configure-unbound-role.yml) in Phase C for recursive DNS
+4. **Optional**: Deploy Unbound (playbook networking/unbound.yml) for recursive DNS
 
-**Dependencies**: Unbound (playbook 16) is optional - AdGuard uses DoT fallback (Quad9/Cloudflare)
-until Unbound is deployed in Phase C
+**Dependencies**: Unbound (networking/unbound.yml) is optional - AdGuard uses DoT fallback
+(Quad9/Cloudflare) until Unbound is deployed
 
 ---
 
-### 13-deploy-monitoring-exporters.yml
+### monitoring/exporters.yml
 
 **Target**: All VMs + Proxmox host
 **Roles**: node_exporter, podman_app (cAdvisor)
@@ -436,9 +436,9 @@ until Unbound is deployed in Phase C
 
 ---
 
-### 14-configure-monitoring-stack.yml
+### monitoring/stack.yml
 
-**Target**: monitoring (192.168.0.16)
+**Target**: monitoring (192.168.10.16)
 **Roles**: podman_app
 
 **Purpose**: Deploy Prometheus, Grafana, and Uptime Kuma
@@ -498,7 +498,7 @@ until Unbound is deployed in Phase C
 **Prerequisites**:
 
 - Monitoring VM provisioned via OpenTofu (VMID 500)
-- Playbook 13 completed (exporters deployed)
+- monitoring/exporters.yml completed (exporters deployed)
 - Phase 2 completed (Tailscale networking)
 
 **Post-Deployment**:
@@ -519,7 +519,7 @@ until Unbound is deployed in Phase C
 
 ---
 
-### 15-configure-tdarr-role.yml
+### services/tdarr.yml
 
 **Target**: jellyfin
 **Roles**: podman_app
@@ -532,9 +532,9 @@ until Unbound is deployed in Phase C
 
 ---
 
-### 16-configure-unbound-role.yml
+### networking/unbound.yml
 
-**Target**: nas (192.168.0.15)
+**Target**: nas (192.168.30.15)
 **Roles**: podman_app
 
 **Service**: Unbound Recursive DNS Resolver (Podman)
@@ -578,11 +578,11 @@ dig @127.0.0.1 -p 5335 dnssec-failed.org
 dig @nas.discus-moth.ts.net google.com
 ```
 
-**Dependencies**: Requires AdGuard Home (playbook 12) already deployed
+**Dependencies**: Requires AdGuard Home (networking/adguard-home.yml) already deployed
 
 ---
 
-### 17-configure-release-checker-stagger.yml
+### system/release-checker-stagger.yml
 
 **Target**: All Ubuntu VMs
 **Role**: common
@@ -597,7 +597,7 @@ dig @nas.discus-moth.ts.net google.com
 
 ---
 
-### 18-configure-woodpecker-ci-role.yml
+### services/woodpecker-ci.yml
 
 **Target**: woodpecker_ci
 **Role**: podman_app
@@ -616,13 +616,13 @@ dig @nas.discus-moth.ts.net google.com
 
 ---
 
-### ~~19-configure-minio-role.yml~~ (Removed)
+### ~~services/minio.yml~~ (Removed)
 
 MinIO was removed as part of the directory restructure (Issue #62). Terraform state reverted to local backend.
 
 ---
 
-### 20-configure-nexus-role.yml
+### services/nexus.yml
 
 **Target**: nas
 **Role**: podman_app
@@ -645,7 +645,7 @@ images from this registry.
 
 ---
 
-### 23-configure-jellyfin-config-role.yml
+### services/jellyfin-config.yml
 
 **Target**: jellyfin
 **Role**: jellyfin_config
@@ -668,7 +668,7 @@ issues in 10.11.x ([Issue #58](https://github.com/SilverDFlame/jellybuntu/issues
 
 ---
 
-### 24-configure-unifi-controller-role.yml
+### services/unifi-controller.yml
 
 **Target**: unifi_controller
 **Role**: podman_app
@@ -678,6 +678,36 @@ issues in 10.11.x ([Issue #58](https://github.com/SilverDFlame/jellybuntu/issues
 **URL**: https://unifi-controller.discus-moth.ts.net:8443
 
 **Purpose**: Self-hosted UniFi Network Controller for managing APs and network devices
+
+---
+
+### services/mumble.yml
+
+**Target**: mumble (192.168.40.20)
+**Role**: podman_app
+
+**Service**: Mumble Voice Chat Server
+**Port**: 64738 (TCP + UDP)
+**URL**: mumble.discus-moth.ts.net:64738
+
+**Purpose**: Low-latency voice chat for gaming sessions
+
+**Container**: `mumblevoip/mumble-server:v1.5.857-1`
+**Resources**: 1 core, 1GB RAM (512MB reservation), CPU units 512
+
+---
+
+### system/system-timezone.yml
+
+**Target**: All Ubuntu VMs
+**Role**: system_timezone
+
+**Purpose**: Configure consistent timezone across all VMs
+
+**Configures**:
+
+- Sets system timezone to configured value
+- Ensures NTP synchronization is active
 
 ---
 
@@ -753,19 +783,20 @@ sops -d group_vars/all.sops.yaml
 **Phase 1** → **Phase 2** → **Phase 3** → Manual GUI Config → **Phase 4**
 
 **Phase 5** (optional): Can run independently after Phase 2 (requires Tailscale networking)
-**Phase C** (optional): Advanced services can run after Phase 4
+**Advanced services** (Tdarr, Unbound, Woodpecker, UniFi, Mumble): Can run after Phase 2
 
 Within phases:
 
-- 01 must run first (creates VMs)
-- 00, 02-03, 12, 20 can run in any order after 01 (Phase 2)
-- 20 (Nexus) must run before Phase 3 (services pull from container registry)
-- 04-07 require VMs to exist and Nexus deployed (Phase 3)
-- 09 requires 02 (NAS must be configured)
-- 10 requires 09 (NFS mount needed)
-- 08, 11 should run last (Phase 4: Recyclarr + system hardening)
-- 13-14 (Phase 5): 13 → 14 (sequential, exporters → monitoring stack)
-- 15-19 (Phase C): Advanced services, can run independently
+- infrastructure/provision-vms must run first (creates VMs)
+- ssh-keys, nas, tailscale, adguard-home, nexus can run in any order after provision-vms (Phase 2)
+- services/nexus must run before Phase 3 (services pull from container registry)
+- services/* require VMs to exist and Nexus deployed (Phase 3)
+- networking/nfs-clients requires infrastructure/nas (NAS must be configured)
+- services/jellyfin requires networking/nfs-clients (NFS mount needed)
+- services/recyclarr, system/system-hardening should run last (Phase 4)
+- monitoring/exporters then monitoring/stack (Phase 5: sequential, exporters then stack)
+- Advanced services (services/tdarr, networking/unbound, services/woodpecker-ci,
+  services/unifi-controller, services/mumble): Can run independently after Phase 2
 
 **Idempotency**: All playbooks are idempotent (safe to re-run)
 

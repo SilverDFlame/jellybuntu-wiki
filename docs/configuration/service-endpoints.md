@@ -9,6 +9,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 
 - **Home Assistant**: http://home-assistant.discus-moth.ts.net:8123
 - **Satisfactory**: satisfactory-server.discus-moth.ts.net:7777
+- **Mumble**: mumble.discus-moth.ts.net:64738
 - **Jellyfin**: http://jellyfin.discus-moth.ts.net:8096
 - **Tdarr**: http://jellyfin.discus-moth.ts.net:8265
 - **Sonarr**: http://media-services.discus-moth.ts.net:8989
@@ -23,7 +24,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **SABnzbd**: http://download-clients.discus-moth.ts.net:8081
 - **AdGuard Home**: http://nas.discus-moth.ts.net:80 (DNS: 100.65.73.89:53)
 - **Nexus Repository**: http://nas.discus-moth.ts.net:8081 (Registry: nas.discus-moth.ts.net:5001)
-- **NAS**: http://nas.discus-moth.ts.net (Btrfs RAID1 storage, 192.168.0.15)
+- **NAS**: http://nas.discus-moth.ts.net (Btrfs RAID1 storage, 192.168.30.15)
 - **Prometheus**: http://monitoring.discus-moth.ts.net:9090
 - **Alertmanager**: http://monitoring.discus-moth.ts.net:9093
 - **Grafana**: http://monitoring.discus-moth.ts.net:3000
@@ -34,28 +35,29 @@ All service URLs and access methods for the Jellybuntu homelab.
 
 ### Via Local Network (Static IPs)
 
-- **Home Assistant**: http://192.168.0.10:8123
-- **Satisfactory**: 192.168.0.11:7777
-- **Jellyfin**: http://192.168.0.12:8096
-- **Tdarr**: http://192.168.0.12:8265
-- **Sonarr**: http://192.168.0.13:8989
-- **Radarr**: http://192.168.0.13:7878
-- **Prowlarr**: http://192.168.0.13:9696
-- **Jellyseerr**: http://192.168.0.13:5055
-- **Bazarr**: http://192.168.0.13:6767
-- **Huntarr**: http://192.168.0.13:9705
-- **Homarr**: http://192.168.0.13:7575
-- **Byparr**: http://192.168.0.13:8191
-- **qBittorrent**: http://192.168.0.14:8080
-- **SABnzbd**: http://192.168.0.14:8081
-- **AdGuard Home**: http://192.168.0.15:80 (DNS: 192.168.0.15:53)
-- **Nexus Repository**: http://192.168.0.15:8081 (Registry: 192.168.0.15:5001)
-- **Prometheus**: http://192.168.0.16:9090
-- **Alertmanager**: http://192.168.0.16:9093
-- **Grafana**: http://192.168.0.16:3000
-- **Woodpecker CI**: http://192.168.0.17:8000 (Web UI)
-- **Lancache**: http://192.168.0.18:80 (HTTP), https://192.168.0.18:443 (SNI proxy)
-- **UniFi Controller**: https://192.168.0.19:8443 (Network management)
+- **Home Assistant**: http://192.168.20.10:8123
+- **Satisfactory**: 192.168.40.11:7777
+- **Mumble**: 192.168.40.20:64738
+- **Jellyfin**: http://192.168.30.12:8096
+- **Tdarr**: http://192.168.30.12:8265
+- **Sonarr**: http://192.168.30.13:8989
+- **Radarr**: http://192.168.30.13:7878
+- **Prowlarr**: http://192.168.30.13:9696
+- **Jellyseerr**: http://192.168.30.13:5055
+- **Bazarr**: http://192.168.30.13:6767
+- **Huntarr**: http://192.168.30.13:9705
+- **Homarr**: http://192.168.30.13:7575
+- **Byparr**: http://192.168.30.13:8191
+- **qBittorrent**: http://192.168.30.14:8080
+- **SABnzbd**: http://192.168.30.14:8081
+- **AdGuard Home**: http://192.168.30.15:80 (DNS: 192.168.30.15:53)
+- **Nexus Repository**: http://192.168.30.15:8081 (Registry: 192.168.30.15:5001)
+- **Prometheus**: http://192.168.10.16:9090
+- **Alertmanager**: http://192.168.10.16:9093
+- **Grafana**: http://192.168.10.16:3000
+- **Woodpecker CI**: http://192.168.10.17:8000 (Web UI)
+- **Lancache**: http://192.168.40.18:80 (HTTP), https://192.168.40.18:443 (SNI proxy)
+- **UniFi Controller**: https://192.168.10.19:8443 (Network management)
 
 ## Deployment Types
 
@@ -239,7 +241,7 @@ systemctl --user restart satisfactory
 
 ### Common Service Operations by VM
 
-#### Media Services VM (192.168.0.13)
+#### Media Services VM (192.168.30.13)
 
 ```bash
 # SSH into VM
@@ -255,7 +257,7 @@ systemctl --user status sonarr radarr prowlarr jellyseerr byparr recyclarr
 systemctl --user restart sonarr radarr prowlarr jellyseerr byparr recyclarr
 ```
 
-#### Download Clients VM (192.168.0.14)
+#### Download Clients VM (192.168.30.14)
 
 ```bash
 # SSH into VM
@@ -271,7 +273,7 @@ systemctl --user status gluetun qbittorrent sabnzbd unpackerr
 systemctl --user restart gluetun qbittorrent sabnzbd unpackerr
 ```
 
-#### Monitoring VM (192.168.0.16)
+#### Monitoring VM (192.168.10.16)
 
 ```bash
 # SSH into VM
@@ -289,7 +291,7 @@ systemctl --user restart prometheus alertmanager grafana
 
 Note: Uptime Kuma runs on external monitoring (Oracle Cloud) at oracle-monitoring.discus-moth.ts.net:3001
 
-#### Woodpecker CI VM (192.168.0.17)
+#### Woodpecker CI VM (192.168.10.17)
 
 ```bash
 # SSH into VM
@@ -309,7 +311,7 @@ systemctl --user restart woodpecker-server woodpecker-agent
 tailscale funnel status
 ```
 
-#### UniFi Controller VM (192.168.0.19)
+#### UniFi Controller VM (192.168.10.19)
 
 ```bash
 # SSH into VM
@@ -392,6 +394,8 @@ journalctl --user -u unifi-app -f
 | UniFi Controller | .19 | 8080 | HTTP | Device Inform |
 | UniFi Controller | .19 | 3478 | UDP | STUN |
 | UniFi Controller | .19 | 10001 | UDP | Device Discovery |
+| Mumble | .20 | 64738 | TCP | Voice Chat |
+| Mumble | .20 | 64738 | UDP | Voice Chat |
 
 *qBittorrent uses dynamic port forwarding via PIA VPN (e.g., 46124). Port is automatically assigned and updated. See
 [VPN Configuration Guide](vpn-gluetun.md) for details.
@@ -406,14 +410,14 @@ When configuring download clients in Sonarr/Radarr/Prowlarr:
 
 ### qBittorrent
 
-- **Host**: `download-clients.discus-moth.ts.net` or `192.168.0.14`
+- **Host**: `download-clients.discus-moth.ts.net` or `192.168.30.14`
 - **Port**: `8080`
 - **Username**: (set during qBittorrent setup)
 - **Password**: (set during qBittorrent setup)
 
 ### SABnzbd
 
-- **Host**: `download-clients.discus-moth.ts.net` or `192.168.0.14`
+- **Host**: `download-clients.discus-moth.ts.net` or `192.168.30.14`
 - **Port**: `8081`
 - **API Key**: Found in SABnzbd Config > General > Security
 - **Category**: Leave blank or use `tv`/`movies`
@@ -427,9 +431,9 @@ All VMs are accessible via SSH with the Ansible key:
 
 ssh -i ~/.ssh/ansible_homelab ansible@<hostname>.discus-moth.ts.net
 
-# Via Local IP
+# Via Local IP (use VLAN IP for the target VM)
 
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.<ip>
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.<vlan>.<ip>
 ```
 
 **Examples**:
@@ -456,10 +460,10 @@ ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net
 
 ## Network Accessibility
 
-### After Firewall Configuration (Playbook 12: configure-ufw-firewall-role)
+### After Firewall Configuration (Phase 4)
 
-- **SSH**: Tailscale (100.64.0.0/10) + LAN (192.168.0.0/24)
-- **Web Services**: Local network (192.168.0.0/24) or Tailscale
+- **SSH**: Tailscale (100.64.0.0/10) + Management VLAN (192.168.10.0/24)
+- **Web Services**: Own VLAN + Management VLAN (192.168.10.0/24)
 - **Other Traffic**: Blocked by default
 
 ### Before Firewall
