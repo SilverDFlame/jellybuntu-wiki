@@ -1,6 +1,6 @@
 # Tdarr Troubleshooting Guide
 
-> **IMPORTANT**: Tdarr runs as a **rootless Podman container with Quadlet** on the Jellyfin VM (192.168.0.12).
+> **IMPORTANT**: Tdarr runs as a **rootless Podman container with Quadlet** on the Jellyfin VM (192.168.30.12).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Quick Diagnostics
@@ -103,7 +103,7 @@ journalctl --user -u tdarr-node -f
 
    ```bash
    # Test with IP instead
-   curl -I http://192.168.0.12:8265
+   curl -I http://192.168.30.12:8265
 
    # If IP works but hostname doesn't, check Tailscale:
    tailscale status | grep jellyfin

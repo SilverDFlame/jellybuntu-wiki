@@ -3,11 +3,11 @@
 Maintenance procedures for Home Assistant home automation platform.
 
 > **IMPORTANT**: Home Assistant runs as a **rootless Podman container with Quadlet** on the home-assistant VM
-> (192.168.0.10). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+> (192.168.20.10). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: home-assistant (VMID 100, 192.168.0.10)
+- **VM**: home-assistant (VMID 100, 192.168.20.10)
 - **Port**: 8123
 - **Config Path**: `~/.config/homeassistant/`
 - **Quadlet File**: `~/.config/containers/systemd/homeassistant.container`

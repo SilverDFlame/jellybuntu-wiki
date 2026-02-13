@@ -557,7 +557,7 @@ vms:
 **Server** (`/etc/exports` on NAS):
 
 ```text
-/mnt/storage/data 192.168.0.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/storage/data 192.168.30.0/24(rw,sync,no_subtree_check,no_root_squash)
 ```
 
 **Client** (`/etc/fstab` on VMs):

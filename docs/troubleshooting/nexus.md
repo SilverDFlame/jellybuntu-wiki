@@ -2,7 +2,7 @@
 
 Troubleshooting guide for Nexus Repository Manager container registry issues.
 
-> **IMPORTANT**: Nexus Repository runs as a **rootless Podman container with Quadlet** on NAS VM (192.168.0.15).
+> **IMPORTANT**: Nexus Repository runs as a **rootless Podman container with Quadlet** on NAS VM (192.168.30.15).
 Use `systemctl --user` and `journalctl --user` commands, NOT `docker` commands.
 
 ## Quick Checks
@@ -131,7 +131,7 @@ podman logs nexus
 
 - Browser shows "Connection refused" or times out
 - Can't reach http://nas.discus-moth.ts.net:8081
-- Can't reach http://192.168.0.15:8081
+- Can't reach http://192.168.30.15:8081
 
 **Diagnosis**:
 
@@ -168,7 +168,7 @@ sudo netstat -tulpn | grep 8081
 
    ```bash
    # Allow Nexus Web UI port
-   sudo ufw allow from 192.168.0.0/24 to any port 8081
+   sudo ufw allow from 192.168.30.0/24 to any port 8081
    sudo ufw allow from 100.64.0.0/10 to any port 8081
    sudo ufw reload
    ```
@@ -207,7 +207,7 @@ sudo netstat -tulpn | grep 8081
 curl http://localhost:5001/v2/
 # Should return: {} or {"repositories":[]}
 
-curl http://192.168.0.15:5001/v2/
+curl http://192.168.30.15:5001/v2/
 curl http://nas.discus-moth.ts.net:5001/v2/
 
 # Check if registry connector is configured
@@ -220,7 +220,7 @@ curl http://nas.discus-moth.ts.net:5001/v2/
 
    ```bash
    # Allow container registry port
-   sudo ufw allow from 192.168.0.0/24 to any port 5001
+   sudo ufw allow from 192.168.30.0/24 to any port 5001
    sudo ufw allow from 100.64.0.0/10 to any port 5001
    sudo ufw reload
    ```

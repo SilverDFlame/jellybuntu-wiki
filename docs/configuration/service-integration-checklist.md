@@ -63,7 +63,7 @@ Prowlarr (Indexers) → Sonarr/Radarr (Automation) → Download Clients → Unpa
 
 - [ ] Settings → Download Clients → Add → qBittorrent
   - Name: qBittorrent
-  - Host: `download-clients.discus-moth.ts.net` or `192.168.0.14`
+  - Host: `download-clients.discus-moth.ts.net` or `192.168.30.14`
   - Port: `8080`
   - Username: `admin`
   - Password: (your qBittorrent password)
@@ -72,7 +72,7 @@ Prowlarr (Indexers) → Sonarr/Radarr (Automation) → Download Clients → Unpa
 
 - [ ] Settings → Download Clients → Add → SABnzbd
   - Name: SABnzbd
-  - Host: `download-clients.discus-moth.ts.net` or `192.168.0.14`
+  - Host: `download-clients.discus-moth.ts.net` or `192.168.30.14`
   - Port: `8081`
   - API Key: (from SABnzbd Config → General → API Key)
   - Category: `tv`
@@ -324,10 +324,10 @@ If widgets not working, check the container logs for API connectivity issues.
 |--------------|------------|-----------------|----------|----------------|
 | Prowlarr | Sonarr | API | localhost:8989 | API Key |
 | Prowlarr | Radarr | API | localhost:7878 | API Key |
-| Sonarr | qBittorrent | API | 192.168.0.14:8080 | User/Pass |
-| Sonarr | SABnzbd | API | 192.168.0.14:8081 | API Key |
-| Radarr | qBittorrent | API | 192.168.0.14:8080 | User/Pass |
-| Radarr | SABnzbd | API | 192.168.0.14:8081 | API Key |
+| Sonarr | qBittorrent | API | 192.168.30.14:8080 | User/Pass |
+| Sonarr | SABnzbd | API | 192.168.30.14:8081 | API Key |
+| Radarr | qBittorrent | API | 192.168.30.14:8080 | User/Pass |
+| Radarr | SABnzbd | API | 192.168.30.14:8081 | API Key |
 | Bazarr | Sonarr | API | localhost:8989 | API Key |
 | Bazarr | Radarr | API | localhost:7878 | API Key |
 | Jellyseerr | Jellyfin | API | jellyfin:8096 | Jellyfin Auth |

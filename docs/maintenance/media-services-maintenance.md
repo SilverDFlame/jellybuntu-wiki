@@ -4,7 +4,7 @@ Maintenance procedures for the media services stack: Sonarr, Radarr, Prowlarr, J
 Homarr, Byparr, and Recyclarr.
 
 > **IMPORTANT**: All media services run as **rootless Podman containers with Quadlet** on the media-services VM
-> (192.168.0.13). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+> (192.168.30.13). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 

@@ -5,7 +5,7 @@ management, and scheduled tasks.
 
 ## Overview
 
-Nexus Repository runs on the NAS VM (192.168.0.15) as a rootless Podman container. Without regular
+Nexus Repository runs on the NAS VM (192.168.30.15) as a rootless Podman container. Without regular
 maintenance, cached images and artifacts will accumulate and consume disk space.
 
 **Key maintenance concerns:**

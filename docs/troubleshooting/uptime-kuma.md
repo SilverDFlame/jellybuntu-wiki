@@ -2,7 +2,7 @@
 
 Troubleshooting guide for Uptime Kuma uptime monitoring issues.
 
-> **IMPORTANT**: Uptime Kuma runs as a **rootless Podman container with Quadlet** on Monitoring VM (192.168.0.16).
+> **IMPORTANT**: Uptime Kuma runs as a **rootless Podman container with Quadlet** on Monitoring VM (192.168.10.16).
 Use `systemctl --user` and `journalctl --user` commands, NOT `docker` commands.
 
 ## Quick Checks
@@ -104,7 +104,7 @@ podman logs uptime-kuma
 
 - Browser shows "Connection refused" or times out
 - Can't reach http://monitoring.discus-moth.ts.net:3001
-- Can't reach http://192.168.0.16:3001
+- Can't reach http://192.168.10.16:3001
 
 **Diagnosis**:
 
@@ -128,7 +128,7 @@ sudo netstat -tulpn | grep 3001
 
    ```bash
    # Allow Uptime Kuma port
-   sudo ufw allow from 192.168.0.0/24 to any port 3001
+   sudo ufw allow from 192.168.10.0/24 to any port 3001
    sudo ufw allow from 100.64.0.0/10 to any port 3001
    sudo ufw reload
    ```
@@ -173,8 +173,8 @@ sudo netstat -tulpn | grep 3001
 ```bash
 # Check if Uptime Kuma can reach target services
 export XDG_RUNTIME_DIR=/run/user/$(id -u)
-podman exec uptime-kuma ping -c 3 192.168.0.12   # Jellyfin
-podman exec uptime-kuma curl -I http://192.168.0.13:8989   # Sonarr
+podman exec uptime-kuma ping -c 3 192.168.30.12   # Jellyfin
+podman exec uptime-kuma curl -I http://192.168.30.13:8989   # Sonarr
 
 # Check DNS resolution
 podman exec uptime-kuma nslookup jellyfin.discus-moth.ts.net
@@ -216,7 +216,7 @@ podman exec uptime-kuma nslookup jellyfin.discus-moth.ts.net
 
 3. **Use IP addresses instead of hostnames**:
    - Edit monitors in Web UI
-   - Change hostname to IP address (e.g., `http://192.168.0.13:8989` instead of `http://media-services.discus-moth.ts.net:8989`)
+   - Change hostname to IP address (e.g., `http://192.168.30.13:8989` instead of `http://media-services.discus-moth.ts.net:8989`)
    - Save and test
 
 4. **Timeout too short**:
@@ -517,7 +517,7 @@ podman exec -it uptime-kuma /bin/sh
 # Inside container, test connectivity
 ping 8.8.8.8
 nslookup google.com
-curl http://192.168.0.13:8989   # Test Sonarr
+curl http://192.168.30.13:8989   # Test Sonarr
 
 # Exit
 exit

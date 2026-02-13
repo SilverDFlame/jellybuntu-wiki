@@ -29,7 +29,7 @@ tofu apply -var="proxmox_password=<your_proxmox_password>"
 Replace `<your_proxmox_password>` with your Proxmox root password. This command will:
 
 1. Verify the monitoring VM configuration
-2. Provision VMID 500 (192.168.0.16) with 4 cores, 6GB RAM, 64GB disk
+2. Provision VMID 500 (192.168.10.16) with 4 cores, 6GB RAM, 64GB disk
 3. Boot Ubuntu Server 24.04 LTS
 
 **Verify provisioning succeeded:**
@@ -59,7 +59,7 @@ qm start 500
 |----------|-------|
 | VM Name | monitoring |
 | VMID | 500 |
-| IP Address | 192.168.0.16 |
+| IP Address | 192.168.10.16 |
 | Tailscale Hostname | monitoring.discus-moth.ts.net |
 | CPU Cores | 4 |
 | RAM | 6GB |
@@ -84,7 +84,7 @@ qm start 500
 - **Proxmox Host**: Hardware health, hypervisor resources
 - **6 Guest VMs**: System metrics, disk space, network
 - **Docker Containers**: Per-container CPU, memory, I/O
-- **Network Devices**: Mikrotik router (192.168.0.1) and switch (192.168.0.2) via SNMP
+- **Network Devices**: Mikrotik router (192.168.10.1) and switch (192.168.10.2) via SNMP
 - **External Connectivity**: ICMP ping (Google DNS, Cloudflare DNS), DNS queries
 - **Web Services**: HTTP availability checks for all Jellybuntu services
 
@@ -353,7 +353,7 @@ Expected: `Linger=yes`
 
 ```bash
 ssh -i ~/.ssh/ansible_homelab ansible@target-vm.discus-moth.ts.net \
-  "sudo ufw allow from 192.168.0.16 to any port 9100 proto tcp"
+  "sudo ufw allow from 192.168.10.16 to any port 9100 proto tcp"
 ```
 
 **Solution for exporter**:

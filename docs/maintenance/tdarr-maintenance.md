@@ -2,12 +2,12 @@
 
 Maintenance procedures for Tdarr automated media transcoding system.
 
-> **IMPORTANT**: Tdarr runs as **rootless Podman containers with Quadlet** on the Jellyfin VM (192.168.0.12).
+> **IMPORTANT**: Tdarr runs as **rootless Podman containers with Quadlet** on the Jellyfin VM (192.168.30.12).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: jellyfin (VMID 400, 192.168.0.12)
+- **VM**: jellyfin (VMID 400, 192.168.30.12)
 - **Components**: Tdarr Server (8265), Tdarr Node (8267)
 - **Config Path**: `/opt/jellyfin/tdarr/`
 - **Transcode Cache**: `/mnt/transcode-cache/tdarr` (RAM disk)

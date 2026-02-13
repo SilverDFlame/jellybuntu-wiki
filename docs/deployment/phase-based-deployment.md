@@ -24,7 +24,7 @@ logical separation of concerns. Each phase can be run independently and has clea
 **What it does**:
 
 - Creates cloud-init template (VMID 9000)
-- Clones 6 VMs from template
+- Clones 11 VMs from template
 - Configures VM resources, networking, and storage
 - Starts all VMs
 
@@ -36,7 +36,7 @@ logical separation of concerns. Each phase can be run independently and has clea
 
 **Success Criteria**:
 
-- All 6 VMs created and running
+- All 11 VMs created and running
 - VMs accessible via SSH (IP addresses)
 - Cloud-init completed on all VMs
 

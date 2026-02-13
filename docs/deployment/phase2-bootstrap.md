@@ -27,7 +27,7 @@ Phase 2 sets up network storage (NAS with Btrfs RAID1 + NFS) and establishes the
 
 ### 2. Install Tailscale on All VMs
 
-- Installs Tailscale on all 6 VMs
+- Installs Tailscale on all VMs
 - Generates ephemeral auth keys via Tailscale API
 - Joins each VM to Tailscale network
 - Registers Tailscale hostnames (e.g., `nas.discus-moth.ts.net`)
@@ -120,7 +120,7 @@ Expected output:
 
 ```text
 /mnt/storage/data
-    192.168.0.0/24(rw,sync,no_subtree_check,no_root_squash)
+    192.168.30.0/24(rw,sync,no_subtree_check,root_squash)
 ```
 
 ### Check Tailscale Status
@@ -228,13 +228,13 @@ This follows TRaSH Guides recommendations for hardlink support.
 
 ```bash
 # Check disks are present
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.15 "lsblk"
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.15 "lsblk"
 
 # Should show sdb, sdc, sdd (6TB each)
 # If missing, check Proxmox disk passthrough
 
 # Verify disks have no existing filesystem
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.15 \
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.15 \
   "sudo wipefs -a /dev/sdb /dev/sdc /dev/sdd"
 ```
 
@@ -266,15 +266,15 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
 
 ```bash
 # Check internet connectivity from VM
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.10 \
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.20.10 \
   "ping -c 3 tailscale.com"
 
 # Check DNS resolution
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.10 \
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.20.10 \
   "nslookup tailscale.com"
 
 # Manual installation
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.10
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.20.10
 curl -fsSL https://tailscale.com/install.sh | sh
 ```
 
@@ -292,7 +292,7 @@ sops -d group_vars/all.sops.yaml | grep tailscale
 # Ensure key is "Reusable" and "Ephemeral"
 
 # Try manual join
-ssh -i ~/.ssh/ansible_homelab ansible@192.168.0.10
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.20.10
 sudo tailscale up --authkey=tskey-api-xxxxx
 ```
 
@@ -333,10 +333,10 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
   "ls -la /mnt/storage/data"
 
 # Test NFS mount manually (use direct IP for reliability)
-sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/test
+sudo mount -t nfs 192.168.30.15:/mnt/storage/data /mnt/test
 ```
 
-> **Note**: NFS mounts use direct IP (192.168.0.15) rather than Tailscale hostname for reliability.
+> **Note**: NFS mounts use direct IP (192.168.30.15) rather than Tailscale hostname for reliability.
 > See [NFS Direct IP Migration](../reference/nfs-direct-ip-migration.md).
 
 ### AdGuard Home Container Won't Start
@@ -399,7 +399,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
   "sudo ufw status | grep 53"
 
 # Test DNS directly
-dig @192.168.0.15 google.com
+dig @192.168.30.15 google.com
 
 # Check AdGuard Home logs
 ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
@@ -445,7 +445,7 @@ After Phase 2, all VMs are accessible via Tailscale hostnames:
 
 ### Network Transition
 
-**Before Phase 2**: SSH via IP addresses (`192.168.0.x`)
+**Before Phase 2**: SSH via VLAN IP addresses (e.g., `192.168.30.x`)
 **After Phase 2**: SSH via Tailscale hostnames (preferred)
 
 Both methods work after Phase 2, but Tailscale is recommended.

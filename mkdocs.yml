@@ -97,6 +97,7 @@ nav:
       - Service Endpoints: configuration/service-endpoints.md
       - Networking: configuration/networking.md
       - Security: configuration/security.md
+      - Mumble Server: configuration/mumble-setup.md
       - UniFi Controller: configuration/unifi-controller-setup.md
   - Maintenance:
       - Updates: maintenance/updates.md
@@ -116,6 +117,7 @@ nav:
       - Container Versioning: reference/container-versioning.md
       - Proxmox API: reference/proxmox-api-permissions.md
       - SSH Bastion: reference/ssh-bastion.md
+      - VLAN Migration: reference/vlan-migration.md
       - Tailscale Auto-Approval: reference/tailscale-auto-approval.md
   - Development:
       - Pre-commit Hooks: development/pre-commit.md

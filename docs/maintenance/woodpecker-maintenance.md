@@ -5,7 +5,7 @@ rotation, and database maintenance.
 
 ## Overview
 
-Woodpecker CI is a lightweight continuous integration server running on a dedicated VM (192.168.0.17 / automation.discus-moth.ts.net).
+Woodpecker CI is a lightweight continuous integration server running on a dedicated VM (192.168.10.17 / automation.discus-moth.ts.net).
 
 **Access**: http://automation.discus-moth.ts.net:8000
 

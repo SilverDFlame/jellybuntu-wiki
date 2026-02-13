@@ -7,7 +7,7 @@ Deployment guide for Woodpecker CI continuous integration server.
 Woodpecker CI provides automated testing, linting, and deployment pipelines for the Jellybuntu infrastructure. It runs
 as a rootless Podman deployment on a dedicated VM with GitHub integration via OAuth.
 
-**VM**: VMID 600 (192.168.0.17)
+**VM**: VMID 600 (192.168.10.17)
 **Hostname**: automation.discus-moth.ts.net
 **Resources**: 2 cores, 8GB RAM, 32GB disk
 
@@ -166,7 +166,7 @@ If pipeline steps fail with "network unreachable":
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│ Woodpecker CI VM (VMID 600, 192.168.0.17)       │
+│ Woodpecker CI VM (VMID 600, 192.168.10.17)       │
 │                                                 │
 │  ┌─────────────────┐  ┌─────────────────────┐  │
 │  │ woodpecker-     │  │ woodpecker-agent    │  │

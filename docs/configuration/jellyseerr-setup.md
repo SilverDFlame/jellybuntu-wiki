@@ -5,7 +5,7 @@ to request TV shows and movies.
 
 ## Overview
 
-- **VM**: media-services (192.168.0.13)
+- **VM**: media-services (192.168.30.13)
 - **Port**: 5055
 - **Container**: jellyseer
 - **Config Path**: `/opt/media-stack/jellyseer/config`
@@ -14,7 +14,7 @@ to request TV shows and movies.
 ## Access
 
 - **Tailscale**: http://media-services.discus-moth.ts.net:5055
-- **Local Network**: http://192.168.0.13:5055
+- **Local Network**: http://192.168.30.13:5055
 
 ## Initial Setup
 
@@ -34,7 +34,7 @@ When you first access Jellyseerr, you'll go through a setup wizard:
    - Click "Use Jellyfin"
 
 3. **Configure Jellyfin Connection**:
-   - **Server URL**: `http://jellyfin.discus-moth.ts.net:8096` or `http://192.168.0.12:8096`
+   - **Server URL**: `http://jellyfin.discus-moth.ts.net:8096` or `http://192.168.30.12:8096`
    - **Login**: Use your Jellyfin admin credentials
    - **Email Address**: Your email for notifications
    - Click "Sign In"
@@ -45,7 +45,7 @@ When you first access Jellyseerr, you'll go through a setup wizard:
    - Click "Continue"
 
 5. **Configure Sonarr** (TV Shows):
-   - **Server URL**: `http://media-services.discus-moth.ts.net:8989` or `http://192.168.0.13:8989`
+   - **Server URL**: `http://media-services.discus-moth.ts.net:8989` or `http://192.168.30.13:8989`
    - **API Key**: Found in Sonarr → Settings → General → Security → API Key
    - **Quality Profile**: Select your preferred profile (e.g., "HD-1080p")
    - **Root Folder**: `/data/media/tv`
@@ -54,7 +54,7 @@ When you first access Jellyseerr, you'll go through a setup wizard:
    - Click "Test" to verify, then "Add"
 
 6. **Configure Radarr** (Movies):
-   - **Server URL**: `http://media-services.discus-moth.ts.net:7878` or `http://192.168.0.13:7878`
+   - **Server URL**: `http://media-services.discus-moth.ts.net:7878` or `http://192.168.30.13:7878`
    - **API Key**: Found in Radarr → Settings → General → Security → API Key
    - **Quality Profile**: Select your preferred profile (e.g., "HD-1080p")
    - **Root Folder**: `/data/media/movies`

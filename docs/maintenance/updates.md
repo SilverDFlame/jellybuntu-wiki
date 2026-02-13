@@ -44,7 +44,7 @@ The Jellybuntu infrastructure uses a hybrid update strategy:
 
 Most services run in Docker containers. Updates require pulling new images and recreating containers.
 
-### Media Services VM (192.168.0.13)
+### Media Services VM (192.168.30.13)
 
 Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr, Recyclarr
 
@@ -80,7 +80,7 @@ docker compose up -d sonarr
 docker compose logs -f sonarr
 ```
 
-### Download Clients VM (192.168.0.14)
+### Download Clients VM (192.168.30.14)
 
 Services: qBittorrent, SABnzbd
 
@@ -103,7 +103,7 @@ docker compose logs qbittorrent
 docker compose logs sabnzbd
 ```
 
-### Home Assistant VM (192.168.0.10)
+### Home Assistant VM (192.168.20.10)
 
 **Update Home Assistant**:
 
@@ -773,7 +773,7 @@ nano roles/adguard_home/defaults/main.yml
 
 # Verify
 ssh ansible@nas.discus-moth.ts.net "docker exec adguardhome /opt/adguardhome/AdGuardHome --version"
-dig @192.168.0.15 google.com  # Test resolution
+dig @192.168.30.15 google.com  # Test resolution
 ```
 
 **Example - Updating Unbound**:
@@ -789,7 +789,7 @@ nano roles/unbound/defaults/main.yml
 
 # Verify
 ssh ansible@nas.discus-moth.ts.net "docker exec unbound unbound -V"
-dig @192.168.0.15 -p 5335 google.com  # Test direct query
+dig @192.168.30.15 -p 5335 google.com  # Test direct query
 ```
 
 ### System Packages

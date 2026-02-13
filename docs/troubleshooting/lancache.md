@@ -3,12 +3,12 @@
 Lancache is a game download caching service that stores game files locally, dramatically speeding up downloads for
 Steam, Epic Games, Origin, Battle.net, and other gaming platforms.
 
-> **IMPORTANT**: Lancache runs as a **rootful Podman container** on the lancache VM (192.168.0.18).
+> **IMPORTANT**: Lancache runs as a **rootful Podman container** on the lancache VM (192.168.40.18).
 > Use `sudo systemctl` and `sudo podman` commands. This is one of the few services NOT using rootless Podman.
 
 ## Overview
 
-- **VM**: lancache (192.168.0.18)
+- **VM**: lancache (192.168.40.18)
 - **Ports**: 80 (HTTP cache), 443 (SNI proxy)
 - **Container**: lancache-monolithic
 - **DNS Container**: lancache-dns
@@ -20,7 +20,7 @@ Steam, Epic Games, Origin, Battle.net, and other gaming platforms.
 ## Access
 
 - **Tailscale**: http://lancache.discus-moth.ts.net:80
-- **Local Network**: http://192.168.0.18:80
+- **Local Network**: http://192.168.40.18:80
 
 ## Quick Diagnostics
 
@@ -77,8 +77,8 @@ du -sh /opt/lancache/cache/*
 
 ```bash
 # Check DNS is resolving to Lancache
-nslookup steamcdn-a.akamaihd.net 192.168.0.18
-# Should return 192.168.0.18
+nslookup steamcdn-a.akamaihd.net 192.168.40.18
+# Should return 192.168.40.18
 
 # Check cache container is running
 sudo podman ps | grep lancache-monolithic
@@ -94,7 +94,7 @@ sudo touch /opt/lancache/cache/test && sudo rm /opt/lancache/cache/test
 **Solutions**:
 
 1. **Client not using Lancache DNS**:
-   - Configure clients to use Lancache DNS (192.168.0.18)
+   - Configure clients to use Lancache DNS (192.168.40.18)
    - Or set Lancache DNS as primary in router/DHCP
    - Or configure AdGuard Home to forward to Lancache for gaming domains
 
@@ -128,7 +128,7 @@ sudo touch /opt/lancache/cache/test && sudo rm /opt/lancache/cache/test
 
 ```bash
 # Test DNS resolution
-dig @192.168.0.18 steamcdn-a.akamaihd.net
+dig @192.168.40.18 steamcdn-a.akamaihd.net
 
 # Check DNS container
 sudo systemctl status lancache-dns
@@ -339,7 +339,7 @@ sudo podman inspect lancache-monolithic | grep -i exit
 sudo podman exec lancache-dns cat /etc/dnsmasq.d/*.conf
 
 # Test specific CDN resolution
-dig @192.168.0.18 cdn1.epicgames.com
+dig @192.168.40.18 cdn1.epicgames.com
 
 # Check cache logs for platform
 sudo journalctl -u lancache-monolithic | grep -i epic
@@ -406,13 +406,13 @@ sudo journalctl -u lancache-monolithic --since "1 hour ago" | grep -c "MISS"
 
 ### Option 1: Configure DHCP/Router DNS
 
-Set Lancache DNS (192.168.0.18) as primary DNS for gaming devices.
+Set Lancache DNS (192.168.40.18) as primary DNS for gaming devices.
 
 ### Option 2: Per-Device DNS
 
 Configure specific devices to use Lancache DNS:
 
-- **Windows**: Network adapter → IPv4 → DNS: 192.168.0.18
+- **Windows**: Network adapter → IPv4 → DNS: 192.168.40.18
 - **Linux**: Edit `/etc/resolv.conf` or NetworkManager
 - **Gaming consoles**: Network settings → DNS
 
@@ -422,9 +422,9 @@ Configure AdGuard Home to forward gaming domains to Lancache:
 
 ```text
 # In AdGuard Home DNS rewrites:
-*.steamcontent.com → 192.168.0.18
-*.akamaihd.net → 192.168.0.18
-*.epicgames.com → 192.168.0.18
+*.steamcontent.com → 192.168.40.18
+*.akamaihd.net → 192.168.40.18
+*.epicgames.com → 192.168.40.18
 ```
 
 ## Update Lancache
@@ -476,7 +476,7 @@ sudo journalctl -u lancache-monolithic -u lancache-dns -f
 **DNS Redirect**:
 
 ```text
-[INFO] Redirecting steamcdn-a.akamaihd.net to 192.168.0.18
+[INFO] Redirecting steamcdn-a.akamaihd.net to 192.168.40.18
 ```
 
 ## See Also

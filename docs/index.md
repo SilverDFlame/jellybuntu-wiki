@@ -47,6 +47,7 @@ Configuration guides for services and infrastructure:
 - **[Tdarr Setup](configuration/tdarr-setup.md)** - Automated media transcoding setup
 - **[Tdarr Flow Configuration](configuration/tdarr-flow-configuration.md)** - Tdarr flow and pipeline design
 - **[Tdarr Transcode Profiles](configuration/tdarr-transcode-profiles.md)** - Codec profiles and optimization settings
+- **[Mumble Server](configuration/mumble-setup.md)** - Voice chat server setup
 - **[Nexus Registry](configuration/nexus-registry.md)** - Container registry setup and configuration
 - **[Monitoring Stack Setup](configuration/monitoring-stack-setup.md)** - Prometheus, Grafana, and alerting configuration
 - **[Uptime Kuma Setup](configuration/uptime-kuma-setup.md)** - Service monitoring and notification setup
@@ -114,6 +115,7 @@ Detailed reference documentation:
 - **[SSH Bastion](reference/ssh-bastion.md)** - SSH bastion host configuration and usage
 - **[NAS Setup](reference/nas-setup.md)** - Btrfs RAID1 NAS installation and NFS configuration
 - **[Btrfs Optimization](reference/btrfs-optimization.md)** - Filesystem tuning, snapshots, and maintenance
+- **[VLAN Migration](reference/vlan-migration.md)** - VLAN segmentation reference and IP mapping
 - **[VM Specifications](reference/vm-specifications.md)** - Detailed VM resource allocation and configuration
 - **[Media Services Workflow](reference/media-services-workflow.md)** - Complete media automation pipeline
 - **[Media Quality Profiles](reference/media-quality-profiles.md)** - Recyclarr quality profile configuration
@@ -124,23 +126,28 @@ Detailed reference documentation:
 
 ### VMs
 
-- **Home Assistant** (VMID 100, 192.168.0.10) - Home automation
-- **Satisfactory** (VMID 200, 192.168.0.11) - Game server with CPU pinning
-- **NAS** (VMID 300, 192.168.0.15) - Btrfs RAID1 NFS storage (6GB RAM)
-- **Jellyfin** (VMID 400, 192.168.0.12) - Media server (4 cores, 8GB RAM, optimized for 4K)
-- **Media Services** (VMID 401, 192.168.0.13) - Sonarr, Radarr, Prowlarr, Jellyseerr
-- **Download Clients** (VMID 402, 192.168.0.14) - qBittorrent, SABnzbd
-- **Monitoring** (VMID 500, 192.168.0.16) - Prometheus, Grafana, Uptime Kuma (optional)
+- **Home Assistant** (VMID 100, 192.168.20.10) - Home automation (IoT VLAN)
+- **Satisfactory** (VMID 200, 192.168.40.11) - Game server with CPU pinning (Games VLAN)
+- **Mumble** (VMID 201, 192.168.40.20) - Voice chat server (Games VLAN)
+- **NAS** (VMID 300, 192.168.30.15) - Btrfs RAID1 NFS storage, DNS (Media VLAN)
+- **Jellyfin** (VMID 400, 192.168.30.12) - Media server with GPU passthrough (Media VLAN)
+- **Media Services** (VMID 401, 192.168.30.13) - Sonarr, Radarr, Prowlarr, Jellyseerr (Media VLAN)
+- **Download Clients** (VMID 402, 192.168.30.14) - qBittorrent, SABnzbd (Media VLAN)
+- **Monitoring** (VMID 500, 192.168.10.16) - Prometheus, Grafana (Management VLAN, optional)
+- **Woodpecker CI** (VMID 600, 192.168.10.17) - CI/CD pipelines (Management VLAN)
+- **Lancache** (VMID 700, 192.168.40.18) - Game download cache (Games VLAN)
+- **UniFi Controller** (VMID 800, 192.168.10.19) - Network management (Management VLAN)
 
 ### Key Features
 
 - **Phase-Based Deployment** - Infrastructure → Networking → Services (or deploy all at once)
+- **VLAN Segmentation** - Network isolation by function (Management, IoT, Media, Games)
 - **Podman Quadlet Architecture** - Rootless containers with native systemd integration
 - **Isolated Download Clients** - Dedicated VM for better resource management
 - **Btrfs RAID1 NAS** - Reliable storage with snapshots and NFS exports
 - **Tailscale Integration** - Secure remote access to all services
 - **Automated Deployment** - Full infrastructure-as-code with Ansible
-- **UFW Firewall** - Network segmentation and access control
+- **UFW Firewall** - VLAN-aware firewall rules and access control
 - **Unattended Upgrades** - Automatic security updates
 
 ## Getting Started

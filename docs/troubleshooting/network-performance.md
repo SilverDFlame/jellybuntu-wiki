@@ -72,7 +72,7 @@ dd if=/mnt/data/test of=/dev/null bs=1M
 
    ```bash
    # /etc/exports on NAS:
-   /nas-storage 192.168.0.0/24(rw,sync,no_subtree_check,no_root_squash)
+   /nas-storage 192.168.30.0/24(rw,sync,no_subtree_check,no_root_squash)
    # Change sync to async for better performance
    ```
 
@@ -89,7 +89,7 @@ See [NAS/NFS Troubleshooting](nas-nfs.md) for detailed NFS optimization.
 iperf3 -c media-services.discus-moth.ts.net
 
 # Compare to local network
-iperf3 -c 192.168.0.13
+iperf3 -c 192.168.30.13
 ```
 
 **Solutions**:
@@ -104,7 +104,7 @@ iperf3 -c 192.168.0.13
    - Check status: `tailscale status`
 
 3. **Use local IPs for same-network access**:
-   - If accessing from home network, use `192.168.0.x` instead of Tailscale IPs
+   - If accessing from home network, use `192.168.X.x` instead of Tailscale IPs
    - Avoids Tailscale overhead
 
 4. **Verify Tailscale MTU**:
@@ -126,7 +126,7 @@ iperf3 -c 192.168.0.13
 podman exec sonarr curl -s http://localhost:7878 | head -5  # Radarr
 
 # Test container to host
-podman exec sonarr ping -c 4 192.168.0.13
+podman exec sonarr ping -c 4 192.168.30.13
 
 # Check Podman network
 podman network inspect podman
@@ -192,8 +192,8 @@ ip link | grep mtu
 
    # Make permanent in /etc/network/interfaces:
    iface ens18 inet static
-     address 192.168.0.13/24
-     gateway 192.168.0.1
+     address 192.168.30.13/24
+     gateway 192.168.30.1
      mtu 1500
    ```
 
@@ -201,7 +201,7 @@ ip link | grep mtu
 
    ```bash
    # Test max MTU without fragmentation
-   ping -M do -s 1472 192.168.0.15  # 1472 + 28 headers = 1500
+   ping -M do -s 1472 192.168.30.15  # 1472 + 28 headers = 1500
    # If fails, reduce: -s 1400, -s 1200, etc.
    ```
 
@@ -232,7 +232,7 @@ ping -c 20 media-services.discus-moth.ts.net
 2. **Verify no packet loss**:
 
    ```bash
-   ping -c 100 192.168.0.13 | tail -2
+   ping -c 100 192.168.30.13 | tail -2
    # 0% packet loss expected
    ```
 
@@ -305,7 +305,7 @@ rm /mnt/data/test
 iperf3 -c jellyfin.discus-moth.ts.net
 
 # Compare to local IP
-iperf3 -c 192.168.0.12
+iperf3 -c 192.168.30.12
 
 # Tailscale adds overhead, expect 10-30% slower if relayed
 ```
@@ -314,7 +314,7 @@ iperf3 -c 192.168.0.12
 
 1. **Use local IPs for same-network communication**:
    - Services on same VM: `localhost`
-   - Services on local VMs: `192.168.0.x`
+   - Services on local VMs: `192.168.X.x`
    - Only use Tailscale for remote access
 
 2. **Optimize NFS**:

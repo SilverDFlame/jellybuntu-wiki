@@ -3,12 +3,12 @@
 Gluetun provides VPN protection for qBittorrent downloads with automatic port forwarding. This guide covers
 troubleshooting VPN connectivity, port forwarding, kill switch, and network isolation issues.
 
-> **IMPORTANT**: Gluetun runs as a **rootless Podman container with Quadlet** on the download-clients VM (192.168.0.14).
+> **IMPORTANT**: Gluetun runs as a **rootless Podman container with Quadlet** on the download-clients VM (192.168.30.14).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: download-clients (192.168.0.14)
+- **VM**: download-clients (192.168.30.14)
 - **Container**: gluetun
 - **VPN Provider**: Private Internet Access (PIA)
 - **Protected Services**: qBittorrent (SABnzbd does not use VPN)
@@ -268,7 +268,7 @@ podman exec -it qbittorrent curl --max-time 5 -s ifconfig.me
    - Check Gluetun firewall config in gluetun.yml:
 
      ```yaml
-     - FIREWALL_OUTBOUND_SUBNETS=192.168.0.0/24,100.64.0.0/10
+     - FIREWALL_OUTBOUND_SUBNETS=192.168.30.0/24,100.64.0.0/10
      - FIREWALL_INPUT_PORTS=8080
      ```
 
@@ -337,7 +337,7 @@ journalctl --user -u qbittorrent | tail -50
    ```
 
 5. **Access from correct network**:
-   - Allowed networks: 192.168.0.0/24 (local) and 100.64.0.0/10 (Tailscale)
+   - Allowed networks: 192.168.30.0/24 (local) and 100.64.0.0/10 (Tailscale)
    - Test from local network or Tailscale
    - Block from other networks (security feature)
 

@@ -25,7 +25,7 @@ AdGuard Home is a network-wide DNS ad blocker and privacy protection service run
 
 ### Deployment Details
 
-- **Host**: NAS VM (192.168.0.15 / nas.discus-moth.ts.net)
+- **Host**: NAS VM (192.168.30.15 / nas.discus-moth.ts.net)
 - **Container**: Docker Compose deployment
 - **Ports**:
   - Web UI: `80/tcp`
@@ -45,7 +45,7 @@ AdGuard Home uses a multi-tier upstream DNS strategy:
 
 ### Network Access
 
-- **Local Network**: `192.168.0.0/24` → Full DNS access
+- **Local Network**: `192.168.30.0/24` → Full DNS access
 - **Tailscale**: `100.64.0.0/10` → Full DNS + Web UI access
 - **Firewall**: UFW rules configured automatically during deployment
 
@@ -766,7 +766,7 @@ Useful for:
 **Example**: Resolve `nas.local` to NAS IP
 
 ```text
-nas.local → 192.168.0.15
+nas.local → 192.168.30.15
 ```
 
 ### DoH (DNS-over-HTTPS) Setup

@@ -221,7 +221,7 @@ sudo ufw status | grep 100.64.0.0/10
    ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net
 
    # Or temporarily allow from local network (NOT recommended for production)
-   sudo ufw allow from 192.168.0.0/24 to any port 22
+   sudo ufw allow from 192.168.10.0/24 to any port 22
    ```
 
 2. **Tailscale rule missing**:
@@ -269,14 +269,14 @@ curl http://localhost:8989
 
    ```bash
    # Allow service ports from local network + Tailscale
-   sudo ufw allow from 192.168.0.0/24 to any port 8989 comment 'Sonarr'
+   sudo ufw allow from 192.168.30.0/24 to any port 8989 comment 'Sonarr'
    sudo ufw allow from 100.64.0.0/10 to any port 8989 comment 'Sonarr - Tailscale'
    sudo ufw reload
    ```
 
 2. **Wrong network specified**:
    - Check if accessing from allowed network
-   - Local network: 192.168.0.0/24
+   - Local network: 192.168.10.0/24
    - Tailscale: 100.64.0.0/10
 
 ### 3. Locked Out of VM
@@ -310,7 +310,7 @@ sudo ufw status | grep YOUR_IP
    sudo ufw disable
 
    # Fix rules and re-enable
-   sudo ufw allow from 192.168.0.0/24
+   sudo ufw allow from 192.168.10.0/24
    sudo ufw allow from 100.64.0.0/10
    sudo ufw enable
    ```
@@ -358,7 +358,7 @@ cat /etc/resolv.conf
    # Check cloud-init config
    cat /etc/netplan/*.yaml
 
-   # Should have gateway4: 192.168.0.1
+   # Should have gateway4: 192.168.10.1
    sudo netplan apply
    ```
 
@@ -370,7 +370,7 @@ cat /etc/resolv.conf
 
    # Should have:
    # nameserver 9.9.9.9
-   # nameserver 192.168.0.1
+   # nameserver 192.168.10.1
 
    # If using systemd-resolved
    sudo systemctl restart systemd-resolved
@@ -398,10 +398,10 @@ cat /etc/resolv.conf
 
 ```bash
 # Test connectivity to gateway
-ping 192.168.0.1
+ping 192.168.10.1
 
 # Test connectivity to another VM
-ping 192.168.0.13
+ping 192.168.30.13
 
 # Check routing table
 ip route show
@@ -419,7 +419,7 @@ ip neigh show
    sudo ufw status
 
    # On target VM
-   sudo ufw allow from 192.168.0.0/24
+   sudo ufw allow from 192.168.10.0/24
    ```
 
 2. **Network interface issue**:
@@ -466,7 +466,7 @@ systemctl status systemd-resolved
 
    # Add nameservers:
    #   nameservers:
-   #     addresses: [9.9.9.9, 192.168.0.1]
+   #     addresses: [9.9.9.9, 192.168.10.1]
 
    sudo netplan apply
    ```
@@ -520,7 +520,7 @@ podman exec sonarr cat /etc/resolv.conf
    # Set DNS in Quadlet .container file
    # Add to [Container] section:
    # DNS=9.9.9.9
-   # DNS=192.168.0.1
+   # DNS=192.168.10.1
    ```
 
 2. **Restart services**:

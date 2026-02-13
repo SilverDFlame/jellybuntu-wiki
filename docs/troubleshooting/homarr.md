@@ -2,12 +2,12 @@
 
 Homarr is a customizable homepage/dashboard for organizing and accessing all your services in one place.
 
-> **IMPORTANT**: Homarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> **IMPORTANT**: Homarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.30.13).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: media-services (192.168.0.13)
+- **VM**: media-services (192.168.30.13)
 - **Port**: 7575
 - **Container**: homarr
 - **Config Path**: `~/.config/homarr/`
@@ -17,7 +17,7 @@ Homarr is a customizable homepage/dashboard for organizing and accessing all you
 ## Access
 
 - **Tailscale**: http://media-services.discus-moth.ts.net:7575
-- **Local Network**: http://192.168.0.13:7575
+- **Local Network**: http://192.168.30.13:7575
 
 ## Quick Diagnostics
 
@@ -88,7 +88,7 @@ sudo ufw status | grep 7575
 
    ```bash
    # Allow port 7575 (if needed)
-   sudo ufw allow from 192.168.0.0/24 to any port 7575
+   sudo ufw allow from 192.168.30.0/24 to any port 7575
    sudo ufw allow from 100.64.0.0/10 to any port 7575
    sudo ufw reload
    ```

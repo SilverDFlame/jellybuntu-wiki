@@ -2,7 +2,7 @@
 
 Troubleshooting guide for Prowlarr indexer management issues.
 
-> **IMPORTANT**: Prowlarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> **IMPORTANT**: Prowlarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.30.13).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Quick Checks
@@ -68,7 +68,7 @@ ss -tlnp | grep 9696
 2. **Firewall blocking**:
 
    ```bash
-   sudo ufw allow from 192.168.0.0/24 to any port 9696
+   sudo ufw allow from 192.168.30.0/24 to any port 9696
    sudo ufw allow from 100.64.0.0/10 to any port 9696
    sudo ufw reload
    ```
@@ -212,7 +212,7 @@ curl http://download-clients.discus-moth.ts.net:8081
 **Solutions**:
 
 1. **Wrong hostname**:
-   - Use `download-clients.discus-moth.ts.net` or `192.168.0.14`
+   - Use `download-clients.discus-moth.ts.net` or `192.168.30.14`
    - NOT `localhost` (download clients are on different VM)
 
 2. **Correct download client settings**:
@@ -306,8 +306,8 @@ systemctl --user start prowlarr
 podman exec -it prowlarr /bin/bash
 
 # Test connectivity
-ping -c 3 192.168.0.14
-wget -O- http://192.168.0.14:8080
+ping -c 3 192.168.30.14
+wget -O- http://192.168.30.14:8080
 
 # Test HTTP
 wget -O- http://localhost:8989/api/v3/health

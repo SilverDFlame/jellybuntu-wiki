@@ -2,13 +2,13 @@
 
 Maintenance procedures for Lancache game download caching service.
 
-> **IMPORTANT**: Lancache runs as a **rootful Podman container** on the lancache VM (192.168.0.18).
+> **IMPORTANT**: Lancache runs as a **rootful Podman container** on the lancache VM (192.168.40.18).
 > This is one of the few services NOT using rootless Podman due to port 53/80/443 requirements.
 > Use `sudo systemctl` commands, NOT `systemctl --user`.
 
 ## Overview
 
-- **VM**: lancache (VMID 700, 192.168.0.18)
+- **VM**: lancache (VMID 700, 192.168.40.18)
 - **Ports**: 80 (HTTP cache), 443 (SNI proxy), 53 (DNS)
 - **Components**: Lancache Monolithic, Lancache DNS
 - **Cache Path**: `/opt/lancache/cache/`
@@ -54,8 +54,8 @@ sudo journalctl -u lancache-monolithic --since "1 hour ago" | grep -c "HIT"
 
    ```bash
    # Test DNS is redirecting gaming CDNs
-   nslookup steamcdn-a.akamaihd.net 192.168.0.18
-   # Should return 192.168.0.18
+   nslookup steamcdn-a.akamaihd.net 192.168.40.18
+   # Should return 192.168.40.18
    ```
 
 4. **Review logs for errors**:
@@ -242,15 +242,15 @@ sudo systemctl start lancache-dns lancache-monolithic
 
 ```bash
 # Test from local machine
-nslookup steamcdn-a.akamaihd.net 192.168.0.18
-# Should return: 192.168.0.18
+nslookup steamcdn-a.akamaihd.net 192.168.40.18
+# Should return: 192.168.40.18
 
 # Test Epic Games
-nslookup cdn1.epicgames.com 192.168.0.18
-# Should return: 192.168.0.18
+nslookup cdn1.epicgames.com 192.168.40.18
+# Should return: 192.168.40.18
 
 # Test upstream DNS (non-gaming)
-nslookup google.com 192.168.0.18
+nslookup google.com 192.168.40.18
 # Should return Google's actual IPs
 ```
 
@@ -269,7 +269,7 @@ Key environment variables:
 Environment=UPSTREAM_DNS=9.9.9.9
 
 # Cache server IP (this VM)
-Environment=LANCACHE_IP=192.168.0.18
+Environment=LANCACHE_IP=192.168.40.18
 
 # Enable generic caching for all supported CDNs
 Environment=USE_GENERIC_CACHE=true
@@ -456,7 +456,7 @@ sudo ss -ulnp | grep 53
 sudo journalctl -u lancache-dns | tail -50
 
 # Test resolution
-nslookup steamcdn-a.akamaihd.net 192.168.0.18
+nslookup steamcdn-a.akamaihd.net 192.168.40.18
 ```
 
 ### Cache Misses When Should Hit
@@ -533,7 +533,7 @@ ipconfig /all | findstr DNS
 # Test resolution
 nslookup steamcdn-a.akamaihd.net
 
-# Should return Lancache IP (192.168.0.18)
+# Should return Lancache IP (192.168.40.18)
 ```
 
 ### Verify Cache is Being Used

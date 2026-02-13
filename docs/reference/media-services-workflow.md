@@ -61,7 +61,7 @@ The media services are deployed using phase-based playbooks that automate the en
 
 **Outcome After Phase 2**:
 
-- ✅ Btrfs NAS ready with NFS storage at 192.168.0.15:/mnt/storage/data
+- ✅ Btrfs NAS ready with NFS storage at 192.168.30.15:/mnt/storage/data
 - ✅ All VMs accessible via Tailscale
 - ✅ Ready for service deployment
 
@@ -87,13 +87,13 @@ The media services are deployed using phase-based playbooks that automate the en
 
 3. **Media Services** (playbook 06-configure-media-services-role):
    - Installs Docker on media-services VM (.13)
-   - Mounts NFS from Btrfs NAS: `/mnt/data` → `192.168.0.15:/mnt/storage/data`
+   - Mounts NFS from Btrfs NAS: `/mnt/data` → `192.168.30.15:/mnt/storage/data`
    - Deploys Sonarr (8989), Radarr (7878), Prowlarr (9696), Jellyseerr (5055), Byparr (8191), Recyclarr
    - Creates Docker Compose file with proper volume mappings
 
 4. **Download Clients** (playbook 07-configure-download-clients-role):
    - Installs Docker on download-clients VM (.14)
-   - Mounts NFS from Btrfs NAS: `/mnt/data` → `192.168.0.15:/mnt/storage/data`
+   - Mounts NFS from Btrfs NAS: `/mnt/data` → `192.168.30.15:/mnt/storage/data`
    - Deploys qBittorrent (8080) and SABnzbd (8081)
    - Applies SABnzbd configuration automatically
    - **qBittorrent auto-configured**: Categories (tv, movies) with proper paths, Automatic Torrent Management enabled
@@ -138,7 +138,7 @@ After Phase 3 deployment, configure services via their web interfaces:
 
 ### 1. SABnzbd Configuration
 
-**URL**: http://download-clients.discus-moth.ts.net:8081 (or http://192.168.0.14:8081 before firewall hardening)
+**URL**: http://download-clients.discus-moth.ts.net:8081 (or http://192.168.30.14:8081 before firewall hardening)
 
 **Note**: After Phase 3 completes, direct IP access is restricted by UFW firewall. Use Tailscale hostname instead.
 
@@ -160,7 +160,7 @@ After Phase 3 deployment, configure services via their web interfaces:
 
 ### 2. qBittorrent Configuration
 
-**URL**: http://download-clients.discus-moth.ts.net:8080 (or http://192.168.0.14:8080 before firewall hardening)
+**URL**: http://download-clients.discus-moth.ts.net:8080 (or http://192.168.30.14:8080 before firewall hardening)
 
 **Note**: After Phase 3 completes, direct IP access is restricted by UFW firewall. Use Tailscale hostname instead.
 
@@ -210,13 +210,13 @@ Management enabled. You only need to verify the configuration:
 
 4. **Settings → Download Clients → Add Download Client**:
    - **Add qBittorrent**:
-     - Host: `download-clients.discus-moth.ts.net` (or `192.168.0.14` before firewall hardening)
+     - Host: `download-clients.discus-moth.ts.net` (or `192.168.30.14` before firewall hardening)
      - Port: `8080`
      - Username: `admin`
      - Password: (from qBittorrent)
 
    - **Add SABnzbd**:
-     - Host: `download-clients.discus-moth.ts.net` (or `192.168.0.14` before firewall hardening)
+     - Host: `download-clients.discus-moth.ts.net` (or `192.168.30.14` before firewall hardening)
      - Port: `8081`
      - API Key: (from SABnzbd)
 
@@ -350,9 +350,9 @@ After completing Phase 3 and GUI configuration:
 
 ### NFS Storage
 
-- [ ] NFS mount is active at `/mnt/data` on media-services VM (192.168.0.13)
-- [ ] NFS mount is active at `/mnt/data` on download-clients VM (192.168.0.14)
-- [ ] NFS mount is active at `/mnt/data` on Jellyfin VM (192.168.0.12)
+- [ ] NFS mount is active at `/mnt/data` on media-services VM (192.168.30.13)
+- [ ] NFS mount is active at `/mnt/data` on download-clients VM (192.168.30.14)
+- [ ] NFS mount is active at `/mnt/data` on Jellyfin VM (192.168.30.12)
 - [ ] Containers can write to NFS: `docker exec sonarr touch /data/test`
 
 ### Download Clients
@@ -406,10 +406,10 @@ sudo chmod -R 775 /mnt/data
 
 ```bash
 # Verify NFS exports on Btrfs NAS
-showmount -e 192.168.0.15
+showmount -e 192.168.30.15
 
 # Test manual mount
-sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/test
+sudo mount -t nfs 192.168.30.15:/mnt/storage/data /mnt/test
 ```
 
 **Container Can't Write:**
@@ -445,5 +445,5 @@ The media services deployment is fully automated through three phases:
 - **Phase 3 (Services)**: Deploys all applications with NFS storage from the start, eliminating the need for manual migration
 
 All services use the **Trash Guides folder structure** at `/mnt/data` (NFS-mounted from
-`192.168.0.15:/mnt/storage/data`), ensuring optimal hardlinks support and efficient storage utilization. After Phase 3
+`192.168.30.15:/mnt/storage/data`), ensuring optimal hardlinks support and efficient storage utilization. After Phase 3
 completes, only GUI configuration is needed - all infrastructure, storage, and service deployment is automated.

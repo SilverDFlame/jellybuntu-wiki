@@ -2,7 +2,7 @@
 
 Troubleshooting guide for AdGuard Home DNS service and DNS resolution issues.
 
-> **IMPORTANT**: AdGuard Home runs as a **rootless Podman container with Quadlet** on the NAS VM (192.168.0.15).
+> **IMPORTANT**: AdGuard Home runs as a **rootless Podman container with Quadlet** on the NAS VM (192.168.30.15).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Quick Checks
@@ -82,7 +82,7 @@ podman exec adguard-home nslookup google.com 9.9.9.9
    sudo ufw status | grep 53
 
    # If missing, add rules
-   sudo ufw allow from 192.168.0.0/24 to any port 53
+   sudo ufw allow from 192.168.30.0/24 to any port 53
    sudo ufw allow from 100.64.0.0/10 to any port 53
    sudo ufw reload
    ```
@@ -445,7 +445,7 @@ dig @nas.discus-moth.ts.net google.com AAAA
 dig @nas.discus-moth.ts.net google.com +trace
 
 # Test reverse DNS
-dig @nas.discus-moth.ts.net -x 192.168.0.15
+dig @nas.discus-moth.ts.net -x 192.168.30.15
 ```
 
 ### Service Management

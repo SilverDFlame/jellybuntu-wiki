@@ -3,7 +3,7 @@
 Maintenance procedures for download clients: qBittorrent, SABnzbd, Gluetun (VPN), and Unpackerr.
 
 > **IMPORTANT**: All download clients run as **rootless Podman containers with Quadlet** on the download-clients VM
-> (192.168.0.14). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+> (192.168.30.14). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 

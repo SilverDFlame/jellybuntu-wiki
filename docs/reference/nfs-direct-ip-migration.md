@@ -6,7 +6,7 @@ This document explains why NFS mounts were changed from Tailscale hostname to di
 
 | Setting | Before | After |
 |---------|--------|-------|
-| NFS Server | `nas.discus-moth.ts.net` | `192.168.0.15` |
+| NFS Server | `nas.discus-moth.ts.net` | `192.168.30.15` |
 | Network Path | Tailscale WireGuard tunnel | Local network (eth0) |
 | Boot Dependency | Required Tailscale to be connected | Standard network only |
 
@@ -26,7 +26,7 @@ On `download-clients` VM (qBittorrent + SABnzbd):
 ```text
 # Tailscale errors during heavy NFS writes
 magicsock: send to 100.65.73.89:41641: operation not permitted
-magicsock: send UDP failed: write udp 192.168.0.14:41641->100.65.73.89:41641: operation not permitted
+magicsock: send UDP failed: write udp 192.168.30.14:41641->100.65.73.89:41641: operation not permitted
 
 # System load during NFS stall
 05:27:20 up 5:41, load average: 264.84, 199.71, 109.53
@@ -49,7 +49,7 @@ Changed NFS server address from Tailscale hostname to direct local IP:
 nfs_server: "nas.discus-moth.ts.net"
 
 # After
-nfs_server: "192.168.0.15"
+nfs_server: "192.168.30.15"
 ```
 
 ### Why This Works
@@ -63,18 +63,18 @@ nfs_server: "192.168.0.15"
 
 Tailscale provides encryption, but for NFS traffic on a local home network:
 
-- Traffic stays within `192.168.0.0/24` subnet
+- Traffic stays within `192.168.30.0/24` subnet
 - NFS exports already restrict access by IP range
 - Tailscale remains available for remote access to services
 - No sensitive data transits the public internet
 
 ### IP Address Stability
 
-> **IMPORTANT**: The NAS must have a stable IP address (192.168.0.15).
+> **IMPORTANT**: The NAS must have a stable IP address (192.168.30.15).
 >
 > Configure one of the following on your router/DHCP server:
 >
-> - **DHCP Reservation** (recommended) - Reserve 192.168.0.15 for the NAS MAC address
+> - **DHCP Reservation** (recommended) - Reserve 192.168.30.15 for the NAS MAC address
 > - **Static IP** - Configure static IP directly on the NAS
 >
 > If the NAS IP changes, all NFS mounts across the infrastructure will fail.
@@ -145,7 +145,7 @@ This removes:
 ```bash
 # Check mount uses direct IP
 mount | grep /mnt/data
-# Should show: 192.168.0.15:/mnt/storage/data on /mnt/data
+# Should show: 192.168.30.15:/mnt/storage/data on /mnt/data
 
 # Verify data accessible
 ls /mnt/data/media
@@ -172,10 +172,10 @@ git checkout main -- group_vars/all.yml host_vars/lancache.yml
 
 | VM | IP | NFS Mount Point |
 |----|-----|-----------------|
-| jellyfin | 192.168.0.12 | /mnt/data |
-| media-services | 192.168.0.13 | /mnt/data |
-| download-clients | 192.168.0.14 | /mnt/data |
-| lancache | 192.168.0.18 | /mnt/lancache |
+| jellyfin | 192.168.30.12 | /mnt/data |
+| media-services | 192.168.30.13 | /mnt/data |
+| download-clients | 192.168.30.14 | /mnt/data |
+| lancache | 192.168.40.18 | /mnt/lancache |
 
 ## Related Documentation
 

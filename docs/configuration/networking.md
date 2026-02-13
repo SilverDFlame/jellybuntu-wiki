@@ -5,39 +5,54 @@ Complete guide to network architecture, firewall rules, and Tailscale VPN config
 > **Security Note**: The IP addresses documented here are private (RFC 1918) addresses on an isolated
 > home network, accessible only via Tailscale VPN. They are not routable from the public internet.
 
+!!! info "VLAN Migration (Feb 2026)"
+    The infrastructure has migrated from flat 192.168.0.0/24 to VLAN-segmented networking.
+    See [VLAN Migration Reference](../reference/vlan-migration.md) for the complete migration guide
+    and legacy-to-VLAN IP mapping.
+
 ## Overview
 
 The Jellybuntu infrastructure uses a dual-network approach:
 
-- **Local Network** (192.168.0.0/24): Direct LAN access
+- **Local VLANs**: Segmented LAN access (Management, IoT, Media, Games)
 - **Tailscale VPN** (100.64.0.0/10): Secure remote access
 
 This provides both local performance and secure remote connectivity.
 
 ## Network Architecture
 
-### Local Network (192.168.0.0/24)
+### Local Network (VLAN-Segmented)
 
-**Purpose**: Primary network for all services
+**Purpose**: Primary network for all services, segmented by function
 
-**Configuration**:
+**VLAN Subnets**:
 
-- **Subnet**: 192.168.0.0/24
-- **Gateway**: 192.168.0.1
-- **DNS Primary**: 9.9.9.9 (Quad9)
-- **DNS Secondary**: 192.168.0.1 (Local router)
+| VLAN ID | Name | Subnet | Gateway | Purpose |
+|---------|------|--------|---------|---------|
+| 10 | Management | 192.168.10.0/24 | 192.168.10.1 | Infrastructure services |
+| 20 | IoT | 192.168.20.0/24 | 192.168.20.1 | Home automation devices |
+| 30 | Media | 192.168.30.0/24 | 192.168.30.1 | Media streaming and storage |
+| 40 | Games | 192.168.40.0/24 | 192.168.40.1 | Game servers and caches |
+| 50 | Cameras | 192.168.50.0/24 | 192.168.50.1 | Reserved for future use |
+
+**DNS**: 9.9.9.9 (Quad9) primary, per-VLAN gateway as secondary
 
 **IP Allocations**:
 
-| Device | IP | Hostname | Purpose |
-|--------|-----|----------|---------|
-| Proxmox Host | Varies | jellybuntu.discus-moth.ts.net | Hypervisor |
-| Home Assistant | 192.168.0.10 | home-assistant | Automation |
-| Satisfactory | 192.168.0.11 | satisfactory-server | Game server |
-| Jellyfin | 192.168.0.12 | jellyfin | Media streaming |
-| Media Services | 192.168.0.13 | media-services | Sonarr/Radarr/etc |
-| Download Clients | 192.168.0.14 | download-clients | qBittorrent/SABnzbd |
-| NAS | 192.168.0.15 | nas | Storage server |
+| VM ID | Device | IP | VLAN | Hostname | Purpose |
+|-------|--------|-----|------|----------|---------|
+| - | Proxmox Host | Varies | - | jellybuntu.discus-moth.ts.net | Hypervisor |
+| 100 | Home Assistant | 192.168.20.10 | 20 (IoT) | home-assistant | Automation |
+| 200 | Satisfactory | 192.168.40.11 | 40 (Games) | satisfactory-server | Game server |
+| 201 | Mumble | 192.168.40.20 | 40 (Games) | mumble | Voice chat server |
+| 300 | NAS | 192.168.30.15 | 30 (Media) | nas | Storage server |
+| 400 | Jellyfin | 192.168.30.12 | 30 (Media) | jellyfin | Media streaming |
+| 401 | Media Services | 192.168.30.13 | 30 (Media) | media-services | Sonarr/Radarr/etc |
+| 402 | Download Clients | 192.168.30.14 | 30 (Media) | download-clients | qBittorrent/SABnzbd |
+| 500 | Monitoring | 192.168.10.16 | 10 (Mgmt) | monitoring | Prometheus/Grafana |
+| 600 | Woodpecker CI | 192.168.10.17 | 10 (Mgmt) | woodpecker | CI/CD pipeline |
+| 700 | Lancache | 192.168.40.18 | 40 (Games) | lancache | Game download cache |
+| 800 | UniFi Controller | 192.168.10.19 | 10 (Mgmt) | unifi-controller | Network management |
 
 ### Tailscale VPN (100.64.0.0/10)
 
@@ -55,43 +70,60 @@ All VMs accessible via Tailscale hostnames:
 
 - `home-assistant.discus-moth.ts.net`
 - `satisfactory-server.discus-moth.ts.net`
+- `mumble.discus-moth.ts.net`
 - `jellyfin.discus-moth.ts.net`
 - `media-services.discus-moth.ts.net`
 - `download-clients.discus-moth.ts.net`
 - `nas.discus-moth.ts.net`
+- `monitoring.discus-moth.ts.net`
+- `woodpecker.discus-moth.ts.net`
+- `lancache.discus-moth.ts.net`
+- `unifi-controller.discus-moth.ts.net`
 
 ### Network Flow Diagram
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│ Local Network (192.168.0.0/24)                          │
-│                                                          │
-│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐      │
-│  │ .10  │  │ .11  │  │ .12  │  │ .13  │  │ .14  │      │
-│  │HA    │  │ Satis│  │Jelly │  │Media │  │Downl │      │
-│  └──┬───┘  └──┬───┘  └──┬───┘  └──┬───┘  └──┬───┘      │
-│     │         │         │         │         │           │
-│     └─────────┴─────────┴─────────┴─────────┘           │
-│                         │                                │
-│                    ┌────┴────┐                           │
-│                    │ .15 NAS │                           │
-│                    │  (NFS)  │                           │
-│                    └─────────┘                           │
-│                                                          │
-│                    Gateway .1                            │
-└────────────────────────┬─────────────────────────────────┘
-                         │
-                    ┌────┴────┐
-                    │Internet │
-                    └────┬────┘
-                         │
-                ┌────────┴────────┐
-                │ Tailscale Cloud │
-                │  Coordination   │
-                └────────┬────────┘
-                         │
-             VPN Mesh (100.64.0.0/10)
-           All VMs + Remote Clients
+┌──────────────────────────────────────────────────────────────────┐
+│                    Proxmox Host (jellybuntu)                     │
+│                                                                  │
+│  VLAN 10 - Management (192.168.10.0/24)                          │
+│  ┌────────────┐  ┌────────────┐  ┌──────────────────┐            │
+│  │ .16 Monitor│  │ .17 Woodpkr│  │ .19 UniFi Ctrl   │            │
+│  └─────┬──────┘  └─────┬──────┘  └───────┬──────────┘            │
+│        └───────────────┼──────────────────┘                      │
+│                        │                                         │
+│  VLAN 20 - IoT (192.168.20.0/24)                                 │
+│  ┌──────────────────┐                                            │
+│  │ .10 Home Asst    │                                            │
+│  └────────┬─────────┘                                            │
+│           │                                                      │
+│  VLAN 30 - Media (192.168.30.0/24)                               │
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────────┐             │
+│  │.12 JF  │  │.13 Med │  │.14 DL  │  │ .15 NAS    │             │
+│  │Jellyfin│  │Services│  │Clients │  │ (NFS/DNS)  │             │
+│  └───┬────┘  └───┬────┘  └───┬────┘  └─────┬──────┘             │
+│      └───────────┴───────────┴──────────────┘                    │
+│                                                                  │
+│  VLAN 40 - Games (192.168.40.0/24)                               │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐                  │
+│  │.11 Satisf  │  │.20 Mumble  │  │.18 Lancache│                  │
+│  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘                  │
+│        └───────────────┼────────────────┘                        │
+│                        │                                         │
+│              Per-VLAN Gateways (.1)                               │
+└──────────────────────────┬───────────────────────────────────────┘
+                           │
+                      ┌────┴────┐
+                      │Internet │
+                      └────┬────┘
+                           │
+                  ┌────────┴────────┐
+                  │ Tailscale Cloud │
+                  │  Coordination   │
+                  └────────┬────────┘
+                           │
+               VPN Mesh (100.64.0.0/10)
+             All VMs + Remote Clients
 ```
 
 ## Firewall Configuration (UFW)
@@ -104,115 +136,201 @@ After Phase 4 deployment, UFW firewall is active on all VMs.
 
 - ✅ Allowed: Tailscale network (100.64.0.0/10)
 - ❌ Blocked: Direct IP access from internet
-- ✅ Allowed: Local network (192.168.0.0/24) - optional
+- ✅ Allowed: Management VLAN (192.168.10.0/24)
 
 **Service Ports**:
 
-- ✅ Allowed: Local network + Tailscale
+- ✅ Allowed: Own VLAN + Management VLAN + Tailscale
 - ❌ Blocked: Direct internet access (unless specifically needed)
 
 ### Per-VM Firewall Rules
 
-#### Home Assistant (192.168.0.10)
+#### Home Assistant (192.168.20.10) - IoT VLAN 20
 
 ```bash
-# SSH (Tailscale + LAN)
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
 sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
-sudo ufw allow from 192.168.0.0/24 to any port 22 proto tcp comment 'SSH (LAN)'
 
-# Home Assistant Web UI
-sudo ufw allow 8123/tcp comment 'Home Assistant'
+# Home Assistant Web UI (IoT VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.20.0/24 to any port 8123 proto tcp comment 'Home Assistant (IoT VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 8123 proto tcp comment 'Home Assistant (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 8123 proto tcp comment 'Home Assistant (Tailscale)'
 ```
 
-#### Satisfactory Server (192.168.0.11)
+#### Satisfactory Server (192.168.40.11) - Games VLAN 40
 
 ```bash
-# SSH (Tailscale + LAN)
-sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp
-sudo ufw allow from 192.168.0.0/24 to any port 22 proto tcp
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
 
-# Satisfactory Game Ports
+# Satisfactory Game Ports (public - required for player connections)
 sudo ufw allow 7777/udp comment 'Satisfactory Game'
 sudo ufw allow 15000/udp comment 'Satisfactory Query'
 sudo ufw allow 15777/udp comment 'Satisfactory Beacon'
 ```
 
-#### Jellyfin (192.168.0.12)
+#### Mumble (192.168.40.20) - Games VLAN 40
 
 ```bash
-# SSH (Tailscale + LAN)
-sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp
-sudo ufw allow from 192.168.0.0/24 to any port 22 proto tcp
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
 
-# Jellyfin Web UI
-sudo ufw allow 8096/tcp comment 'Jellyfin'
-
-# Optional: DLNA discovery
-sudo ufw allow 1900/udp comment 'Jellyfin DLNA'
-sudo ufw allow 7359/udp comment 'Jellyfin Discovery'
+# Mumble Voice Server (Games VLAN + Tailscale)
+sudo ufw allow from 192.168.40.0/24 to any port 64738 proto tcp comment 'Mumble TCP (Games VLAN)'
+sudo ufw allow from 192.168.40.0/24 to any port 64738 proto udp comment 'Mumble UDP (Games VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 64738 proto tcp comment 'Mumble TCP (Tailscale)'
+sudo ufw allow from 100.64.0.0/10 to any port 64738 proto udp comment 'Mumble UDP (Tailscale)'
 ```
 
-#### Media Services (192.168.0.13)
+#### Jellyfin (192.168.30.12) - Media VLAN 30
 
 ```bash
-# SSH (Tailscale + LAN)
-sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp
-sudo ufw allow from 192.168.0.0/24 to any port 22 proto tcp
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
 
-# Sonarr
-sudo ufw allow 8989/tcp comment 'Sonarr'
+# Jellyfin Web UI (Media VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.30.0/24 to any port 8096 proto tcp comment 'Jellyfin (Media VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 8096 proto tcp comment 'Jellyfin (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 8096 proto tcp comment 'Jellyfin (Tailscale)'
 
-# Radarr
-sudo ufw allow 7878/tcp comment 'Radarr'
+# Optional: DLNA discovery (Media VLAN only)
+sudo ufw allow from 192.168.30.0/24 to any port 1900 proto udp comment 'Jellyfin DLNA (Media VLAN)'
+sudo ufw allow from 192.168.30.0/24 to any port 7359 proto udp comment 'Jellyfin Discovery (Media VLAN)'
+```
 
-# Prowlarr
-sudo ufw allow 9696/tcp comment 'Prowlarr'
+#### Media Services (192.168.30.13) - Media VLAN 30
 
-# Jellyseerr
-sudo ufw allow 5055/tcp comment 'Jellyseerr'
+```bash
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
+
+# Sonarr (Media VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.30.0/24 to any port 8989 proto tcp comment 'Sonarr (Media VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 8989 proto tcp comment 'Sonarr (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 8989 proto tcp comment 'Sonarr (Tailscale)'
+
+# Radarr (Media VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.30.0/24 to any port 7878 proto tcp comment 'Radarr (Media VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 7878 proto tcp comment 'Radarr (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 7878 proto tcp comment 'Radarr (Tailscale)'
+
+# Prowlarr (Media VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.30.0/24 to any port 9696 proto tcp comment 'Prowlarr (Media VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 9696 proto tcp comment 'Prowlarr (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 9696 proto tcp comment 'Prowlarr (Tailscale)'
+
+# Jellyseerr (Media VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.30.0/24 to any port 5055 proto tcp comment 'Jellyseerr (Media VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 5055 proto tcp comment 'Jellyseerr (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 5055 proto tcp comment 'Jellyseerr (Tailscale)'
 
 # Byparr (localhost only - no rule needed)
 ```
 
-#### Download Clients (192.168.0.14)
+#### Download Clients (192.168.30.14) - Media VLAN 30
 
 ```bash
-# SSH (Tailscale + LAN)
-sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp
-sudo ufw allow from 192.168.0.0/24 to any port 22 proto tcp
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
 
-# qBittorrent Web UI
-sudo ufw allow 8080/tcp comment 'qBittorrent Web UI'
+# qBittorrent Web UI (Media VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.30.0/24 to any port 8080 proto tcp comment 'qBittorrent (Media VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 8080 proto tcp comment 'qBittorrent (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 8080 proto tcp comment 'qBittorrent (Tailscale)'
 
-# qBittorrent Incoming (torrents)
+# qBittorrent Incoming (torrents - public)
 sudo ufw allow 6881/tcp comment 'qBittorrent TCP'
 sudo ufw allow 6881/udp comment 'qBittorrent UDP'
 
-# SABnzbd Web UI
-sudo ufw allow 8081/tcp comment 'SABnzbd'
+# SABnzbd Web UI (Media VLAN + Management VLAN + Tailscale)
+sudo ufw allow from 192.168.30.0/24 to any port 8081 proto tcp comment 'SABnzbd (Media VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 8081 proto tcp comment 'SABnzbd (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 8081 proto tcp comment 'SABnzbd (Tailscale)'
 ```
 
-#### NAS (192.168.0.15)
+#### NAS (192.168.30.15) - Media VLAN 30
 
 ```bash
-# SSH (Tailscale + LAN)
-sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp
-sudo ufw allow from 192.168.0.0/24 to any port 22 proto tcp
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
 
-# NFS (local network only for security)
-sudo ufw allow from 192.168.0.0/24 to any port 2049 proto tcp comment 'NFS'
+# NFS (Media VLAN + Games VLAN for lancache)
+sudo ufw allow from 192.168.30.0/24 to any port 2049 proto tcp comment 'NFS (Media VLAN)'
+sudo ufw allow from 192.168.40.0/24 to any port 2049 proto tcp comment 'NFS (Games VLAN - lancache)'
 
-# AdGuard Home Web UI (Tailscale + LAN)
+# AdGuard Home Web UI (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 80 proto tcp comment 'AdGuard Home Web UI (Management VLAN)'
 sudo ufw allow from 100.64.0.0/10 to any port 80 proto tcp comment 'AdGuard Home Web UI (Tailscale)'
-sudo ufw allow from 192.168.0.0/24 to any port 80 proto tcp comment 'AdGuard Home Web UI (LAN)'
 
-# AdGuard Home DNS (local network)
-sudo ufw allow from 192.168.0.0/24 to any port 53 proto tcp comment 'AdGuard Home DNS (LAN)'
-sudo ufw allow from 192.168.0.0/24 to any port 53 proto udp comment 'AdGuard Home DNS (LAN)'
+# AdGuard Home DNS (all VLANs + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 53 comment 'AdGuard Home DNS (Management VLAN)'
+sudo ufw allow from 192.168.20.0/24 to any port 53 comment 'AdGuard Home DNS (IoT VLAN)'
+sudo ufw allow from 192.168.30.0/24 to any port 53 comment 'AdGuard Home DNS (Media VLAN)'
+sudo ufw allow from 192.168.40.0/24 to any port 53 comment 'AdGuard Home DNS (Games VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 53 comment 'AdGuard Home DNS (Tailscale)'
+```
 
-# AdGuard Home DNS (Tailscale)
-sudo ufw allow from 100.64.0.0/10 to any port 53 proto tcp comment 'AdGuard Home DNS (Tailscale)'
-sudo ufw allow from 100.64.0.0/10 to any port 53 proto udp comment 'AdGuard Home DNS (Tailscale)'
+#### Monitoring (192.168.10.16) - Management VLAN 10
+
+```bash
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
+
+# Grafana Web UI (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 3000 proto tcp comment 'Grafana (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 3000 proto tcp comment 'Grafana (Tailscale)'
+
+# Prometheus (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 9090 proto tcp comment 'Prometheus (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 9090 proto tcp comment 'Prometheus (Tailscale)'
+```
+
+#### Woodpecker CI (192.168.10.17) - Management VLAN 10
+
+```bash
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
+
+# Woodpecker Web UI (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 8000 proto tcp comment 'Woodpecker (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 8000 proto tcp comment 'Woodpecker (Tailscale)'
+```
+
+#### Lancache (192.168.40.18) - Games VLAN 40
+
+```bash
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
+
+# Lancache HTTP/HTTPS (Games VLAN)
+sudo ufw allow from 192.168.40.0/24 to any port 80 proto tcp comment 'Lancache HTTP (Games VLAN)'
+sudo ufw allow from 192.168.40.0/24 to any port 443 proto tcp comment 'Lancache HTTPS (Games VLAN)'
+```
+
+#### UniFi Controller (192.168.10.19) - Management VLAN 10
+
+```bash
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
+
+# UniFi Web UI (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 8443 proto tcp comment 'UniFi Web UI (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 8443 proto tcp comment 'UniFi Web UI (Tailscale)'
+
+# UniFi Device Communication (Management VLAN)
+sudo ufw allow from 192.168.10.0/24 to any port 8080 proto tcp comment 'UniFi Inform (Management VLAN)'
+sudo ufw allow from 192.168.10.0/24 to any port 3478 proto udp comment 'UniFi STUN (Management VLAN)'
 ```
 
 ### Managing Firewall Rules
@@ -271,7 +389,7 @@ After Phase 4, SSH is accessible via Tailscale or local network:
 ssh ansible@media-services.discus-moth.ts.net
 
 # Via local network (fallback for Tailscale outages)
-ssh ansible@192.168.0.13
+ssh ansible@192.168.30.13
 ```
 
 **Ephemeral Keys**:
@@ -329,7 +447,11 @@ Example ACL for auto-approval:
   },
   "autoApprovers": {
     "routes": {
-      "192.168.0.0/24": ["tag:homelab"]
+      "192.168.10.0/24": ["tag:homelab"],
+      "192.168.20.0/24": ["tag:homelab"],
+      "192.168.30.0/24": ["tag:homelab"],
+      "192.168.40.0/24": ["tag:homelab"],
+      "192.168.50.0/24": ["tag:homelab"]
     }
   }
 }
@@ -343,37 +465,39 @@ See [reference/tailscale-auto-approval.md](../reference/tailscale-auto-approval.
 
 **Security**: Isolate services by function
 **Performance**: Reduce broadcast traffic
-**Management**: Easier to apply policies
+**Management**: Easier to apply per-VLAN policies
 
-### Current Segmentation Strategy
+### Current VLAN Segmentation
 
-**Physical Segmentation**: None (all on same VLAN)
-**Logical Segmentation**: By VM and firewall rules
+**Physical Segmentation**: VLAN tagging via UniFi managed switch
+**Logical Segmentation**: By VLAN, VM placement, and firewall rules
 
-**Service Groups**:
+This replaces the former flat 192.168.0.0/24 network that was used prior to
+the Feb 2026 VLAN migration.
 
-1. **Infrastructure**: NAS, Proxmox
-2. **Home Automation**: Home Assistant
-3. **Game Servers**: Satisfactory
-4. **Media Management**: Media Services VM
-5. **Download Operations**: Download Clients VM
-6. **Media Streaming**: Jellyfin
+**VLAN Definitions**:
 
-### Future Segmentation Options
+| VLAN ID | Name | Subnet | VMs |
+|---------|------|--------|-----|
+| 10 | Management | 192.168.10.0/24 | Monitoring, Woodpecker CI, UniFi Controller |
+| 20 | IoT | 192.168.20.0/24 | Home Assistant |
+| 30 | Media | 192.168.30.0/24 | NAS, Jellyfin, Media Services, Download Clients |
+| 40 | Games | 192.168.40.0/24 | Satisfactory, Mumble, Lancache |
+| 50 | Cameras | 192.168.50.0/24 | Reserved for future use |
 
-If more isolation is needed:
+**Inter-VLAN Policy**:
 
-**VLAN Segmentation**:
-
-- VLAN 10: Management (Proxmox, NAS)
-- VLAN 20: Services (Media, Downloads)
-- VLAN 30: DMZ (Jellyfin, public-facing)
+- Management VLAN (10) can reach all other VLANs for administration
+- Media VLAN (30) is self-contained for NFS and media workflows
+- Games VLAN (40) can reach NAS on Media VLAN (30) for lancache storage
+- IoT VLAN (20) is isolated except for Management VLAN access
+- All VLANs can reach Tailscale (100.64.0.0/10) for remote access
 
 **Network Implementation**:
 
 ```yaml
-# In playbooks/vars.yml
-vm_network_vlan: 20
+# In playbooks/vars.yml (per-VM VLAN assignment)
+vm_network_vlan: 30  # Example: Media VLAN for Jellyfin
 ```
 
 ## DNS Configuration
@@ -386,12 +510,12 @@ vm_network_vlan: 20
 Clients → AdGuard Home → Unbound → Root Servers → TLD → Authoritative
           (filtering)    (recursive)
           Port 53        Port 5335
-          192.168.0.15
+          192.168.30.15
 ```
 
 ### AdGuard Home (DNS Filtering Layer)
 
-**Deployment**: AdGuard Home runs on NAS VM (192.168.0.15)
+**Deployment**: AdGuard Home runs on NAS VM (192.168.30.15)
 
 **Purpose**:
 
@@ -402,7 +526,7 @@ Clients → AdGuard Home → Unbound → Root Servers → TLD → Authoritative
 
 **Configuration**:
 
-- **Primary DNS**: NAS IP (192.168.0.15 / nas.discus-moth.ts.net)
+- **Primary DNS**: NAS IP (192.168.30.15 / nas.discus-moth.ts.net)
 - **Web UI**: http://nas.discus-moth.ts.net:80
 - **Configured via**: Tailscale Admin Console → DNS → Custom nameserver
 
@@ -417,7 +541,7 @@ Clients → AdGuard Home → Unbound → Root Servers → TLD → Authoritative
 
 ### Unbound (Recursive DNS Resolver)
 
-**Deployment**: Unbound runs alongside AdGuard Home on NAS VM (192.168.0.15)
+**Deployment**: Unbound runs alongside AdGuard Home on NAS VM (192.168.30.15)
 
 **Purpose**:
 
@@ -478,7 +602,7 @@ ssh ansible@nas.discus-moth.ts.net "docker stats unbound --no-stream"
 ```yaml
 vm_network_dns:
   - "9.9.9.9"
-  - "192.168.0.1"
+  - "192.168.30.1"  # Per-VLAN gateway (example: Media VLAN)
 ```
 
 ### Tailscale MagicDNS
@@ -506,22 +630,29 @@ vm_network_dns:
 
 | Service | Port | Protocol | Access |
 |---------|------|----------|--------|
-| SSH | 22 | TCP | Tailscale + LAN |
-| NFS | 2049 | TCP | Local only |
-| **AdGuard Home Web UI** | **80** | **TCP** | **Tailscale + LAN** |
-| **AdGuard Home DNS** | **53** | **TCP/UDP** | **Local + Tailscale** |
-| **Unbound DNS** | **5335** | **TCP/UDP** | **Localhost + Local network** |
-| Home Assistant | 8123 | TCP | Local + Tailscale |
+| SSH | 22 | TCP | Management VLAN + Tailscale |
+| NFS | 2049 | TCP | Media VLAN + Games VLAN |
+| **AdGuard Home Web UI** | **80** | **TCP** | **Management VLAN + Tailscale** |
+| **AdGuard Home DNS** | **53** | **TCP/UDP** | **All VLANs + Tailscale** |
+| **Unbound DNS** | **5335** | **TCP/UDP** | **Localhost + local network** |
+| Home Assistant | 8123 | TCP | IoT VLAN + Management VLAN + Tailscale |
 | Satisfactory | 7777 | UDP | Public |
-| Jellyfin | 8096 | TCP | Local + Tailscale |
-| Sonarr | 8989 | TCP | Local + Tailscale |
-| Radarr | 7878 | TCP | Local + Tailscale |
-| Prowlarr | 9696 | TCP | Local + Tailscale |
-| Jellyseerr | 5055 | TCP | Local + Tailscale |
+| Mumble | 64738 | TCP/UDP | Games VLAN + Tailscale |
+| Jellyfin | 8096 | TCP | Media VLAN + Management VLAN + Tailscale |
+| Sonarr | 8989 | TCP | Media VLAN + Management VLAN + Tailscale |
+| Radarr | 7878 | TCP | Media VLAN + Management VLAN + Tailscale |
+| Prowlarr | 9696 | TCP | Media VLAN + Management VLAN + Tailscale |
+| Jellyseerr | 5055 | TCP | Media VLAN + Management VLAN + Tailscale |
 | Byparr | 8191 | TCP | Localhost only |
-| qBittorrent Web | 8080 | TCP | Local + Tailscale |
+| qBittorrent Web | 8080 | TCP | Media VLAN + Management VLAN + Tailscale |
 | qBittorrent Incoming | 6881 | TCP/UDP | Public |
-| SABnzbd | 8081 | TCP | Local + Tailscale |
+| SABnzbd | 8081 | TCP | Media VLAN + Management VLAN + Tailscale |
+| Grafana | 3000 | TCP | Management VLAN + Tailscale |
+| Prometheus | 9090 | TCP | Management VLAN + Tailscale |
+| Woodpecker CI | 8000 | TCP | Management VLAN + Tailscale |
+| Lancache HTTP | 80 | TCP | Games VLAN |
+| Lancache HTTPS | 443 | TCP | Games VLAN |
+| UniFi Web UI | 8443 | TCP | Management VLAN + Tailscale |
 
 ### Port Conflicts
 
@@ -556,8 +687,8 @@ sudo netstat -tuln | grep LISTEN
 
 ✅ **Current Practice**:
 
-- Services accessible from local network
-- Remote access via Tailscale VPN (external) or LAN (local)
+- Services accessible from own VLAN + Management VLAN
+- Remote access via Tailscale VPN (external) or VLAN (local)
 - No direct internet exposure
 
 ### 3. Firewall Management
@@ -616,7 +747,7 @@ sudo ufw status | grep 8989
 curl -I http://localhost:8989
 
 # Check which network you're on
-# Local (192.168.0.x) or Tailscale (100.x.x.x)
+# Local VLAN (192.168.{10,20,30,40}.x) or Tailscale (100.x.x.x)
 ```
 
 ### Tailscale Not Connected
@@ -657,8 +788,8 @@ addr=100.65.73.89           ← NAS via Tailscale
 Result: ~70 Mbps throughput, 31% iowait
 
 # Local network path (fast):
-clientaddr=192.168.0.18     ← Direct LAN
-addr=192.168.0.15           ← NAS direct
+clientaddr=192.168.40.18    ← Direct VLAN (Games)
+addr=192.168.30.15          ← NAS direct (Media VLAN)
 Result: Full 10Gbps throughput
 ```
 
@@ -673,23 +804,23 @@ Result: Full 10Gbps throughput
 
 **Services using local IP for NFS:**
 
-- **All media VMs** (Jellyfin, Media Services, Download Clients): Use `192.168.0.15` for media storage
-- **LANCache**: Uses `192.168.0.15` for game cache storage (requires ~140x higher throughput than
+- **All media VMs** (Jellyfin, Media Services, Download Clients): Use `192.168.30.15` for media storage
+- **LANCache**: Uses `192.168.30.15` for game cache storage (requires ~140x higher throughput than
   Tailscale provides)
 
 **Implementation** (from `host_vars/lancache.yml`):
 
 ```yaml
-# NFS mount uses direct local IP for full 10Gbps LAN speed
+# NFS mount uses direct VLAN IP for full 10Gbps LAN speed
 # Using Tailscale hostname (nas.discus-moth.ts.net) would limit throughput
 # to ~70 Mbps due to WireGuard tunnel encryption overhead.
-# Local IP is safe because both VMs are on the same physical network.
-nfs_server: "192.168.0.15"
+# Cross-VLAN NFS access is permitted by inter-VLAN routing policy.
+nfs_server: "192.168.30.15"
 ```
 
-**Security Note**: Using local IPs is safe for VMs on the same physical network.
-The NFS server firewall (UFW) restricts NFS access to 192.168.0.0/24 regardless
-of which hostname/IP is used to connect.
+**Security Note**: Using VLAN IPs is safe for VMs on the same physical host.
+The NFS server firewall (UFW) restricts NFS access to the Media VLAN
+(192.168.30.0/24) and Games VLAN (192.168.40.0/24) only.
 
 ### NFS Mount Fails
 
@@ -707,11 +838,11 @@ ssh ansible@nas.discus-moth.ts.net "sudo exportfs -v"
 # Check firewall allows NFS
 ssh ansible@nas.discus-moth.ts.net "sudo ufw status | grep 2049"
 
-# Test mount manually (use direct IP for NFS reliability)
-sudo mount -t nfs 192.168.0.15:/mnt/storage/data /mnt/test
+# Test mount manually (use direct VLAN IP for NFS reliability)
+sudo mount -t nfs 192.168.30.15:/mnt/storage/data /mnt/test
 ```
 
-> **Note**: NFS mounts use direct IP (192.168.0.15) rather than Tailscale hostname to avoid
+> **Note**: NFS mounts use direct VLAN IP (192.168.30.15) rather than Tailscale hostname to avoid
 > tunnel saturation under heavy I/O. See [NFS Performance: Local IP vs Tailscale](#nfs-performance-local-ip-vs-tailscale)
 > and [NFS Direct IP Migration](../reference/nfs-direct-ip-migration.md).
 
@@ -753,7 +884,7 @@ ssh ansible@nas.discus-moth.ts.net "docker ps | grep unbound"
 ssh ansible@nas.discus-moth.ts.net "dig @127.0.0.1 -p 5335 google.com"
 
 # Test AdGuard Home
-ssh ansible@nas.discus-moth.ts.net "dig @192.168.0.15 google.com"
+ssh ansible@nas.discus-moth.ts.net "dig @192.168.30.15 google.com"
 
 # Check AdGuard Home logs for upstream errors
 ssh ansible@nas.discus-moth.ts.net "docker logs adguardhome --tail 50 | grep -i error"
@@ -822,10 +953,15 @@ firewall_ports:
 VM network settings in [`playbooks/vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/vars.yml):
 
 ```yaml
-vm_network_gateway: "192.168.0.1"
+# Gateway and DNS are VLAN-specific (set per-VM or per-VLAN group)
+# Examples:
+#   Management VLAN: vm_network_gateway: "192.168.10.1"
+#   IoT VLAN:        vm_network_gateway: "192.168.20.1"
+#   Media VLAN:      vm_network_gateway: "192.168.30.1"
+#   Games VLAN:      vm_network_gateway: "192.168.40.1"
 vm_network_dns:
   - "9.9.9.9"
-  - "192.168.0.1"
+  - "{{ vm_network_gateway }}"  # Per-VLAN gateway as secondary DNS
 ```
 
 ### Tailscale Configuration
@@ -848,21 +984,21 @@ vault_tailscale_api_key: "tskey-api-xxxxx"
 
 **Network Design**:
 
-- Dual network: Local (192.168.0.0/24) + Tailscale VPN
-- Static IP assignments for all VMs
-- Consistent DNS configuration
+- VLAN-segmented local network (Management, IoT, Media, Games) + Tailscale VPN
+- Static IP assignments for all 11 VMs across 4 active VLANs
+- Per-VLAN gateways and DNS configuration
+- Replaced former flat 192.168.0.0/24 network in Feb 2026
 
 **Security**:
 
-- SSH via Tailscale + LAN after Phase 4
-- UFW firewall on all VMs
-- Minimal port exposure
-- End-to-end encryption via WireGuard
+- SSH restricted to Management VLAN (192.168.10.0/24) + Tailscale
+- Service access scoped to own VLAN + Management VLAN + Tailscale
+- UFW firewall on all VMs with VLAN-aware rules
+- End-to-end encryption via WireGuard for remote access
 
 **Management**:
 
 - Centralized firewall rules via Ansible
 - Tailscale for secure remote access
-- NFS for shared storage (local network only)
-
-Your network is secure, performant, and maintainable!
+- NFS for shared storage (Media VLAN + Games VLAN cross-VLAN access)
+- UniFi Controller on Management VLAN for network device management

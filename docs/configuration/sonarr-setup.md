@@ -8,7 +8,7 @@ Complete setup guide for Sonarr TV show management.
 
 ## Overview
 
-- **VM**: media-services (VMID 401, 192.168.0.13)
+- **VM**: media-services (VMID 401, 192.168.30.13)
 - **Port**: 8989
 - **Deployment**: Podman container (rootless)
 - **Media Path**: `/data/media/tv/`

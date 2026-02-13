@@ -124,7 +124,7 @@ vault_nfs_gid: 3000
 Edit [`playbooks/vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/vars.yml):
 
 - Verify VM resource allocation fits your hardware
-- Update network settings if needed (default: 192.168.0.0/24)
+- Update network settings if needed (default: 192.168.10.0/24)
 
 ### 5. Deploy Infrastructure (15 min)
 

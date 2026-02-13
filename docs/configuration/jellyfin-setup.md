@@ -3,12 +3,12 @@
 Jellyfin is an open-source media server that organizes and streams your media collection. It provides a clean
 interface for managing movies, TV shows, music, and photos.
 
-> **IMPORTANT**: Jellyfin runs as a **native systemd service** on the Jellyfin VM (192.168.0.12).
+> **IMPORTANT**: Jellyfin runs as a **native systemd service** on the Jellyfin VM (192.168.30.12).
 > Use `sudo systemctl` commands, NOT `systemctl --user`. Jellyfin is NOT containerized.
 
 ## Overview
 
-- **VM**: jellyfin (VMID 400, 192.168.0.12)
+- **VM**: jellyfin (VMID 400, 192.168.30.12)
 - **Ports**: 8096 (HTTP), 8920 (HTTPS), 7359 (Discovery)
 - **Deployment**: Native systemd service (not containerized)
 - **Config Path**: `/etc/jellyfin/` and `/var/lib/jellyfin/`
@@ -18,7 +18,7 @@ interface for managing movies, TV shows, music, and photos.
 ## Access
 
 - **Tailscale**: http://jellyfin.discus-moth.ts.net:8096
-- **Local Network**: http://192.168.0.12:8096
+- **Local Network**: http://192.168.30.12:8096
 
 ## Deployment
 
@@ -196,7 +196,7 @@ For access via Tailscale (recommended):
 2. Known proxies: Leave empty
 3. Public HTTPS port: 8920 (optional)
 4. Allow remote connections: **Enabled**
-5. LAN networks: `192.168.0.0/24,100.64.0.0/10` (local + Tailscale)
+5. LAN networks: `192.168.30.0/24,100.64.0.0/10` (local + Tailscale)
 
 ### DLNA/UPnP (Optional)
 
@@ -257,7 +257,7 @@ curl -X POST "http://localhost:8096/Library/Refresh" \
 ### Jellyseerr Integration
 
 1. In Jellyseerr Settings → Jellyfin:
-   - Hostname: `http://192.168.0.12:8096`
+   - Hostname: `http://192.168.30.12:8096`
    - API Key: (Generate in Jellyfin Dashboard → API Keys)
 2. Enable library sync
 3. Import users from Jellyfin
@@ -275,7 +275,7 @@ curl -X POST "http://localhost:8096/Library/Refresh" \
 
 ```bash
 # Base URL
-http://192.168.0.12:8096
+http://192.168.30.12:8096
 
 # Get system info
 curl "http://localhost:8096/System/Info" \

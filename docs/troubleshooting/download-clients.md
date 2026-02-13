@@ -3,7 +3,7 @@
 Troubleshooting guide for qBittorrent and SABnzbd download client issues.
 
 > **IMPORTANT**: Download clients run as **rootless Podman containers with Quadlet** on the download-clients VM
-> (192.168.0.14). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
+> (192.168.30.14). Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Quick Checks
 
@@ -78,7 +78,7 @@ ss -tlnp | grep 8080
 3. **Firewall blocking**:
 
    ```bash
-   sudo ufw allow from 192.168.0.0/24 to any port 8080
+   sudo ufw allow from 192.168.30.0/24 to any port 8080
    sudo ufw allow from 100.64.0.0/10 to any port 8080
    sudo ufw reload
    ```
@@ -238,7 +238,7 @@ podman exec sabnzbd cat /config/sabnzbd.ini | grep -E "host_whitelist|local_rang
 
 2. **Hostname verification failing**:
    - Config > General > Security
-   - Host whitelist should include: `download-clients.discus-moth.ts.net, 192.168.0.14, localhost, 127.0.0.1, sabnzbd`
+   - Host whitelist should include: `download-clients.discus-moth.ts.net, 192.168.30.14, localhost, 127.0.0.1, sabnzbd`
    - Or restart container (should be set by playbook)
 
 3. **Local ranges misconfigured**:
@@ -372,7 +372,7 @@ curl "http://localhost:8080/api?mode=version&apikey=$API_KEY"
 2. **Use correct port**:
    - From Sonarr/Radarr containers: Port `8080` (internal)
    - From external: Port `8081`
-   - Host: `download-clients.discus-moth.ts.net` or `192.168.0.14`
+   - Host: `download-clients.discus-moth.ts.net` or `192.168.30.14`
 
 3. **Test connectivity**:
 
@@ -468,7 +468,7 @@ podman exec sabnzbd wget -qO- --timeout=5 ifconfig.me
 
 2. **Firewall blocking local subnets**:
    - Verify `FIREWALL_OUTBOUND_SUBNETS` includes:
-     - `192.168.0.0/24` (local network)
+     - `192.168.30.0/24` (local network)
      - `100.64.0.0/10` (Tailscale)
 
    ```bash
@@ -527,8 +527,8 @@ curl -I http://localhost:8081  # SABnzbd
    sudo ufw status | grep -E "8080|8081"
 
    # Allow if needed
-   sudo ufw allow from 192.168.0.0/24 to any port 8080
-   sudo ufw allow from 192.168.0.0/24 to any port 8081
+   sudo ufw allow from 192.168.30.0/24 to any port 8080
+   sudo ufw allow from 192.168.30.0/24 to any port 8081
    sudo ufw allow from 100.64.0.0/10 to any port 8080
    sudo ufw allow from 100.64.0.0/10 to any port 8081
    sudo ufw reload
@@ -1377,8 +1377,8 @@ podman inspect qbittorrent | grep -A 10 PortBindings
 
    ```bash
    # Allow ports through UFW
-   sudo ufw allow from 192.168.0.0/24 to any port 8080
-   sudo ufw allow from 192.168.0.0/24 to any port 8081
+   sudo ufw allow from 192.168.30.0/24 to any port 8080
+   sudo ufw allow from 192.168.30.0/24 to any port 8081
    sudo ufw allow from 100.64.0.0/10 to any port 8080
    sudo ufw allow from 100.64.0.0/10 to any port 8081
    sudo ufw reload
@@ -1552,7 +1552,7 @@ podman exec sabnzbd id
 1. **Fix NFS permissions**:
 
    ```bash
-   # On NAS (192.168.0.15), set ownership to 3000:3000
+   # On NAS (192.168.30.15), set ownership to 3000:3000
    ssh -i ~/.ssh/ansible_homelab ansible@nas.discus-moth.ts.net \
      "sudo chown -R 3000:3000 /mnt/storage/data/torrents /mnt/storage/data/usenet"
 

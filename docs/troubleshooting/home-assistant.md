@@ -99,7 +99,7 @@ podman logs home-assistant
 
 - Browser shows "Connection refused" or times out
 - Can't reach http://home-assistant.discus-moth.ts.net:8123
-- Can't reach http://192.168.0.10:8123
+- Can't reach http://192.168.20.10:8123
 
 **Diagnosis**:
 
@@ -123,7 +123,7 @@ curl http://$(tailscale ip -4):8123
 
    ```bash
    # Allow Home Assistant port
-   sudo ufw allow from 192.168.0.0/24 to any port 8123
+   sudo ufw allow from 192.168.20.0/24 to any port 8123
    sudo ufw allow from 100.64.0.0/10 to any port 8123
    sudo ufw reload
    ```
@@ -273,8 +273,8 @@ podman inspect home-assistant | grep NetworkMode
 
    ```bash
    # Allow mDNS/SSDP discovery protocols
-   sudo ufw allow from 192.168.0.0/24 to any port 1900 proto udp   # SSDP
-   sudo ufw allow from 192.168.0.0/24 to any port 5353 proto udp   # mDNS
+   sudo ufw allow from 192.168.20.0/24 to any port 1900 proto udp   # SSDP
+   sudo ufw allow from 192.168.20.0/24 to any port 5353 proto udp   # mDNS
    sudo ufw reload
    ```
 
@@ -285,7 +285,7 @@ podman inspect home-assistant | grep NetworkMode
    - Manually enter IP address/credentials
 
 4. **Check device is on same network**:
-   - Verify device is on 192.168.0.0/24 network
+   - Verify device is on 192.168.20.0/24 network
    - Check device is not isolated by router VLAN/guest network
 
 ### 5. Database Errors / Performance Issues
@@ -413,7 +413,7 @@ ls ~/.config/homeassistant/.storage/auth*
    #   auth_providers:
    #     - type: trusted_networks
    #       trusted_networks:
-   #         - 192.168.0.0/24
+   #         - 192.168.20.0/24
    #         - 100.64.0.0/10
 
    # Restart

@@ -3,12 +3,12 @@
 Homarr is a customizable homepage/dashboard for organizing and accessing all your services in one place. It provides
 service status monitoring, integrations with popular applications, and a clean interface for your homelab.
 
-> **IMPORTANT**: Homarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.0.13).
+> **IMPORTANT**: Homarr runs as a **rootless Podman container with Quadlet** on the media-services VM (192.168.30.13).
 > Use `systemctl --user` and `podman` commands, NOT `docker` commands.
 
 ## Overview
 
-- **VM**: media-services (VMID 401, 192.168.0.13)
+- **VM**: media-services (VMID 401, 192.168.30.13)
 - **Port**: 7575
 - **Deployment**: Rootless Podman with Quadlet
 - **Config Path**: `~/.config/homarr/`
@@ -17,7 +17,7 @@ service status monitoring, integrations with popular applications, and a clean i
 ## Access
 
 - **Tailscale**: http://media-services.discus-moth.ts.net:7575
-- **Local Network**: http://192.168.0.13:7575
+- **Local Network**: http://192.168.30.13:7575
 
 ## Deployment
 

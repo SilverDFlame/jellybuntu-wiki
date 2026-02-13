@@ -154,7 +154,7 @@ sudo netstat -tulpn | grep 7777
 
 4. **Connect via correct address**:
 
-   - **Local network**: `192.168.0.11:7777`
+   - **Local network**: `192.168.40.11:7777`
    - **Tailscale**: `satisfactory-server.discus-moth.ts.net:7777`
    - Make sure game client is using the correct IP/hostname
 
@@ -422,7 +422,7 @@ sftp ansible@satisfactory-server.discus-moth.ts.net
 4. **SMM connection settings**:
 
    - Use **Simple Mode** (not Docker/Advanced)
-   - Host: `satisfactory-server.discus-moth.ts.net` or `192.168.0.11`
+   - Host: `satisfactory-server.discus-moth.ts.net` or `192.168.40.11`
    - Port: `22`
    - Username: `ansible`
    - Password: (from vault)
@@ -537,7 +537,7 @@ sudo ufw status verbose
 
 # Test from another machine on network
 # From another VM or PC:
-telnet 192.168.0.11 7777
+telnet 192.168.40.11 7777
 
 # Capture network traffic (advanced)
 sudo tcpdump -i any port 7777 -n

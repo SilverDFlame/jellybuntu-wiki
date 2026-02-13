@@ -40,7 +40,7 @@ Tdarr is an automated media transcoding and optimization system that processes y
 - Optimize streaming performance (reduce transcoding load on Jellyfin)
 - Ensure consistent media quality across your library
 
-**Deployment Location**: Jellyfin VM (VMID 400, 192.168.0.12)
+**Deployment Location**: Jellyfin VM (VMID 400, 192.168.30.12)
 
 **Resource Allocation**:
 
@@ -66,7 +66,7 @@ Tdarr uses a server-node architecture:
 
 ## Access
 
-- **Local Network**: http://192.168.0.12:8265
+- **Local Network**: http://192.168.30.12:8265
 - **Tailscale**: http://jellyfin.discus-moth.ts.net:8265
 - **Homarr Dashboard**: Add to Media Server section at http://media-services.discus-moth.ts.net:7575
 
