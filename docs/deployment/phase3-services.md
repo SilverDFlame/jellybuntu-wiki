@@ -18,9 +18,9 @@ and Jellyfin.
 
 ## What Phase 3 Does
 
-### 1. Home Assistant (Docker)
+### 1. Home Assistant (Podman Quadlet)
 
-- Deploys Home Assistant container
+- Deploys Home Assistant container via rootless Podman Quadlet
 - Mounts configuration directory
 - Exposes port 8123
 
@@ -29,11 +29,11 @@ and Jellyfin.
 - Installs SteamCMD and dependencies
 - Downloads Satisfactory server
 - Creates systemd service
-- Configures dedicated CPU cores (2-3)
+- Configures dedicated CPU cores (4-7)
 
-### 3. Media Services (Docker)
+### 3. Media Services (Podman Quadlet)
 
-Deploys modular Docker Compose stack:
+Deploys rootless Podman Quadlet services:
 
 - **Sonarr** (8989) - TV show management
 - **Radarr** (7878) - Movie management
@@ -41,7 +41,7 @@ Deploys modular Docker Compose stack:
 - **Jellyseerr** (5055) - Request management
 - **Byparr** (8191) - Cloudflare bypass
 
-### 4. Download Clients (Docker)
+### 4. Download Clients (Podman Quadlet)
 
 - **qBittorrent** (8080) - **Auto-configured via Web API**:
   - Extracts temporary password from logs
@@ -63,6 +63,17 @@ Deploys modular Docker Compose stack:
 - Sets system limits and scheduling priority
 - Optimized for 4K transcoding
 
+### 7. Matrix/Elysium Communication Server (Podman Pod)
+
+- Deploys pod-based architecture with 6 containers via `podman_app` role
+- **Synapse** (8008) - Matrix homeserver with PostgreSQL 16 backend
+- **LiveKit** (7880/7881) - WebRTC SFU for Element Call voice/video
+- **lk-jwt-service** (8880) - MatrixRTC authorization bridge
+- **coturn** (3478) - TURN/STUN server on host network for NAT traversal
+- **Synapse Admin** (8080) - Web UI for server administration
+- Configures iptables redirect (port 80 to 8008) for well-known discovery
+- Requires post-deployment bootstrap for signing key and admin user
+
 ## Running Phase 3
 
 ```bash
@@ -79,7 +90,7 @@ PLAY [Deploy Satisfactory] *********************************************
 changed: [satisfactory-server]
 
 PLAY [Deploy Media Services] *******************************************
-TASK [Deploy Docker Compose stack] *************************************
+TASK [Deploy Podman Quadlet services] **********************************
 changed: [media-services]
 
 PLAY [Deploy Download Clients] *****************************************
@@ -107,11 +118,11 @@ jellyfin             : ok=10 changed=8
 
 ## Verification
 
-### Check Docker Containers (Media Services)
+### Check Podman Containers (Media Services)
 
 ```bash
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
-  "docker ps"
+  "export XDG_RUNTIME_DIR=/run/user/\$(id -u) && podman ps"
 ```
 
 Expected containers:
@@ -123,17 +134,33 @@ Expected containers:
 - byparr
 - recyclarr
 
-### Check Docker Containers (Download Clients)
+### Check Podman Containers (Download Clients)
 
 ```bash
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "docker ps"
+  "export XDG_RUNTIME_DIR=/run/user/\$(id -u) && podman ps"
 ```
 
 Expected containers:
 
 - qbittorrent
 - sabnzbd
+
+### Check Matrix Containers (Elysium)
+
+```bash
+ssh -i ~/.ssh/ansible_homelab ansible@elysium.discus-moth.ts.net \
+  "podman ps --format 'table {{.Names}}\t{{.Status}}'"
+```
+
+Expected containers (6 total):
+
+- postgres
+- synapse
+- livekit
+- lk-jwt-service
+- coturn
+- synapse-admin
 
 ### Verify NFS Mounts
 
@@ -186,6 +213,11 @@ All services should be accessible via Tailscale hostnames:
 
 - http://jellyfin.discus-moth.ts.net:8096 (Jellyfin)
 
+**Communication**:
+
+- http://elysium.discus-moth.ts.net:8008 (Matrix/Synapse)
+- http://elysium.discus-moth.ts.net:8080 (Synapse Admin)
+
 **Home Automation**:
 
 - http://home-assistant.discus-moth.ts.net:8123 (Home Assistant)
@@ -212,22 +244,22 @@ This means qBittorrent is immediately usable with your vault credentials!
 
 ## Troubleshooting
 
-### Docker Containers Not Starting
+### Podman Containers Not Starting
 
 **Solution**:
 
 ```bash
 # Check container logs
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
-  "docker logs sonarr"
+  "podman logs sonarr"
 
-# Check Docker service
+# Check Quadlet service status
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
-  "systemctl status docker"
+  "systemctl --user status sonarr"
 
-# Restart container
+# Restart container via systemd
 ssh -i ~/.ssh/ansible_homelab ansible@media-services.discus-moth.ts.net \
-  "cd /opt/media-stack && docker compose restart sonarr"
+  "systemctl --user restart sonarr"
 ```
 
 ### NFS Mount Fails
@@ -259,19 +291,18 @@ sudo mount 192.168.30.15:/mnt/storage/data /mnt/data
 ```bash
 # Check qBittorrent is running
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "docker ps | grep qbittorrent"
+  "systemctl --user status qbittorrent"
 
 # Check container logs for temp password
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "docker logs qbittorrent 2>&1 | grep 'temporary password'"
+  "podman logs qbittorrent 2>&1 | grep 'temporary password'"
 
 # Verify credentials in secrets file
 sops -d group_vars/all.sops.yaml | grep services_admin
 
-# Reset and reconfigure
+# Restart and reconfigure
 ssh -i ~/.ssh/ansible_homelab ansible@download-clients.discus-moth.ts.net \
-  "cd /opt/download-clients && docker compose down"
-rm -rf /opt/download-clients/services/qbittorrent/config
+  "systemctl --user restart qbittorrent"
 ./bin/runtime/ansible-run.sh playbooks/services/download-clients.yml
 ```
 
@@ -352,10 +383,12 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 - [`playbooks/services/jellyfin.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin.yml)
 - [`playbooks/services/jellyfin-config.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin-config.yml) -
   Post-wizard API configuration (run after initial setup)
+- [`playbooks/services/matrix.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/matrix.yml) - Matrix/Synapse communication server
+- [`playbooks/utility/matrix-bootstrap.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/utility/matrix-bootstrap.yml) - One-time signing key and admin user setup
 
 **Roles**:
 
-- [`roles/docker_compose_app/`](https://github.com/SilverDFlame/jellybuntu/blob/main/roles/docker_compose_app/) - Docker Compose deployments
+- [`roles/podman_app/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/podman_app/) - Podman Quadlet container deployments
 - [`roles/nfs_client/`](https://github.com/SilverDFlame/jellybuntu/blob/main/roles/nfs_client/) - NFS mount configuration
 - [`roles/jellyfin/`](https://github.com/SilverDFlame/jellybuntu/blob/main/roles/jellyfin/) - Jellyfin installation and optimization
 
@@ -365,25 +398,26 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 - UFW firewall (security hardening - Phase 4)
 - Unattended upgrades (Phase 4)
 
-## Docker Compose Structure
+## Quadlet Structure
 
-Services use modular compose files:
+Services use Podman Quadlet `.container` files managed by systemd:
 
 ```text
-services/compose/
-├── docker-compose.yml               # Media services
-├── docker-compose-downloads.yml     # Download clients
-└── services/                        # Individual service definitions
-    ├── sonarr.yml
-    ├── radarr.yml
-    ├── prowlarr.yml
-    ├── jellyseerr.yml
-    ├── recyclarr.yml
-    ├── qbittorrent.yml
-    └── sabnzbd.yml
+~/.config/containers/systemd/     # Per-VM Quadlet definitions
+├── sonarr.container
+├── radarr.container
+├── prowlarr.container
+├── jellyseerr.container
+├── byparr.container
+├── recyclarr.container
+├── qbittorrent.container
+├── sabnzbd.container
+├── gluetun.container
+└── unpackerr.container
 ```
 
-This modular structure makes services easy to update or modify individually.
+Each `.container` file defines a single service as a native systemd unit, managed via
+`systemctl --user` commands.
 
 ## Important Notes
 
@@ -451,13 +485,15 @@ To re-run specific service:
 
 ✅ Phase 3 is complete when:
 
-- [ ] All Docker containers running
+- [ ] All Podman containers running
 - [ ] Jellyfin service active
 - [ ] NFS mounts present on all client VMs
 - [ ] qBittorrent login works with vault password
 - [ ] All web UIs accessible via Tailscale
 - [ ] Home Assistant accessible
 - [ ] Satisfactory server running (if enabled)
+- [ ] Matrix/Synapse API responding (http://elysium.discus-moth.ts.net:8008/_matrix/client/versions)
+- [ ] All 6 Matrix containers running on Elysium
 
 ## Next Steps
 

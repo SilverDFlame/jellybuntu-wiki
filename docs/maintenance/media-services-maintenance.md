@@ -1,6 +1,6 @@
 # Media Services Maintenance
 
-Maintenance procedures for the media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Huntarr,
+Maintenance procedures for the media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr,
 Homarr, Byparr, and Recyclarr.
 
 > **IMPORTANT**: All media services run as **rootless Podman containers with Quadlet** on the media-services VM
@@ -15,7 +15,6 @@ Homarr, Byparr, and Recyclarr.
 | Prowlarr | 9696 | Indexer management |
 | Jellyseerr | 5055 | Media requests |
 | Bazarr | 6767 | Subtitle management |
-| Huntarr | 9705 | Missing media hunter |
 | Homarr | 7575 | Dashboard |
 | Byparr | 8191 | Cloudflare bypass |
 | Recyclarr | N/A | Quality profile sync |
@@ -88,13 +87,12 @@ podman pull docker.io/linuxserver/radarr:latest
 podman pull docker.io/linuxserver/prowlarr:latest
 podman pull docker.io/fallenbagel/jellyseerr:latest
 podman pull docker.io/linuxserver/bazarr:latest
-podman pull ghcr.io/huntarr/huntarr:latest
 podman pull ghcr.io/ajnart/homarr:latest
 podman pull ghcr.io/thephaseless/byparr:2.0.1
 podman pull docker.io/recyclarr/recyclarr:latest
 
 # Restart all services
-systemctl --user restart sonarr radarr prowlarr jellyseerr bazarr huntarr homarr byparr
+systemctl --user restart sonarr radarr prowlarr jellyseerr bazarr homarr byparr
 
 # Verify all services are running
 podman ps
@@ -145,7 +143,7 @@ mkdir -p "$BACKUP_DIR"
 systemctl --user stop sonarr radarr prowlarr jellyseerr bazarr
 
 # Backup each service config
-for svc in sonarr radarr prowlarr jellyseerr bazarr huntarr homarr; do
+for svc in sonarr radarr prowlarr jellyseerr bazarr homarr; do
   if [ -d ~/.config/$svc ]; then
     tar -czf "$BACKUP_DIR/${svc}-${DATE}.tar.gz" -C ~/.config "$svc"
     echo "Backed up $svc"

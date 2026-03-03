@@ -50,7 +50,6 @@ Based on measured production usage patterns:
 |--------------|-------|-------------|---------------|------------------------------------|
 | Byparr       | 1.5GB | 768MB       | 300-600MB     | Camoufox (Firefox-based)           |
 | Homarr       | 256MB | 128MB       | 50-150MB      | Dashboard, lightweight             |
-| Huntarr      | 512MB | 256MB       | 100-200MB     | Periodic processing                |
 | cAdvisor     | 256MB | 128MB       | 30-50MB       | Monitoring, stable                 |
 
 ### Home Automation
@@ -224,10 +223,9 @@ Container Limits:
   Byparr:       1.5GB
   Homarr:       256MB
   cAdvisor:     256MB
-  Huntarr:      512MB
   Recyclarr:    256MB
   ------------
-  Total:        ~7GB
+  Total:        ~6.5GB
 
 OS Overhead:    1GB
 File Cache:     1GB (15%)

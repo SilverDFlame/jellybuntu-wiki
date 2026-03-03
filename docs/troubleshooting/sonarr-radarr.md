@@ -221,53 +221,16 @@ curl http://localhost:9696/api/v1/health
 
 #### Solutions
 
-##### Option 1: Use Huntarr (Recommended - Automatic Backlog Searches)
-
-Huntarr is specifically designed to solve this problem by automatically searching for missing/wanted content on a
-schedule.
-
-1. **Verify Huntarr is installed and running**:
-
-   ```bash
-   systemctl --user status huntarr
-   podman ps | grep huntarr
-   # Should show huntarr container running on port 9705
-   ```
-
-2. **Check if Huntarr schedule is configured** (MOST COMMON ISSUE):
-   - Navigate to: http://media-services.discus-moth.ts.net:9705
-   - Go to **Settings** → **Scheduling**
-   - Look at **"Current Schedules"** section
-   - **If empty**: Follow [Huntarr Setup Guide](../configuration/huntarr-setup.md) Step 4
-   - **If configured**: Verify schedule is running (check "How Long Ago" in Hunt Manager)
-
-3. **Quick Huntarr schedule setup**:
-   - Settings → Scheduling
-   - Time: 03:00 (3 AM)
-   - Frequency: Daily (All Days)
-   - Action: Enable
-   - App: All Apps (Global)
-   - Click "+ Add Schedule"
-
-##### Why Huntarr Matters
-
-- Automatically triggers searches for ALL missing episodes daily
-- Works for backlog content that RSS can't catch
-- No manual intervention needed once configured
-- See [Huntarr Configuration Guide](../configuration/huntarr-setup.md) for full setup
-
-##### Option 2: Manual Bulk Search (One-Time Fix)
-
-For immediate results without Huntarr:
+##### Option 1: Manual Bulk Search
 
 1. Go to **Wanted** → **Missing** in Sonarr
 2. Select episodes you want to search for
 3. Click "Search Selected" at the top
 4. Wait for searches to complete
 
-**Note**: This is manual and must be repeated for new missing episodes. Huntarr automates this.
+**Note**: This must be repeated periodically for new missing episodes.
 
-##### Option 3: Enable Automatic Search on Add (Limited)
+##### Option 2: Enable Automatic Search on Add (Limited)
 
 - Settings → Media Management
 - Enable "Episode Title Required" → Never
@@ -275,20 +238,10 @@ For immediate results without Huntarr:
 
 ##### Verification
 
-1. After setting up Huntarr schedule (or manual search):
+1. After manual search:
    - Check Sonarr → Activity → Queue
    - Missing episodes should appear as they're found
    - Downloads start automatically via Prowlarr → Download clients
-
-2. Check Huntarr is working:
-   - Huntarr → Main → Hunt Manager
-   - Look at "How Long Ago" column (should update after schedule runs)
-   - Huntarr → Home dashboard shows "Live Hunts Executed" counter
-
-**See Also**:
-
-- [Huntarr Configuration Guide](../configuration/huntarr-setup.md)
-- [Huntarr Troubleshooting](huntarr.md)
 
 ---
 
@@ -558,7 +511,6 @@ If issues persist:
 
 - [Download Clients Troubleshooting](download-clients.md)
 - [Prowlarr Troubleshooting](prowlarr.md)
-- [Huntarr Troubleshooting](huntarr.md)
 - [NAS/NFS Troubleshooting](nas-nfs.md)
 - [Podman Troubleshooting](podman.md)
 - [Common Issues](common-issues.md)

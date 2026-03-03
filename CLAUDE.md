@@ -11,6 +11,8 @@ documentation, built with MkDocs and deployed to `http://nas.discus-moth.ts.net:
 
 **Main Infrastructure Repository:** [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu)
 
+**Local clone:** `~/coding/mirrors/jellybuntu/` — agent teams read roles, playbooks, and terraform files from here during doc-sync tasks.
+
 ---
 
 ## 🔗 Cross-Repository References

@@ -344,6 +344,34 @@ sops -d group_vars/all.sops.yaml
 - Store encrypted files in git (safe to commit)
 - Never commit decrypted secrets
 
+### Container Secrets (secrets.env)
+
+Per-service environment files provide runtime secrets to Podman Quadlet containers.
+
+**Location**: `/opt/<service>/secrets.env` on each service VM
+
+**Permissions**: Mode `0600` (owner read/write only)
+
+**How it works**:
+
+1. Ansible templates generate `secrets.env` from vault variables during deployment
+2. Quadlet `.container` files reference the file via `EnvironmentFile=/opt/<service>/secrets.env`
+3. Changes to secrets.env trigger a container restart (Ansible handler)
+4. File permissions enforced at `0600` to prevent unauthorized reads
+
+**Example** (`/opt/sonarr/secrets.env`):
+
+```text
+SONARR__AUTH__APIKEY=vault-generated-key-here
+```
+
+**Benefits**:
+
+- Secrets never embedded in container images or Quadlet files
+- Permission enforcement prevents other users from reading keys
+- Ansible change detection triggers automatic restarts on secret rotation
+- Consistent pattern across all services (`/opt/<service>/secrets.env`)
+
 ## Proxmox API Authentication
 
 ### API User Creation
@@ -443,22 +471,13 @@ vault_services_admin_password: "..."
 
 **Purpose**: Service-to-service authentication
 
-**Sonarr/Radarr API Keys**:
-Generated automatically by services, retrieved manually:
+**Vault Variables**:
 
-```bash
-# Access service web UI
-# Settings → General → Security → API Key
-```
-
-**Adding to Secrets**:
-
-```bash
-sops group_vars/all.sops.yaml
-
-# Add:
+```yaml
 vault_sonarr_api_key: "..."
 vault_radarr_api_key: "..."
+vault_lidarr_api_key: "..."
+vault_sabnzbd_api_key: "..."
 ```
 
 **Usage**:
@@ -466,6 +485,35 @@ vault_radarr_api_key: "..."
 - Recyclarr: Syncs custom formats
 - Prowlarr: Adds indexers to services
 - Jellyseerr: Requests media
+
+### API Key Pre-Seeding (Automated)
+
+As of Feb 2026, API keys for media services are **auto-generated and vault-driven**. No manual
+retrieval from service web UIs is needed.
+
+**How it works**:
+
+1. During `setup.sh`, API keys are generated and stored in
+   [`group_vars/all.sops.yaml`](https://github.com/SilverDFlame/jellybuntu/blob/main/group_vars/all.sops.yaml)
+2. Phase 3 deployment injects these keys into each service's `config.xml` (or `sabnzbd.ini`)
+   via Ansible templates
+3. Services start with pre-configured API keys matching the vault
+
+**Services with pre-seeded keys**:
+
+| Service | Vault Variable | Config File |
+|---------|---------------|-------------|
+| Sonarr | `vault_sonarr_api_key` | `config.xml` |
+| Radarr | `vault_radarr_api_key` | `config.xml` |
+| Lidarr | `vault_lidarr_api_key` | `config.xml` |
+| SABnzbd | `vault_sabnzbd_api_key` | `sabnzbd.ini` |
+
+**Benefits**:
+
+- No manual API key retrieval step after deployment
+- Keys consistent across redeployments
+- Prowlarr, Recyclarr, and Jellyseerr can be pre-configured with known keys
+- Eliminates post-deployment GUI configuration for API keys
 
 ### Jellyfin Authentication
 
@@ -702,7 +750,7 @@ sudo systemctl disable unattended-upgrades
 ### ⚠️ Consider Implementing
 
 - [ ] Fail2ban for brute force protection
-- [ ] Reverse proxy with HTTPS
+- [x] Reverse proxy with HTTPS (Traefik v3 — see [Traefik Setup](traefik-setup.md))
 - [ ] Regular security audits
 - [ ] Backup encryption
 - [ ] Intrusion detection (optional)
@@ -828,6 +876,29 @@ The following hardening improvements were applied across the infrastructure in F
 
 - Credential cleanup trap added to `setup.sh` to remove sensitive files on exit or error
 - SSH arguments made array-safe to prevent word splitting vulnerabilities
+
+### Claude Code Secret Protection
+
+PreToolUse hooks in `.claude/settings.json` provide defense-in-depth for AI-assisted development,
+preventing accidental secret exposure during Claude Code sessions.
+
+**block-secret-commands.sh** (Bash tool):
+
+- Blocks `sops -d` (decrypt secrets to stdout)
+- Blocks `ansible-vault view` (view vault contents)
+- Blocks `-vvv` verbose flags (can expose secrets in Ansible debug output)
+- Prevents AI from inadvertently decrypting and reading secret values
+
+**block-secret-files.sh** (Read tool):
+
+- Blocks reading `terraform.tfvars` (Terraform variables with sensitive values)
+- Blocks reading `credentials.json` (service account credentials)
+- Blocks reading age key files (SOPS decryption keys)
+- Prevents AI from reading raw secret material from disk
+
+**Purpose**: Even with trusted AI tooling, defense-in-depth ensures secrets cannot be accidentally
+exposed in conversation context, tool outputs, or logs. These hooks complement SOPS encryption
+and file permissions as an additional security layer.
 
 ## Security Resources
 

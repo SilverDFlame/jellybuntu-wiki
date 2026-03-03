@@ -53,6 +53,8 @@ This provides both local performance and secure remote connectivity.
 | 600 | Woodpecker CI | 192.168.10.17 | 10 (Mgmt) | woodpecker | CI/CD pipeline |
 | 700 | Lancache | 192.168.40.18 | 40 (Games) | lancache | Game download cache |
 | 800 | UniFi Controller | 192.168.10.19 | 10 (Mgmt) | unifi-controller | Network management |
+| 900 | Reverse Proxy | 192.168.10.20 | 10 (Mgmt) | reverse-proxy | Traefik HTTPS proxy |
+| 202 | Elysium (Matrix) | 192.168.40.21 | 40 (Games) | elysium | Matrix/Synapse |
 
 ### Tailscale VPN (100.64.0.0/10)
 
@@ -79,6 +81,8 @@ All VMs accessible via Tailscale hostnames:
 - `woodpecker.discus-moth.ts.net`
 - `lancache.discus-moth.ts.net`
 - `unifi-controller.discus-moth.ts.net`
+- `reverse-proxy.discus-moth.ts.net`
+- `elysium.discus-moth.ts.net`
 
 ### Network Flow Diagram
 
@@ -87,10 +91,10 @@ All VMs accessible via Tailscale hostnames:
 │                    Proxmox Host (jellybuntu)                     │
 │                                                                  │
 │  VLAN 10 - Management (192.168.10.0/24)                          │
-│  ┌────────────┐  ┌────────────┐  ┌──────────────────┐            │
-│  │ .16 Monitor│  │ .17 Woodpkr│  │ .19 UniFi Ctrl   │            │
-│  └─────┬──────┘  └─────┬──────┘  └───────┬──────────┘            │
-│        └───────────────┼──────────────────┘                      │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌──────────┐   │
+│  │ .16 Monitor│  │ .17 Woodpkr│  │ .19 UniFi  │  │.20 Proxy │   │
+│  └─────┬──────┘  └─────┬──────┘  └──────┬─────┘  └────┬─────┘   │
+│        └───────────────┼────────────────┼──────────────┘         │
 │                        │                                         │
 │  VLAN 20 - IoT (192.168.20.0/24)                                 │
 │  ┌──────────────────┐                                            │
@@ -333,6 +337,20 @@ sudo ufw allow from 192.168.10.0/24 to any port 8080 proto tcp comment 'UniFi In
 sudo ufw allow from 192.168.10.0/24 to any port 3478 proto udp comment 'UniFi STUN (Management VLAN)'
 ```
 
+#### Reverse Proxy (192.168.10.20) - Management VLAN 10
+
+```bash
+# SSH (Management VLAN + Tailscale)
+sudo ufw allow from 192.168.10.0/24 to any port 22 proto tcp comment 'SSH (Management VLAN)'
+sudo ufw allow from 100.64.0.0/10 to any port 22 proto tcp comment 'SSH (Tailscale)'
+
+# Traefik HTTP (redirect to HTTPS) — Management VLAN
+sudo ufw allow from 192.168.10.0/24 to any port 80 proto tcp comment 'Traefik HTTP (Management VLAN)'
+
+# Traefik HTTPS (TLS termination) — Management VLAN
+sudo ufw allow from 192.168.10.0/24 to any port 443 proto tcp comment 'Traefik HTTPS (Management VLAN)'
+```
+
 ### Managing Firewall Rules
 
 **View current rules**:
@@ -479,10 +497,10 @@ the Feb 2026 VLAN migration.
 
 | VLAN ID | Name | Subnet | VMs |
 |---------|------|--------|-----|
-| 10 | Management | 192.168.10.0/24 | Monitoring, Woodpecker CI, UniFi Controller |
+| 10 | Management | 192.168.10.0/24 | Monitoring, Woodpecker CI, UniFi Controller, Reverse Proxy |
 | 20 | IoT | 192.168.20.0/24 | Home Assistant |
 | 30 | Media | 192.168.30.0/24 | NAS, Jellyfin, Media Services, Download Clients |
-| 40 | Games | 192.168.40.0/24 | Satisfactory, Mumble, Lancache |
+| 40 | Games | 192.168.40.0/24 | Satisfactory, Mumble, Elysium (Matrix), Lancache |
 | 50 | Cameras | 192.168.50.0/24 | Reserved for future use |
 
 **Inter-VLAN Policy**:
@@ -624,6 +642,74 @@ vm_network_dns:
 - Query logging and statistics
 - Custom filtering rules
 
+## Traefik DNS Integration
+
+The Traefik reverse proxy relies on AdGuard DNS rewrites to intercept service traffic and provide
+TLS termination. This section explains how DNS, Traefik, and the backend services interact.
+
+### How It Works
+
+When `traefik_enabled: true` is set in
+[`services/configs/adguard-vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/services/configs/adguard-vars.yml),
+AdGuard creates DNS rewrites that redirect service hostnames to the proxy VM (192.168.10.20):
+
+```text
+Client                    AdGuard Home              Traefik Proxy           Backend Service
+  │                         │                         │                       │
+  │ DNS: sonarr.discus-     │                         │                       │
+  │   moth.ts.net           │                         │                       │
+  │ ───────────────────────>│                         │                       │
+  │                         │ Rewrite → 192.168.10.20 │                       │
+  │ <───────────────────────│                         │                       │
+  │                         │                         │                       │
+  │ HTTPS :443              │                         │                       │
+  │ ──────────────────────────────────────────────────>│                      │
+  │                         │                         │ TLS terminate         │
+  │                         │                         │ Match Host header     │
+  │                         │                         │ HTTP → 192.168.30.13:8989
+  │                         │                         │ ─────────────────────>│
+  │                         │                         │ <─────────────────────│
+  │ <──────────────────────────────────────────────────│                      │
+```
+
+### DNS Rewrite List
+
+The following hostnames are redirected to the proxy VM when `traefik_enabled` is `true`:
+
+- `sonarr.discus-moth.ts.net`
+- `radarr.discus-moth.ts.net`
+- `prowlarr.discus-moth.ts.net`
+- `jellyseerr.discus-moth.ts.net`
+- `jellyfin.discus-moth.ts.net`
+- `tdarr.discus-moth.ts.net`
+- `qbittorrent.discus-moth.ts.net`
+- `sabnzbd.discus-moth.ts.net`
+- `elysium.discus-moth.ts.net`
+- `synapse-admin.discus-moth.ts.net`
+- `lk-jwt.discus-moth.ts.net`
+- `bazarr.discus-moth.ts.net`
+- `lidarr.discus-moth.ts.net`
+- `navidrome.discus-moth.ts.net`
+- `byparr.discus-moth.ts.net`
+
+### Why Direct LAN IPs for Backends
+
+Traefik routes to backends using their VLAN IP addresses (e.g., `192.168.30.13` for media-services)
+rather than their Tailscale hostnames. This avoids a DNS loop: AdGuard rewrites
+`sonarr.discus-moth.ts.net` → proxy IP, so using the same hostname as the backend URL would route
+traffic back to Traefik instead of the actual service.
+
+### Activation Sequence
+
+1. Deploy Traefik on the proxy VM (`playbooks/services/traefik-proxy.yml`)
+2. Verify Traefik is running: `systemctl --user status traefik`
+3. Set `traefik_enabled: true` in `services/configs/adguard-vars.yml`
+4. Run AdGuard playbook: `./bin/runtime/ansible-run.sh playbooks/networking/adguard-home.yml`
+5. Run cert renewal: `sudo systemctl start traefik-cert-renew.service`
+6. Verify HTTPS access for each proxied service
+
+**See Also**: [Traefik Reverse Proxy Setup](traefik-setup.md) for complete configuration details.
+
 ## Port Assignments
 
 ### Standard Port Assignments
@@ -653,6 +739,8 @@ vm_network_dns:
 | Lancache HTTP | 80 | TCP | Games VLAN |
 | Lancache HTTPS | 443 | TCP | Games VLAN |
 | UniFi Web UI | 8443 | TCP | Management VLAN + Tailscale |
+| Traefik HTTP | 80 | TCP | Management VLAN |
+| Traefik HTTPS | 443 | TCP | Management VLAN |
 
 ### Port Conflicts
 
@@ -975,6 +1063,7 @@ vault_tailscale_api_key: "tskey-api-xxxxx"
 ## Reference
 
 - [Service Endpoints](service-endpoints.md) - All service URLs and ports
+- [Traefik Reverse Proxy Setup](traefik-setup.md) - HTTPS proxy configuration
 - [Security Configuration](security.md) - Security best practices
 - [Tailscale Auto-Approval](../reference/tailscale-auto-approval.md) - ACL configuration
 - UFW Firewall Role ([`roles/ufw_firewall/`](https://github.com/SilverDFlame/jellybuntu/blob/main/roles/ufw_firewall/)) - Firewall automation
@@ -985,7 +1074,7 @@ vault_tailscale_api_key: "tskey-api-xxxxx"
 **Network Design**:
 
 - VLAN-segmented local network (Management, IoT, Media, Games) + Tailscale VPN
-- Static IP assignments for all 11 VMs across 4 active VLANs
+- Static IP assignments for all 13 VMs across 4 active VLANs
 - Per-VLAN gateways and DNS configuration
 - Replaced former flat 192.168.0.0/24 network in Feb 2026
 

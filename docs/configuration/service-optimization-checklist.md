@@ -18,7 +18,6 @@ Quick reference for optimizing newly deployed services.
 
 **What Changed**:
 
-- ✅ Added Huntarr to Homarr (Media Management section)
 - ✅ Added Bazarr widget integration
 
 ---
@@ -47,41 +46,7 @@ Quick reference for optimizing newly deployed services.
 
 ---
 
-## 3. Configure Huntarr (Priority)
-
-**Guide**: [docs/configuration/huntarr-setup.md](huntarr-setup.md)
-
-### Quick Setup (10 minutes)
-
-1. **Connect Sonarr** → localhost:8989 + API key
-2. **Connect Radarr** → localhost:7878 + API key
-3. **Search Settings** → 24h interval, Medium depth, 70% min score
-4. **Quality Profiles** → Match Sonarr/Radarr profiles
-5. **Content Discovery** → Enable Missing Episodes, Sequels, Franchises
-6. **Initial Scan** → Sync library and discover content
-
-### Recommended Start Settings (Conservative)
-
-```text
-Search Interval: 24 hours
-Auto-Add: Enabled
-Minimum Score: 85%
-Find Missing Episodes: ✅
-Find Sequels/Prequels: ✅
-Find Franchise: ❌ (enable later if desired)
-Find Similar: ❌ (can be overwhelming)
-```
-
-### Expected Result
-
-- Huntarr scans library every 24 hours
-- Finds missing episodes from monitored series
-- Discovers sequels/prequels to owned movies
-- Auto-adds to Sonarr/Radarr for download
-
----
-
-## 4. Optimize qBittorrent (Optional)
+## 3. Optimize qBittorrent (Optional)
 
 **Access**: http://download-clients.discus-moth.ts.net:8080
 
@@ -114,7 +79,7 @@ Find Similar: ❌ (can be overwhelming)
 
 ---
 
-## 5. SABnzbd Configuration (Automated)
+## 4. SABnzbd Configuration (Automated)
 
 **Access**: http://download-clients.discus-moth.ts.net:8081
 
@@ -154,7 +119,7 @@ SABnzbd is configured to work harmoniously with Unpackerr:
 
 ---
 
-## 6. Verify Recyclarr Configuration (Already Complete)
+## 5. Verify Recyclarr Configuration (Already Complete)
 
 **Quality Profiles**:
 
@@ -173,7 +138,7 @@ SABnzbd is configured to work harmoniously with Unpackerr:
 
 ---
 
-## 7. Verify Jellyfin Optimization (Already Complete)
+## 6. Verify Jellyfin Optimization (Already Complete)
 
 **Performance Optimizations**:
 
@@ -193,13 +158,11 @@ SABnzbd is configured to work harmoniously with Unpackerr:
 
 1. ✅ Add service to Homarr dashboard
 2. ✅ Configure Bazarr (subtitle automation)
-3. ✅ Configure Huntarr (content discovery)
 
 ### Optional (As Needed)
 
 1. ⚪ Fine-tune qBittorrent settings
 2. ⚪ Enable SABnzbd deobfuscation
-3. ⚪ Adjust Huntarr aggressiveness
 
 ---
 
@@ -216,7 +179,6 @@ sops group_vars/all.sops.yaml
 
 # 3. Follow configuration guides
 # - docs/configuration/bazarr-setup.md
-# - docs/configuration/huntarr-setup.md
 
 ```
 

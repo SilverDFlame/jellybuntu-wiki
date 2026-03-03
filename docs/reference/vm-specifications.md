@@ -106,6 +106,67 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 ---
 
+## Elysium - Matrix/Synapse (VMID 202)
+
+**Hardware:**
+
+- **Cores:** 4 (shared)
+- **CPU Type:** host
+- **CPU Units:** 1024 (medium priority)
+- **Memory:** 8GB (8192MB)
+- **Disk:** 64GB (local-zfs)
+- **Network:** virtio bridge (vmbr0, VLAN 40)
+
+**Network:**
+
+- **IP:** 192.168.40.21
+- **Hostname:** elysium.discus-moth.ts.net
+- **Gateway:** 192.168.40.1
+- **DNS:** 9.9.9.9, 192.168.40.1
+
+**Services (Quadlet/Podman — pod-based):**
+
+- Synapse homeserver (Matrix communication)
+- PostgreSQL 16 (database backend)
+- LiveKit SFU (WebRTC voice/video for Element Call)
+- lk-jwt-service (MatrixRTC authorization bridge)
+- coturn TURN/STUN (NAT traversal, host network)
+- Synapse Admin (web UI)
+
+**Ports:**
+
+| Port | Protocol | Service | Access |
+|------|----------|---------|--------|
+| 8008 | TCP | Synapse Client API | Proxy + Tailscale |
+| 8080 | TCP | Synapse Admin UI | Proxy + Tailscale |
+| 7880 | TCP | LiveKit HTTP API | Local + Tailscale |
+| 7881 | TCP | LiveKit WebRTC TCP | Local + Tailscale |
+| 8880 | TCP | LiveKit JWT Service | Proxy + Tailscale |
+| 3478 | TCP/UDP | coturn TURN/STUN | Local + Tailscale |
+| 49152-49200 | UDP | coturn relay range | Local + Tailscale |
+| 50000-50060 | UDP | LiveKit media range | Local + Tailscale |
+
+**Storage:**
+
+- Quadlet files: `~/.config/containers/systemd/`
+- Base directory: `/opt/matrix/`
+- Synapse data: `/opt/matrix/synapse/data/` (media, signing key — UID 991)
+- Synapse config: `/opt/matrix/synapse/config/`
+- PostgreSQL data: `/opt/matrix/postgres/data/`
+- LiveKit config: `/opt/matrix/livekit/config/`
+- coturn config: `/opt/matrix/coturn/config/`
+
+**Deployment:**
+
+- Stack: Quadlet/Podman (rootless, pod-based)
+- Pod: `matrix-pod` (Synapse, PostgreSQL, LiveKit, lk-jwt-service, Synapse Admin)
+- coturn: Host network mode (not in pod — needs real client IPs for NAT)
+- Boot order: 6 (same as other game/communication servers)
+- Playbook: [`playbooks/services/matrix.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/matrix.yml)
+- Bootstrap: [`playbooks/utility/matrix-bootstrap.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/utility/matrix-bootstrap.yml)
+
+---
+
 ## NAS - Btrfs RAID1 (VMID 300)
 
 **Hardware:**
@@ -208,7 +269,7 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - **Cores:** 4 (shared)
 - **CPU Type:** host
 - **CPU Units:** 1024 (medium priority)
-- **Memory:** 8GB (8192MB)
+- **Memory:** 10GB (10240MB)
 - **Disk:** 50GB (local-zfs)
 - **Network:** virtio bridge (vmbr0, VLAN 30)
 
@@ -226,7 +287,6 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 - Prowlarr (indexer management)
 - Jellyseerr (request management)
 - Bazarr (subtitle management)
-- Huntarr (missing content discovery)
 - Homarr (dashboard)
 - Byparr (Cloudflare bypass)
 - Recyclarr (custom formats/quality profiles)
@@ -431,6 +491,53 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 
 ---
 
+## Reverse Proxy (VMID 900)
+
+**Hardware:**
+
+- **Cores:** 1 (shared)
+- **CPU Type:** host
+- **CPU Units:** 512 (low priority)
+- **Memory:** 512MB
+- **Disk:** 32GB (local-zfs)
+- **Network:** virtio bridge (vmbr0, VLAN 10)
+
+**Network:**
+
+- **IP:** 192.168.10.20
+- **Hostname:** reverse-proxy.discus-moth.ts.net
+- **Gateway:** 192.168.10.1
+- **DNS:** 9.9.9.9, 192.168.10.1
+
+**Services (Quadlet/Podman):**
+
+- Traefik v3 reverse proxy (TLS termination, file-based routing)
+
+**Ports:**
+
+| Port | Protocol | Service | Access |
+|------|----------|---------|--------|
+| 80 | TCP | HTTP (redirects to HTTPS) | Management VLAN |
+| 443 | TCP | HTTPS (TLS termination) | Management VLAN |
+
+**Storage:**
+
+- Quadlet files: `~/.config/containers/systemd/`
+- Config directory: `/opt/traefik/config`
+- Dynamic config: `/opt/traefik/config/dynamic`
+- TLS certificates: `/opt/traefik/certs`
+- Logs: `/opt/traefik/logs`
+
+**Deployment:**
+
+- Stack: Quadlet/Podman (rootless)
+- Image: `nas.discus-moth.ts.net:5001/library/traefik:v3` (via Nexus proxy)
+- Container memory limit: 256MB (reservation: 128MB)
+- Boot order: 5 (starts after backend services)
+- TLS: Tailscale certificates renewed weekly via systemd timer
+
+---
+
 ## Resource Allocation Summary
 
 | VM | VMID | Cores | Pinning | CPU Type | CPU Units | Priority | RAM | Disk | Special Flags |
@@ -438,22 +545,24 @@ Complete hardware, network, and service configuration for all VMs in the Jellybu
 | Home Assistant | 100 | 2 | No | host | 1024 | Medium | 2GB | 40GB | - |
 | Satisfactory | 200 | 4 | 4-7 | host | 2048 | High | 8GB | 60GB | numa=0 |
 | Mumble | 201 | 1 | No | host | 512 | Low | 1GB | 32GB | - |
+| Elysium (Matrix) | 202 | 4 | No | host | 1024 | Medium | 8GB | 64GB | - |
 | NAS (Btrfs RAID1) | 300 | 2 | No | host | 1024 | Medium | 6GB | 32GB + 3x6TB | - |
 | Jellyfin | 400 | 4 | No | host | 2048 | High | 8GB | 80GB | +aes |
-| Media Services | 401 | 4 | No | host | 1024 | Medium | 8GB | 50GB | - |
+| Media Services | 401 | 4 | No | host | 1024 | Medium | 10GB | 50GB | - |
 | Download Clients | 402 | 4 | No | host | 1024 | Medium | 6GB | 60GB | - |
 | Monitoring | 500 | 2 | No | host | 1024 | Medium | 4GB | 64GB | - |
 | Woodpecker CI | 600 | 2 | No | host | 512 | Low | 8GB | 32GB | - |
 | Lancache | 700 | 2 | No | host | 512 | Low | 4GB | 32GB | - |
 | UniFi Controller | 800 | 2 | No | host | 1024 | Medium | 4GB | 32GB | - |
-| **Total** | | **29** | | | | | **59GB** | **514GB + 6TB** | |
+| Reverse Proxy | 900 | 1 | No | host | 512 | Low | 512MB | 32GB | - |
+| **Total** | | **34** | | | | | **69.5GB** | **610GB + 6TB** | |
 
 **Physical Host Resources:**
 
 - 16 physical CPU cores / 32 threads (AMD EPYC 7313P)
 - 128GB RAM
 - NVMe boot + 3x 6TB Btrfs RAID1 (~9TB usable) + 32GB RAM disk (transcoding)
-- ~181% CPU overprovisioning (29 virtual / 16 physical)
+- ~212% CPU overprovisioning (34 virtual / 16 physical)
 
 **CPU Overprovisioning Strategy:**
 

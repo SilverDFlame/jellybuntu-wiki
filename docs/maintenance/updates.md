@@ -654,7 +654,6 @@ The Jellybuntu infrastructure uses a **hybrid versioning approach** based on ser
 
 - **Jellyseerr** (2.1.0) - Request management
 - **Homarr** (0.16.0) - Service dashboard
-- **Huntarr** (8.2.10) - Content discovery
 - **Recyclarr** (7.4.1) - Quality profile sync
 - **Unpackerr** (0.15.0) - Archive extraction
 - **Tdarr** (2.27.01) - Transcoding automation
@@ -709,7 +708,6 @@ The Jellybuntu infrastructure uses a **hybrid versioning approach** based on ser
 | **Unpackerr** | `0.15.0` | **Pinned** | Third-party, extraction stability |
 | **Homarr** | `0.16.0` | **Pinned** | Dashboard, widget compatibility |
 | **Tdarr** | `2.27.01` | **Pinned** | Transcoding, complex workflows |
-| **Huntarr** | `8.2.10` | **Pinned** | Content discovery, API stability |
 | **Gluetun** | `v3.41.0` | **Pinned** | VPN critical, port forwarding fragile |
 | **AdGuard Home** | `v0.107.68` | **Pinned** | Critical DNS infra, config changes |
 | **Unbound** | `1.24.1-0` | **Pinned** | Critical DNS resolver, DNSSEC fragile |

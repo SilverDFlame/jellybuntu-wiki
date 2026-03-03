@@ -127,8 +127,6 @@ bazarr:
   limits: {cpus: '0.5', memory: 384M}
 jellyseerr:
   limits: {cpus: '0.5', memory: 256M}
-huntarr:
-  limits: {cpus: '0.25', memory: 128M}
 homarr:
   limits: {cpus: '0.25', memory: 256M}
 byparr:

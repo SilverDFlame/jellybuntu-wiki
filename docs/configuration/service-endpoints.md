@@ -10,6 +10,9 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Home Assistant**: http://home-assistant.discus-moth.ts.net:8123
 - **Satisfactory**: satisfactory-server.discus-moth.ts.net:7777
 - **Mumble**: mumble.discus-moth.ts.net:64738
+- **Matrix (Synapse)**: http://elysium.discus-moth.ts.net:8008
+- **Synapse Admin**: http://elysium.discus-moth.ts.net:8080
+- **LiveKit**: http://elysium.discus-moth.ts.net:7880
 - **Jellyfin**: http://jellyfin.discus-moth.ts.net:8096
 - **Tdarr**: http://jellyfin.discus-moth.ts.net:8265
 - **Sonarr**: http://media-services.discus-moth.ts.net:8989
@@ -17,7 +20,6 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Prowlarr**: http://media-services.discus-moth.ts.net:9696
 - **Jellyseerr**: http://media-services.discus-moth.ts.net:5055
 - **Bazarr**: http://media-services.discus-moth.ts.net:6767
-- **Huntarr**: http://media-services.discus-moth.ts.net:9705
 - **Homarr**: http://media-services.discus-moth.ts.net:7575
 - **Byparr**: http://media-services.discus-moth.ts.net:8191
 - **qBittorrent**: http://download-clients.discus-moth.ts.net:8080
@@ -32,12 +34,39 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Woodpecker CI**: https://automation.discus-moth.ts.net (Web UI via Tailscale Funnel)
 - **Lancache**: http://lancache.discus-moth.ts.net:80 (Game download cache)
 - **UniFi Controller**: https://unifi-controller.discus-moth.ts.net:8443 (Network management)
+- **Traefik Proxy**: https://reverse-proxy.discus-moth.ts.net (Reverse proxy dashboard disabled by default)
+
+### Via HTTPS Proxy (Recommended)
+
+When Traefik DNS rewrites are active in AdGuard, services are accessible via HTTPS with valid TLS certificates:
+
+- **Sonarr**: https://sonarr.discus-moth.ts.net
+- **Radarr**: https://radarr.discus-moth.ts.net
+- **Prowlarr**: https://prowlarr.discus-moth.ts.net
+- **Jellyseerr**: https://jellyseerr.discus-moth.ts.net
+- **Bazarr**: https://bazarr.discus-moth.ts.net
+- **Lidarr**: https://lidarr.discus-moth.ts.net
+- **Navidrome**: https://navidrome.discus-moth.ts.net
+- **Byparr**: https://byparr.discus-moth.ts.net
+- **Jellyfin**: https://jellyfin.discus-moth.ts.net
+- **Tdarr**: https://tdarr.discus-moth.ts.net
+- **qBittorrent**: https://qbittorrent.discus-moth.ts.net
+- **SABnzbd**: https://sabnzbd.discus-moth.ts.net
+- **Matrix API**: https://elysium.discus-moth.ts.net/_matrix/
+- **Synapse Admin**: https://synapse-admin.discus-moth.ts.net
+- **LiveKit JWT**: https://lk-jwt.discus-moth.ts.net
+
+> **Note**: HTTPS proxy URLs require `traefik_enabled: true` in AdGuard DNS configuration. Direct HTTP access
+> (via Tailscale or local IP) remains available as a fallback. See [Traefik Setup](traefik-setup.md) for details.
 
 ### Via Local Network (Static IPs)
 
 - **Home Assistant**: http://192.168.20.10:8123
 - **Satisfactory**: 192.168.40.11:7777
 - **Mumble**: 192.168.40.20:64738
+- **Matrix (Synapse)**: http://192.168.40.21:8008
+- **Synapse Admin**: http://192.168.40.21:8080
+- **LiveKit**: http://192.168.40.21:7880
 - **Jellyfin**: http://192.168.30.12:8096
 - **Tdarr**: http://192.168.30.12:8265
 - **Sonarr**: http://192.168.30.13:8989
@@ -45,7 +74,6 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Prowlarr**: http://192.168.30.13:9696
 - **Jellyseerr**: http://192.168.30.13:5055
 - **Bazarr**: http://192.168.30.13:6767
-- **Huntarr**: http://192.168.30.13:9705
 - **Homarr**: http://192.168.30.13:7575
 - **Byparr**: http://192.168.30.13:8191
 - **qBittorrent**: http://192.168.30.14:8080
@@ -58,6 +86,7 @@ All service URLs and access methods for the Jellybuntu homelab.
 - **Woodpecker CI**: http://192.168.10.17:8000 (Web UI)
 - **Lancache**: http://192.168.40.18:80 (HTTP), https://192.168.40.18:443 (SNI proxy)
 - **UniFi Controller**: https://192.168.10.19:8443 (Network management)
+- **Traefik Proxy**: http://192.168.10.20:80 (HTTP → HTTPS redirect), https://192.168.10.20:443 (HTTPS)
 
 ## Deployment Types
 
@@ -79,6 +108,8 @@ All service URLs and access methods for the Jellybuntu homelab.
 | Nexus Repository (.15) | **Quadlet** (rootless Podman) | Container registry on NAS |
 | Lancache (.18) | **Quadlet** (rootful Podman) | Game download cache (Steam, Epic, etc.) |
 | UniFi Controller (.19) | **Quadlet** (rootless Podman) | MongoDB + LinuxServer UniFi app |
+| Matrix/Elysium (.21) | **Quadlet** (rootless Podman) | Pod-based: Synapse, PostgreSQL, LiveKit, lk-jwt-service, coturn, Synapse Admin |
+| Traefik Proxy (.20) | **Quadlet** (rootless Podman) | Traefik v3 reverse proxy (TLS termination) |
 
 > **Important**: Most services now use **rootless Podman with Quadlet** (systemd integration). Use `systemctl --user`
 commands, NOT `docker` or `docker-compose`.
@@ -311,6 +342,46 @@ systemctl --user restart woodpecker-server woodpecker-agent
 tailscale funnel status
 ```
 
+#### Elysium (Matrix) VM (192.168.40.21)
+
+```bash
+# SSH into VM
+
+ssh -i ~/.ssh/ansible_homelab ansible@elysium.discus-moth.ts.net
+
+# Check all services
+
+systemctl --user status postgres synapse livekit lk-jwt-service coturn synapse-admin
+
+# Restart pod (all pod containers restart together)
+
+systemctl --user restart matrix-pod-pod
+
+# View Synapse logs
+
+journalctl --user -u synapse -f
+```
+
+#### Reverse Proxy VM (192.168.10.20)
+
+```bash
+# SSH into VM
+
+ssh -i ~/.ssh/ansible_homelab ansible@reverse-proxy.discus-moth.ts.net
+
+# Check Traefik service
+
+systemctl --user status traefik
+
+# Restart Traefik
+
+systemctl --user restart traefik
+
+# View logs
+
+journalctl --user -u traefik -f
+```
+
 #### UniFi Controller VM (192.168.10.19)
 
 ```bash
@@ -373,7 +444,6 @@ journalctl --user -u unifi-app -f
 | Prowlarr | .13 | 9696 | HTTP | Web UI |
 | Jellyseerr | .13 | 5055 | HTTP | Web UI |
 | Bazarr | .13 | 6767 | HTTP | Web UI |
-| Huntarr | .13 | 9705 | HTTP | Web UI |
 | Homarr | .13 | 7575 | HTTP | Dashboard |
 | Byparr | .13 | 8191 | HTTP | API |
 | qBittorrent | .14 | 8080 | HTTP | Web UI |
@@ -394,8 +464,18 @@ journalctl --user -u unifi-app -f
 | UniFi Controller | .19 | 8080 | HTTP | Device Inform |
 | UniFi Controller | .19 | 3478 | UDP | STUN |
 | UniFi Controller | .19 | 10001 | UDP | Device Discovery |
-| Mumble | .20 | 64738 | TCP | Voice Chat |
-| Mumble | .20 | 64738 | UDP | Voice Chat |
+| Traefik Proxy | .20 | 80 | HTTP | HTTP → HTTPS redirect |
+| Traefik Proxy | .20 | 443 | HTTPS | TLS termination |
+| Mumble | .20 (VLAN 40) | 64738 | TCP | Voice Chat |
+| Mumble | .20 (VLAN 40) | 64738 | UDP | Voice Chat |
+| Synapse | .21 (VLAN 40) | 8008 | HTTP | Matrix Client API |
+| Synapse Admin | .21 (VLAN 40) | 8080 | HTTP | Admin Web UI |
+| LiveKit | .21 (VLAN 40) | 7880 | HTTP | LiveKit HTTP API |
+| LiveKit | .21 (VLAN 40) | 7881 | TCP | LiveKit WebRTC TCP |
+| LiveKit JWT | .21 (VLAN 40) | 8880 | HTTP | JWT Service |
+| coturn | .21 (VLAN 40) | 3478 | TCP/UDP | TURN/STUN |
+| coturn | .21 (VLAN 40) | 49152-49200 | UDP | Relay range |
+| LiveKit | .21 (VLAN 40) | 50000-50060 | UDP | Media range |
 
 *qBittorrent uses dynamic port forwarding via PIA VPN (e.g., 46124). Port is automatically assigned and updated. See
 [VPN Configuration Guide](vpn-gluetun.md) for details.
@@ -496,5 +576,6 @@ ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net
 ## See Also
 
 - [Networking Configuration](networking.md)
+- [Traefik Reverse Proxy Setup](traefik-setup.md)
 - [Troubleshooting Guide](../maintenance/troubleshooting.md)
 - [Security Configuration](security.md)
