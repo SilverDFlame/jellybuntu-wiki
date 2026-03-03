@@ -2,6 +2,8 @@ site_name: Jellybuntu Infrastructure Wiki
 site_description: Homelab infrastructure automation documentation - Ansible, Proxmox, and Podman
 site_author: Jellybuntu Project
 site_url: http://nas.discus-moth.ts.net:8082
+exclude_docs: |
+  archive/
 
 repo_name: SilverDFlame/jellybuntu-wiki
 repo_url: https://github.com/SilverDFlame/jellybuntu-wiki
@@ -98,6 +100,8 @@ nav:
       - Networking: configuration/networking.md
       - Security: configuration/security.md
       - Mumble Server: configuration/mumble-setup.md
+      - Traefik Reverse Proxy: configuration/traefik-setup.md
+      - Matrix/Synapse: configuration/matrix-setup.md
       - UniFi Controller: configuration/unifi-controller-setup.md
   - Maintenance:
       - Updates: maintenance/updates.md
@@ -111,6 +115,7 @@ nav:
       - Service-Specific:
           - Jellyfin: troubleshooting/jellyfin.md
           - Download Clients: troubleshooting/download-clients.md
+          - Matrix: troubleshooting/matrix.md
   - Reference:
       - Playbooks: reference/playbooks.md
       - Terraform Modules: reference/terraform-modules.md
@@ -121,15 +126,6 @@ nav:
       - Tailscale Auto-Approval: reference/tailscale-auto-approval.md
   - Development:
       - Pre-commit Hooks: development/pre-commit.md
-  - Archive:
-      - Changelog 2025 Q3: archive/changelog-2025-q3.md
-      - Legacy Documentation:
-          - Docker Troubleshooting: archive/docker-troubleshooting.md
-          - TrueNAS Setup: archive/truenas-setup.md
-          - Portainer Setup: archive/portainer-setup.md
-          - Homepage Setup: archive/homepage-setup.md
-          - Memory Alerts Analysis: archive/memory-alerts-analysis-20251031.md
-
 extra:
   social:
     - icon: fontawesome/brands/github

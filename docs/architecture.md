@@ -41,6 +41,14 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Priority: Low (cpu_units: 512)
   - Deployment: Phase 4 (optional)
 
+- **Elysium (Matrix)** (VMID 202)
+  - Resources: 4 cores, 8GB RAM, 64GB disk
+  - IP: 192.168.40.21 (Games VLAN 40)
+  - Stack: Rootless Podman with Quadlet (pod-based)
+  - Services: Synapse homeserver, PostgreSQL 16, LiveKit SFU, lk-jwt-service, coturn, Synapse Admin
+  - Priority: Medium (cpu_units: 1024)
+  - Deployment: Phase 3 (services)
+
 #### Storage Infrastructure
 
 - **NAS** (VMID 300)
@@ -63,10 +71,10 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Purpose: 4K hardware transcoding with NVENC, automated media optimization
 
 - **Media Services Stack** (VMID 401)
-  - Resources: 4 cores, 8GB RAM, 50GB disk
+  - Resources: 4 cores, 10GB RAM, 50GB disk
   - IP: 192.168.30.13 (Media VLAN 30)
   - Stack: Rootless Podman with Quadlet
-  - Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Huntarr, Homarr, Byparr, Recyclarr
+  - Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Homarr, Byparr, Recyclarr
   - Priority: Medium (cpu_units: 1024)
 
 - **Download Clients** (VMID 402)
@@ -123,6 +131,17 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Purpose: Self-hosted UniFi Network Controller for managing APs and network devices
   - Deployment: Phase 3 (services)
 
+#### Reverse Proxy
+
+- **Reverse Proxy** (VMID 900)
+  - Resources: 1 core, 512MB RAM, 32GB disk
+  - IP: 192.168.10.20 (Management VLAN 10)
+  - Stack: Rootless Podman with Quadlet (Traefik v3)
+  - Services: Traefik v3 reverse proxy with TLS termination (file provider, Tailscale certs)
+  - Priority: Low (cpu_units: 512)
+  - Purpose: Centralized HTTPS ingress for all internal services via DNS rewrites
+  - Deployment: Phase 3 (services)
+
 ### 3. Application Layer
 
 **Home Assistant**: Podman Quadlet container for home automation and device integration
@@ -143,7 +162,6 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 - Prowlarr: Indexer management
 - Jellyseerr: Request management
 - Bazarr: Subtitle automation
-- Huntarr: Missing content discovery
 - Homarr: Dashboard for service overview
 - Byparr: Cloudflare bypass
 - Recyclarr: Custom formats and quality profiles
@@ -160,6 +178,24 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
 - Transcodes media to space-efficient formats
 - Runs on Jellyfin VM alongside media server
 - Quadlet-based deployment
+
+**Traefik Reverse Proxy**: Centralized HTTPS ingress (Rootless Podman Quadlet):
+
+- TLS termination with Tailscale certificates for all proxied services
+- File-based routing (no Docker/Podman socket exposure)
+- DNS rewrites in AdGuard redirect service hostnames to proxy VM
+- Backends addressed by direct LAN IP to avoid DNS loops
+- Weekly automated certificate renewal via systemd timer
+
+**Matrix/Synapse (Elysium)**: Pod-based communication server (Rootless Podman Quadlet):
+
+- Synapse homeserver with PostgreSQL 16 backend
+- LiveKit SFU for Element Call voice/video (WebRTC)
+- lk-jwt-service for MatrixRTC authorization bridge
+- coturn TURN/STUN server (host network for NAT traversal)
+- Synapse Admin web UI for user and room management
+- Registration disabled; users onboarded via registration tokens
+- Federation disabled (internal use only)
 
 **NAS Services**: Storage, DNS, and container infrastructure:
 
@@ -203,8 +239,8 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 **Priority Tiers** (cpu_units):
 
 1. **High (2048)**: Satisfactory (pinned), Jellyfin (GPU handles transcoding)
-2. **Medium (1024)**: Media Services, Download Clients, NAS, Monitoring, Home Assistant
-3. **Low (512)**: Woodpecker CI, Mumble, Lancache, UniFi Controller
+2. **Medium (1024)**: Media Services, Download Clients, NAS, Monitoring, Home Assistant, Elysium (Matrix)
+3. **Low (512)**: Woodpecker CI, Mumble, Lancache, UniFi Controller, Reverse Proxy
 
 ### Storage Architecture
 
@@ -212,6 +248,13 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 - **Media/Downloads**: NFS mounted at `/mnt/data` (from NAS export `nas:/mnt/storage/data`)
 - **NAS**: Passthrough disks for Btrfs RAID1 pool with snapshots
 - **Folder Structure**: Trash Guides recommended layout for hardlinks
+
+**virtio-fs RAM Disk (Download Clients)**:
+
+- Purpose: Reduce NFS I/O during active downloads by staging to RAM
+- Flow: Downloads write to RAM disk staging area, then move to NFS on completion
+- Benefits: Less NAS write amplification from incomplete/temporary download chunks, faster processing
+- Implementation: virtio-fs backed tmpfs on Download Clients VM
 
 ### Networking
 
@@ -271,7 +314,6 @@ radarr.container
 prowlarr.container
 jellyseerr.container
 bazarr.container
-huntarr.container
 homarr.container
 byparr.container
 recyclarr.container
@@ -281,6 +323,9 @@ gluetun.container
 qbittorrent.container
 sabnzbd.container
 unpackerr.container
+
+# Reverse Proxy VM (~/.config/containers/systemd/)
+traefik.container
 ```
 
 **Benefits**:
@@ -328,13 +373,15 @@ unpackerr.container
 | Mumble           | 201  | 1      | 1GB      | 32GB    | Low      | 512       |
 | NAS              | 300  | 2      | 6GB      | 3x6TB** | Medium   | 1024      |
 | Jellyfin         | 400  | 4      | 8GB      | 80GB    | High     | 2048      |
-| Media Services   | 401  | 4      | 8GB      | 50GB    | Medium   | 1024      |
+| Media Services   | 401  | 4      | 10GB     | 50GB    | Medium   | 1024      |
 | Download Clients | 402  | 4      | 6GB      | 60GB    | Medium   | 1024      |
 | Monitoring       | 500  | 2      | 4GB      | 64GB    | Medium   | 1024      |
 | Woodpecker CI    | 600  | 2      | 8GB      | 32GB    | Low      | 512       |
 | Lancache         | 700  | 2      | 4GB      | 32GB*** | Low      | 512       |
 | UniFi Controller | 800  | 2      | 2GB      | 32GB    | Low      | 512       |
-| **Total**        |      | **29** | **57GB** |         |          |           |
+| Elysium (Matrix) | 202  | 4      | 8GB      | 64GB    | Medium   | 1024      |
+| Reverse Proxy    | 900  | 1      | 512MB    | 32GB    | Low      | 512       |
+| **Total**        |      | **34** | **67.5GB** |       |          |           |
 
 *Satisfactory cores are pinned to physical cores 4-7 (was 2-3)
 **NAS has 3x 6TB drives in Btrfs RAID1 (~9TB usable)
@@ -401,9 +448,9 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 │ EPYC 7313P: 16 cores/32 threads, 128GB RAM                       │
 │ Bridge: vmbr0 (VLAN-aware)                                       │
 │                                                                  │
-│  ┌─ Management VLAN 10 ─────────────────────────────────┐        │
-│  │ Monitoring (.16)  Woodpecker (.17)  UniFi (.19)      │        │
-│  └──────────────────────────────────────────────────────┘        │
+│  ┌─ Management VLAN 10 ──────────────────────────────────────┐   │
+│  │ Monitoring (.16)  Woodpecker (.17)  UniFi (.19)  Proxy (.20) │   │
+│  └───────────────────────────────────────────────────────────┘   │
 │                                                                  │
 │  ┌─ IoT VLAN 20 ────────┐                                       │
 │  │ Home Assistant (.10)  │                                       │
@@ -413,9 +460,9 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 │  │ NAS (.15)  Jellyfin (.12)  Media Svc (.13)  DL (.14) │        │
 │  └──────────────────────────────────────────────────────┘        │
 │                                                                  │
-│  ┌─ Games VLAN 40 ──────────────────────────────────────┐        │
-│  │ Satisfactory (.11)  Mumble (.20)  Lancache (.18)     │        │
-│  └──────────────────────────────────────────────────────┘        │
+│  ┌─ Games VLAN 40 ──────────────────────────────────────────────────┐ │
+│  │ Satisfactory (.11) Mumble (.20) Elysium (.21) Lancache (.18)    │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
                          │
@@ -506,6 +553,8 @@ sudo podman exec -it lancache /bin/bash
 ## See Also
 
 - [AdGuard Home Configuration](configuration/adguard-home.md) - DNS setup and management
+- [Traefik Reverse Proxy](configuration/traefik-setup.md) - HTTPS proxy and TLS termination
+- [Matrix/Synapse Setup](configuration/matrix-setup.md) - Communication server on Elysium
 - [EPYC 7313P Optimization](reference/epyc-7313p-optimization.md) - CPU tuning and BIOS settings
 - [Resource Allocation Details](configuration/resource-allocation.md)
 - [Networking Configuration](configuration/networking.md)

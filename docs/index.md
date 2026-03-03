@@ -43,7 +43,6 @@ Configuration guides for services and infrastructure:
 - **[VPN/Gluetun Configuration](configuration/vpn-gluetun.md)** - VPN setup and port forwarding
 - **[AdGuard Home Setup](configuration/adguard-home.md)** - DNS filtering and ad blocking
 - **[Bazarr Setup](configuration/bazarr-setup.md)** - Subtitle automation
-- **[Huntarr Setup](configuration/huntarr-setup.md)** - Finding missing media content
 - **[Tdarr Setup](configuration/tdarr-setup.md)** - Automated media transcoding setup
 - **[Tdarr Flow Configuration](configuration/tdarr-flow-configuration.md)** - Tdarr flow and pipeline design
 - **[Tdarr Transcode Profiles](configuration/tdarr-transcode-profiles.md)** - Codec profiles and optimization settings
@@ -100,7 +99,6 @@ Service-specific troubleshooting guides:
 - **[Home Assistant](troubleshooting/home-assistant.md)** - Home automation, integrations, database issues
 - **[AdGuard Home](troubleshooting/adguard-home.md)** - DNS filtering, query logs, upstream resolution
 - **[Bazarr](troubleshooting/bazarr.md)** - Subtitle downloads, provider issues, library sync
-- **[Huntarr](troubleshooting/huntarr.md)** - Missing content discovery, scheduling, connections
 - **[Unpackerr](troubleshooting/unpackerr.md)** - Archive extraction, path configuration, permissions
 - **[Uptime Kuma](troubleshooting/uptime-kuma.md)** - Monitor configuration, notifications, status pages
 - **[Nexus Repository](troubleshooting/nexus.md)** - Container registry, authentication, disk management

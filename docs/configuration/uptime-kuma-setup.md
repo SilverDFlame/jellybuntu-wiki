@@ -62,7 +62,6 @@ Create monitors for all web services using these details:
 | Prowlarr   | HTTP(s) | http://media-services.discus-moth.ts.net | 9696 | 60s            |
 | Jellyseerr | HTTP(s) | http://media-services.discus-moth.ts.net | 5055 | 60s            |
 | Bazarr     | HTTP(s) | http://media-services.discus-moth.ts.net | 6767 | 60s            |
-| Huntarr    | HTTP(s) | http://media-services.discus-moth.ts.net | 9705 | 60s            |
 | Homarr     | HTTP(s) | http://media-services.discus-moth.ts.net | 7575 | 60s            |
 
 #### Download Clients VM (192.168.30.14)

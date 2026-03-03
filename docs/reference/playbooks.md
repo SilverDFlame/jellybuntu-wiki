@@ -91,7 +91,7 @@ Run all phases at once (skips Phase 4):
 
 ### phase3-services.yml
 
-**Includes**: nfs-clients, home-assistant, satisfactory, media-services, download-clients, jellyfin
+**Includes**: nfs-clients, home-assistant, satisfactory, media-services, download-clients, jellyfin, traefik-proxy, matrix
 
 **Purpose**: Deploy all applications and services
 
@@ -255,7 +255,6 @@ Run all phases at once (skips Phase 4):
 - Prowlarr (9696) - Indexer management
 - Jellyseerr (5055) - Media request management
 - Bazarr (6767) - Subtitle automation
-- Huntarr (9705) - Missing content discovery
 - Byparr (8191) - Cloudflare bypass
 - Recyclarr - TRaSH Guides quality profiles sync
 - Homarr - Application dashboard
@@ -681,6 +680,37 @@ issues in 10.11.x ([Issue #58](https://github.com/SilverDFlame/jellybuntu/issues
 
 ---
 
+### services/traefik-proxy.yml
+
+**Target**: reverse_proxy (192.168.10.20)
+**Role**: traefik_proxy
+
+**Service**: Traefik v3 Reverse Proxy (Quadlet/Podman)
+**Ports**: 80 (HTTP redirect), 443 (HTTPS TLS termination)
+**URL**: https://reverse-proxy.discus-moth.ts.net
+
+**Purpose**: Centralized TLS-terminating reverse proxy for all internal services
+
+**Features**:
+
+- File-based routing (no Docker/Podman socket exposure)
+- Tailscale TLS certificates with weekly automated renewal
+- DNS rewrites in AdGuard redirect service hostnames to proxy VM
+- Hot-reloadable dynamic configuration (no restart for route changes)
+- Security headers middleware (HSTS, CSP, nosniff)
+
+**Role Dependencies**: common, tailscale
+
+**Prerequisites**: Backend VMs running, Tailscale authenticated on proxy VM
+
+**Post-Deployment**:
+
+1. Set `traefik_enabled: true` in `services/configs/adguard-vars.yml`
+2. Run AdGuard playbook to apply DNS rewrites
+3. Run cert renewal: `sudo systemctl start traefik-cert-renew.service`
+
+---
+
 ### services/mumble.yml
 
 **Target**: mumble (192.168.40.20)
@@ -694,6 +724,30 @@ issues in 10.11.x ([Issue #58](https://github.com/SilverDFlame/jellybuntu/issues
 
 **Container**: `mumblevoip/mumble-server:v1.5.857-1`
 **Resources**: 1 core, 1GB RAM (512MB reservation), CPU units 512
+
+---
+
+### services/matrix.yml
+
+**Target**: elysium_servers (192.168.40.21)
+**Roles**: podman_app
+
+**Service**: Matrix/Synapse Communication Server (pod-based, 6 containers)
+**Ports**: 8008 (Synapse), 7880-7881 (LiveKit), 3478 (coturn), 8080 (Synapse Admin), 8880 (JWT Service)
+**URL**: http://elysium.discus-moth.ts.net:8008
+
+**Purpose**: Internal communication server with text, voice, and video via Element Call
+
+**What It Does**:
+
+- Installs iptables-persistent and adds port 80 to 8008 redirect for well-known discovery
+- Deploys 6 containers in pod-based architecture via `podman_app` role
+- PostgreSQL 16 (database), Synapse (homeserver), LiveKit (WebRTC SFU)
+- lk-jwt-service (MatrixRTC auth), coturn (TURN/STUN on host network), Synapse Admin (web UI)
+- Verifies all 6 containers running and Synapse API responsive
+
+**Resources**: 4 cores, 8GB RAM, CPU units 1024
+**Prerequisites**: VM provisioned, Tailscale running, vault secrets configured
 
 ---
 
@@ -712,6 +766,23 @@ issues in 10.11.x ([Issue #58](https://github.com/SilverDFlame/jellybuntu/issues
 ---
 
 ## Utility Playbooks
+
+### utility/matrix-bootstrap.yml
+
+**Target**: elysium_servers (192.168.40.21)
+
+**Purpose**: One-time post-deployment bootstrap for Matrix/Synapse
+
+**What It Does**:
+
+- Generates Synapse signing key (server's cryptographic identity)
+- Restarts Synapse to load the new key
+- Creates `admin` user with password from vault (uses temp file, not CLI args)
+- Safe to re-run (idempotent — skips if key/user already exist)
+
+**Prerequisites**: Matrix services deployed and Synapse responding on port 8008
+
+---
 
 ### cleanup-vms.yml
 

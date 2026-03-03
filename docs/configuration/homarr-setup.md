@@ -90,7 +90,6 @@ Since Homarr uses host networking, services on the same VM are accessed via loca
 | Prowlarr | `http://localhost:9696` | 9696 |
 | Jellyseerr | `http://localhost:5055` | 5055 |
 | Bazarr | `http://localhost:6767` | 6767 |
-| Huntarr | `http://localhost:9705` | 9705 |
 | Byparr | `http://localhost:8191` | 8191 |
 
 ### Other-VM Services
