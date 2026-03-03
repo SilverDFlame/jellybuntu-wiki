@@ -320,6 +320,10 @@ systemctl list-timers traefik-cert-renew.timer
 └── ... (one directory per domain)
 ```
 
+!!! warning "Do not manually edit `acme.json`"
+    Traefik manages this file exclusively. Deleting it will trigger re-issuance on next restart,
+    which counts against Let's Encrypt rate limits (5 certificates per registered domain per week).
+
 ---
 
 ## DNS Integration
@@ -456,6 +460,11 @@ Defined in
 | 443 | TCP | HTTPS (TLS termination) |
 
 UFW is restricted to the Management VLAN subnet (`192.168.10.0/24`).
+
+> **Note:** Inter-VLAN routing is handled at the network layer (UniFi firewall rules). Clients on
+> other VLANs (e.g., VLAN 20 users) reach the proxy VM via routed traffic that arrives on the
+> Management VLAN interface. The UFW rule restricts inbound connections to the Management subnet
+> because all routed inter-VLAN traffic arrives from the gateway on that subnet.
 
 ---
 
