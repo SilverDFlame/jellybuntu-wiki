@@ -318,8 +318,9 @@ Certificates are stored in a single JSON file:
 └── acme.json    (0600, ansible:ansible -- contains private key)
 ```
 
-**Do not manually edit `acme.json`** -- Traefik manages this file exclusively. Deleting it will
-trigger re-issuance on next restart.
+!!! warning "Do not manually edit `acme.json`"
+    Traefik manages this file exclusively. Deleting it will trigger re-issuance on next restart,
+    which counts against Let's Encrypt rate limits (5 certificates per registered domain per week).
 
 ---
 
@@ -462,7 +463,16 @@ Defined in
 | 80 | TCP | HTTP (redirects to HTTPS) |
 | 443 | TCP | HTTPS (TLS termination) |
 
-UFW is restricted to the Management VLAN subnet (`192.168.10.0/24`).
+UFW is restricted to the Management VLAN subnet (`192.168.10.0/24`) and the Tailscale network
+(`100.64.0.0/10`). Legacy flat-LAN rules (`192.168.0.0/24`) remain until `ufw_remove_legacy` is
+enabled globally.
+
+No `ufw_cross_vlan_rules` are needed on the proxy VM. Clients on the Management VLAN and Tailscale
+reach the proxy directly. The proxy **initiates outbound connections** to backends on other VLANs
+(Media VLAN 30, Communications VLAN 40) -- outbound traffic is allowed by UFW's default `allow
+outgoing` policy, so no inbound cross-VLAN rules are required on the proxy side. Backend VMs define
+their own `ufw_cross_vlan_rules` to accept connections from the Management VLAN where the proxy
+resides.
 
 ---
 
