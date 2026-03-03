@@ -98,6 +98,7 @@ nav:
   - Configuration:
       - Service Endpoints: configuration/service-endpoints.md
       - Networking: configuration/networking.md
+      - Traefik Reverse Proxy: configuration/traefik-setup.md
       - Security: configuration/security.md
       - Mumble Server: configuration/mumble-setup.md
       - Traefik Reverse Proxy: configuration/traefik-setup.md
