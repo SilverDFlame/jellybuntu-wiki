@@ -456,8 +456,8 @@ If configuration is out of sync, redeploy from the control node:
 
 ## See Also
 
-- [Matrix Setup](../configuration/matrix-setup.md) - Full deployment guide
-- [Networking Troubleshooting](networking.md) - Tailscale and firewall issues
-- [Podman Troubleshooting](podman.md) - Container runtime issues
-- [Common Issues](common-issues.md) - Cross-service problems
-- [Service Endpoints](../configuration/service-endpoints.md) - Connection details
+- [Matrix Setup](../configuration/matrix-setup.md) — Full deployment guide
+- [Networking Troubleshooting](networking.md) — Tailscale and firewall issues
+- [Podman Troubleshooting](podman.md) — Container runtime issues
+- [Common Issues](common-issues.md) — Cross-service problems
+- [Service Endpoints](../configuration/service-endpoints.md) — Connection details

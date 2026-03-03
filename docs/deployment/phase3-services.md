@@ -388,7 +388,7 @@ ssh -i ~/.ssh/ansible_homelab ansible@satisfactory-server.discus-moth.ts.net \
 
 **Roles**:
 
-- [`roles/podman_app/`](https://github.com/SilverDFlame/jellybuntu/blob/main/roles/podman_app/) - Podman Quadlet container deployments
+- [`roles/podman_app/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/podman_app/) - Podman Quadlet container deployments
 - [`roles/nfs_client/`](https://github.com/SilverDFlame/jellybuntu/blob/main/roles/nfs_client/) - NFS mount configuration
 - [`roles/jellyfin/`](https://github.com/SilverDFlame/jellybuntu/blob/main/roles/jellyfin/) - Jellyfin installation and optimization
 

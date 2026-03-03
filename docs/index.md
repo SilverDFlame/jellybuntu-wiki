@@ -135,6 +135,8 @@ Detailed reference documentation:
 - **Woodpecker CI** (VMID 600, 192.168.10.17) - CI/CD pipelines (Management VLAN)
 - **Lancache** (VMID 700, 192.168.40.18) - Game download cache (Games VLAN)
 - **UniFi Controller** (VMID 800, 192.168.10.19) - Network management (Management VLAN)
+- **Elysium (Matrix)** (VMID 202, 192.168.40.21) — Matrix/Synapse communication server (Games VLAN)
+- **Reverse Proxy** (VMID 900, 192.168.10.20) — Traefik v3 HTTPS proxy (Management VLAN)
 
 ### Key Features
 

@@ -312,8 +312,8 @@ After bootstrap, recommended next steps:
 
 ## See Also
 
-- [Architecture Overview](../architecture.md) - Infrastructure design
-- [Service Endpoints](service-endpoints.md) - All service URLs and ports
-- [Matrix Troubleshooting](../troubleshooting/matrix.md) - Issue resolution
-- [Mumble Setup](mumble-setup.md) - Legacy voice chat (retained during migration)
-- [Resource Allocation](resource-allocation.md) - VM resource planning
+- [Architecture Overview](../architecture.md) — Infrastructure design
+- [Service Endpoints](service-endpoints.md) — All service URLs and ports
+- [Matrix Troubleshooting](../troubleshooting/matrix.md) — Issue resolution
+- [Mumble Setup](mumble-setup.md) — Legacy voice chat (retained during migration)
+- [Resource Allocation](resource-allocation.md) — VM resource planning

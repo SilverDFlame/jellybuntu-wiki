@@ -54,6 +54,7 @@ This provides both local performance and secure remote connectivity.
 | 700 | Lancache | 192.168.40.18 | 40 (Games) | lancache | Game download cache |
 | 800 | UniFi Controller | 192.168.10.19 | 10 (Mgmt) | unifi-controller | Network management |
 | 900 | Reverse Proxy | 192.168.10.20 | 10 (Mgmt) | reverse-proxy | Traefik HTTPS proxy |
+| 202 | Elysium (Matrix) | 192.168.40.21 | 40 (Games) | elysium | Matrix/Synapse |
 
 ### Tailscale VPN (100.64.0.0/10)
 
@@ -81,6 +82,7 @@ All VMs accessible via Tailscale hostnames:
 - `lancache.discus-moth.ts.net`
 - `unifi-controller.discus-moth.ts.net`
 - `reverse-proxy.discus-moth.ts.net`
+- `elysium.discus-moth.ts.net`
 
 ### Network Flow Diagram
 
@@ -498,7 +500,7 @@ the Feb 2026 VLAN migration.
 | 10 | Management | 192.168.10.0/24 | Monitoring, Woodpecker CI, UniFi Controller, Reverse Proxy |
 | 20 | IoT | 192.168.20.0/24 | Home Assistant |
 | 30 | Media | 192.168.30.0/24 | NAS, Jellyfin, Media Services, Download Clients |
-| 40 | Games | 192.168.40.0/24 | Satisfactory, Mumble, Lancache |
+| 40 | Games | 192.168.40.0/24 | Satisfactory, Mumble, Elysium (Matrix), Lancache |
 | 50 | Cameras | 192.168.50.0/24 | Reserved for future use |
 
 **Inter-VLAN Policy**:
@@ -1072,7 +1074,7 @@ vault_tailscale_api_key: "tskey-api-xxxxx"
 **Network Design**:
 
 - VLAN-segmented local network (Management, IoT, Media, Games) + Tailscale VPN
-- Static IP assignments for all 12 VMs across 4 active VLANs
+- Static IP assignments for all 13 VMs across 4 active VLANs
 - Per-VLAN gateways and DNS configuration
 - Replaced former flat 192.168.0.0/24 network in Feb 2026
 

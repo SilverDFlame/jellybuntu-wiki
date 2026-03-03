@@ -449,7 +449,7 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 │ Bridge: vmbr0 (VLAN-aware)                                       │
 │                                                                  │
 │  ┌─ Management VLAN 10 ──────────────────────────────────────┐   │
-│  │ Monitoring (.16)  Woodpecker (.17)  UniFi (.19)  Proxy (.20) │   │
+│  │ Monitoring (.16) Woodpecker (.17) UniFi (.19) Proxy (.20) │   │
 │  └───────────────────────────────────────────────────────────┘   │
 │                                                                  │
 │  ┌─ IoT VLAN 20 ────────┐                                       │
@@ -460,7 +460,7 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 │  │ NAS (.15)  Jellyfin (.12)  Media Svc (.13)  DL (.14) │        │
 │  └──────────────────────────────────────────────────────┘        │
 │                                                                  │
-│  ┌─ Games VLAN 40 ──────────────────────────────────────────────────┐ │
+│  ┌─ Games VLAN 40 ─────────────────────────────────────────────────┐ │
 │  │ Satisfactory (.11) Mumble (.20) Elysium (.21) Lancache (.18)    │ │
 │  └─────────────────────────────────────────────────────────────────┘ │
 │                                                                  │

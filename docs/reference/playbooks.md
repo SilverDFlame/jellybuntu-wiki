@@ -103,6 +103,8 @@ Run all phases at once (skips Phase 4):
 - Media services stack: Sonarr, Radarr, Prowlarr, Jellyseerr, Byparr (media-services)
 - Download clients: qBittorrent, SABnzbd (download-clients)
 - Jellyfin with transcoding optimizations (jellyfin)
+- Traefik v3 reverse proxy with Let's Encrypt certificates (traefik-proxy)
+- Matrix/Synapse communication server with PostgreSQL (matrix)
 
 **Duration**: ~15 minutes
 
