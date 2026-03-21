@@ -4,105 +4,113 @@ Quick reference for Claude Code working with the Jellybuntu Wiki repository.
 
 ---
 
-## 📚 About This Repository
+## About This Repository
 
-This is the **documentation wiki** for the Jellybuntu infrastructure project. It contains all user-facing
-documentation, built with MkDocs and deployed to `http://nas.discus-moth.ts.net:8082`.
+This is the **documentation wiki** for the Jellybuntu infrastructure project. It contains
+operator-facing documentation, built with MkDocs and deployed to
+`http://nas.discus-moth.ts.net:8082`.
 
-**Main Infrastructure Repository:** [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu)
+**Related Repositories:**
 
-**Local clone:** `~/coding/mirrors/jellybuntu/` — agent teams read roles, playbooks, and terraform files from here during doc-sync tasks.
+| Repo | Local Path | Purpose |
+|------|-----------|---------|
+| [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu) | `~/coding/jellybuntu` | Ansible/Terraform IaC (use `feature/k3s-service-migration` branch) |
+| [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) | `~/coding/jellybuntu-helm` | Flux GitOps k3s manifests |
+| [SilverDFlame/jellybuntu-wiki](https://github.com/SilverDFlame/jellybuntu-wiki) | `~/coding/jellybuntu-wiki` | This wiki (MkDocs) |
 
 ---
 
-## 🔗 Cross-Repository References
+## Documentation Structure
 
-This wiki references code from the main Jellybuntu repository. **Always use absolute GitHub URLs** for code paths:
-
-```markdown
-✅ Good: [`playbooks/main.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/main.yml)
-✅ Good: [`roles/jellyfin/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin)
-❌ Bad: `../playbooks/main.yml` (relative path - doesn't exist in wiki)
-❌ Bad: `playbooks/main.yml` (no link - not navigable)
+```text
+docs/
+├── index.md                 # Service dashboard, quick links, repo map
+├── architecture.md          # Hybrid VM+k3s design, diagrams
+├── infrastructure/          # VMs, networking, storage, GPU
+├── services/                # One page per service (~21 pages)
+├── operations/              # Deployment, k3s cluster, backups, secrets, updates
+└── troubleshooting.md       # Common issues (single page)
 ```
 
-**URL patterns:**
+---
 
-- Files: `https://github.com/SilverDFlame/jellybuntu/blob/main/{path}`
-- Directories: `https://github.com/SilverDFlame/jellybuntu/tree/main/{path}`
+## Cross-Repository References
+
+**External code links** use absolute GitHub URLs:
+
+```markdown
+Good: [`roles/jellyfin/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin)
+Good: [`clusters/jellybuntu/media/`](https://github.com/SilverDFlame/jellybuntu-helm/tree/main/clusters/jellybuntu/media)
+Bad:  `../playbooks/main.yml` (relative path - doesn't exist in wiki)
+```
+
+URL patterns:
+
+- jellybuntu files: `https://github.com/SilverDFlame/jellybuntu/blob/main/{path}`
+- jellybuntu dirs: `https://github.com/SilverDFlame/jellybuntu/tree/main/{path}`
+- jellybuntu-helm files: `https://github.com/SilverDFlame/jellybuntu-helm/blob/main/{path}`
 
 **Internal wiki links** stay relative:
 
 ```markdown
-✅ Good: [Architecture](architecture.md)
-✅ Good: [Service Endpoints](configuration/service-endpoints.md)
+Good: [Architecture](architecture.md)
+Good: [Sonarr](services/sonarr.md)
 ```
 
 ---
 
-## 📂 Documentation Structure
+## Service Page Template
 
-```text
-docs/
-├── index.md                 # Documentation home
-├── quickstart.md            # Getting started guide
-├── architecture.md          # Infrastructure overview
-├── CLAUDE.md                # Documentation authoring guide
-├── deployment/              # Deployment guides (phases, initial setup)
-├── configuration/           # Service configuration guides
-├── maintenance/             # Operational procedures
-├── reference/               # Technical reference docs
-├── troubleshooting/         # Service-specific troubleshooting
-├── development/             # Developer workflows
-└── archive/                 # Deprecated documentation
+Every service page follows this structure:
+
+```markdown
+# Service Name
+
+> One-line description
+
+| Field | Value |
+|-------|-------|
+| **Runs on** | k3s `media` namespace / VM `nas` (300) |
+| **Access** | `https://sonarr.elysium.industries` |
+| **Port** | 8989 |
+| **Database** | PostgreSQL `sonarr_main`, `sonarr_log` on `db` VM |
+| **Repo** | `jellybuntu-helm` -> `clusters/jellybuntu/media/sonarr.yaml` |
+
+## Key Config
+
+(Non-obvious configuration notes)
+
+## Common Operations
+
+(Restart, logs, troubleshooting)
 ```
 
-**See**: [docs/CLAUDE.md](docs/CLAUDE.md) for documentation authoring guidelines.
+Include only applicable fields (e.g., no Database row for services without one).
 
 ---
 
-## 🛠️ Development Workflow
+## Development Workflow
 
 ### Local Preview
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Start development server
 mkdocs serve
-
 # View at http://localhost:8000
 ```
 
 ### Build and Validate
 
 ```bash
-# Build with strict mode (catches broken links)
 mkdocs build --strict
-
-# Run pre-commit checks
 pre-commit run --all-files
 ```
 
-### Pre-commit Hooks
-
-This repo uses simplified pre-commit hooks for documentation:
-
-| Hook | Purpose |
-|------|---------|
-| trailing-whitespace | Remove trailing whitespace |
-| end-of-file-fixer | Ensure newline at EOF |
-| check-yaml | Validate YAML syntax |
-| mixed-line-ending | Enforce LF line endings |
-| yamllint | Lint mkdocs.yml |
-| markdownlint-cli2 | Lint markdown files |
-
 ---
 
-## 🏷️ Markdown Style Guide
+## Markdown Style Guide
 
-### Key Rules (Pre-commit Enforced)
+### Linting Rules (Pre-commit Enforced)
 
 | Rule | Constraint |
 |------|------------|
@@ -111,34 +119,20 @@ This repo uses simplified pre-commit hooks for documentation:
 | **MD032** | Blank lines around lists |
 | **MD040** | Code blocks need language tags |
 
-### Common Fixes
-
-```markdown
-<!-- BAD: No language tag -->
-` ` `
-some output
-` ` `
-
-<!-- GOOD: Language specified -->
-` ` `text
-some output
-` ` `
-
-<!-- BAD: No blank line before list -->
-**Steps**:
-1. First step
-
-<!-- GOOD: Blank line before list -->
-**Steps**:
-
-1. First step
-```
-
 **Language tags**: Use `bash` for commands, `yaml` for config, `text` for generic output.
+
+### Relaxed Rules
+
+| Rule | Setting |
+|------|---------|
+| **MD024** | siblings_only: true (duplicate headings OK if not siblings) |
+| **MD033** | disabled (inline HTML allowed) |
+| **MD034** | disabled (bare URLs allowed) |
+| **MD041** | disabled (first line doesn't need to be h1) |
 
 ---
 
-## 🚀 CI/CD Pipeline
+## CI/CD Pipeline
 
 Documentation is automatically built and deployed via Woodpecker CI.
 
@@ -146,47 +140,33 @@ Documentation is automatically built and deployed via Woodpecker CI.
 
 **Pipeline:**
 
-1. **build-docs**: Install deps, run `mkdocs build --strict`
+1. **build-docs**: `mkdocs build --strict`
 2. **deploy-docs**: rsync to `nas.discus-moth.ts.net:/opt/docs/site/`
 
-**Secret required:** `ssh_ci_private_key` (shared with main repo)
-
-**Hosted at:** http://nas.discus-moth.ts.net:8082
+**Secret required:** `ssh_ci_private_key`
 
 ---
 
-## 📝 Git Workflow
-
-**Use feature branches** for documentation changes:
+## Git Workflow
 
 ```bash
 git checkout -b docs/your-improvement
 # Make changes
-git add .
 git commit -m "docs: Description of changes"
 git push -u origin docs/your-improvement
-# Create PR
 ```
 
-**Branch naming:**
-
-- `docs/` - Documentation improvements
-- `fix/` - Fix broken links, typos
-- `feature/` - New documentation sections
+Branch prefixes: `docs/`, `fix/`, `feature/`
 
 ---
 
-## 🔍 Quick Reference
+## Quick Reference
 
 | Task | Command/Location |
 |------|------------------|
 | Preview docs | `mkdocs serve` |
 | Build docs | `mkdocs build --strict` |
 | Run linting | `pre-commit run --all-files` |
-| Authoring guide | [docs/CLAUDE.md](docs/CLAUDE.md) |
 | Main repo | [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu) |
+| Helm repo | [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) |
 | Hosted docs | http://nas.discus-moth.ts.net:8082 |
-
----
-
-**For documentation authoring guidelines, see [docs/CLAUDE.md](docs/CLAUDE.md)**
