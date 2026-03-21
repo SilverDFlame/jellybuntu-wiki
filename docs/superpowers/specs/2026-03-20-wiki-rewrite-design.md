@@ -29,8 +29,9 @@ action never worked. A fresh start is warranted.
 ### Delete
 
 - All files under `docs/` (90+ markdown files including archive/, plans/, all subdirectories)
+- `docs/CLAUDE.md` (authoring guide — conventions folded into root `CLAUDE.md`)
 - `.github/workflows/doc-sync-check.yml`
-- `.github/sync-mapping.yml`
+- `.github/sync-mapping.yml` (if present)
 
 ### Keep (unchanged)
 
@@ -42,8 +43,9 @@ action never worked. A fresh start is warranted.
 
 ### Rewrite
 
-- `mkdocs.yml` nav section (new structure, theme/plugins stay)
-- Root `CLAUDE.md` (updated directory structure, conventions preserved)
+- `mkdocs.yml` nav section and `site_description` (new structure; theme/plugins/extensions stay;
+  remove stale `exclude_docs: archive/` and update `validation` comment)
+- Root `CLAUDE.md` (updated directory structure, absorb authoring conventions from deleted `docs/CLAUDE.md`)
 
 ## New Documentation Structure
 
