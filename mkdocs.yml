@@ -134,7 +134,7 @@ copyright: Copyright &copy; 2024-2026 Jellybuntu Project
 # Link validation (MkDocs 1.6+)
 # These settings cause warnings to become errors with --strict flag
 validation:
-  omitted_files: info  # Changed to warn after spec/plan files move out of docs/
+  omitted_files: warn  # All docs should be in nav
   absolute_links: warn
   unrecognized_links: warn
   anchors: warn
