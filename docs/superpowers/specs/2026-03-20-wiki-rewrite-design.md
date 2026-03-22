@@ -89,7 +89,7 @@ docs/
 └── troubleshooting.md          # Single page, common issues by category
 ```
 
-**Total: ~34 pages**
+Total: ~34 pages
 
 ## MkDocs Navigation
 
