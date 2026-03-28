@@ -38,6 +38,7 @@ node_modules/
 
 # Claude Code local files
 .claude/
+superpowers/
 
 # Security: Prevent accidental commit of sensitive files
 *.key
