@@ -1,561 +1,103 @@
-# Architecture Overview
-
-This document describes the infrastructure design, VM layer, and key design patterns of the Jellybuntu homelab.
-
-## Infrastructure Layers
-
-### 1. Proxmox Host Layer
-
-- **Host**: discus-moth.ts.net (jellybuntu)
-- **Hardware**: AMD EPYC 7313P (16 cores / 32 threads), 128GB ECC DDR4, GTX 1080 GPU
-- **Storage**: NVMe boot + 3x 6TB Btrfs RAID1 (~9TB usable) + 32GB RAM disk (transcoding)
-- **Role**: VM provisioning, GPU passthrough, resource allocation
-- **Virtualization**: Proxmox VE with cloud-init templates, IOMMU enabled
-
-### 2. VM Layer
-
-All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/SilverDFlame/jellybuntu/blob/main/infrastructure/terraform/vms.tf) (OpenTofu):
-
-#### Home Automation
-
-- **Home Assistant** (VMID 100)
-  - Resources: 2 cores, 2GB RAM, 40GB disk
-  - IP: 192.168.20.10 (IoT VLAN 20)
-  - Stack: Rootless Podman with Quadlet
-  - Priority: Medium (cpu_units: 1024)
-
-#### Game Servers
-
-- **Satisfactory** (VMID 200)
-  - Resources: 4 cores (pinned 4-7), 8GB RAM, 60GB disk
-  - IP: 192.168.40.11 (Games VLAN 40)
-  - Stack: SteamCMD + systemd service
-  - Priority: High (cpu_units: 2048, dedicated cores)
-  - Note: Cores 0-3 reserved for future Minecraft server
-
-- **Mumble** (VMID 201)
-  - Resources: 1 core, 1GB RAM, 32GB disk
-  - IP: 192.168.40.20 (Games VLAN 40)
-  - Stack: Rootless Podman with Quadlet
-  - Services: Mumble voice chat server (mumblevoip/mumble-server)
-  - Priority: Low (cpu_units: 512)
-  - Deployment: Phase 4 (optional)
-
-- **Elysium (Matrix)** (VMID 202)
-  - Resources: 4 cores, 8GB RAM, 64GB disk
-  - IP: 192.168.40.21 (Games VLAN 40)
-  - Stack: Rootless Podman with Quadlet (pod-based)
-  - Services: Synapse homeserver, PostgreSQL 16, LiveKit SFU, lk-jwt-service, coturn, Synapse Admin
-  - Priority: Medium (cpu_units: 1024)
-  - Deployment: Phase 3 (services)
-
-#### Storage Infrastructure
-
-- **NAS** (VMID 300)
-  - Resources: 2 cores, 6GB RAM, 32GB OS disk + 3x 6TB passthrough (Btrfs RAID1)
-  - IP: 192.168.30.15 (Media VLAN 30)
-  - Stack: Btrfs RAID1 (~9TB usable), NFS server, AdGuard Home, Nexus Repository (Quadlet)
-  - Services: NFS, AdGuard Home (DNS), Nexus Repository (container registry)
-  - Priority: Medium (cpu_units: 1024)
-  - Purpose: Network storage, internal DNS with ad blocking, container image caching
-
-#### Media Services
-
-- **Jellyfin** (VMID 400)
-  - Resources: 4 cores, 8GB RAM, 80GB disk + GTX 1080 GPU passthrough
-  - IP: 192.168.30.12 (Media VLAN 30)
-  - Stack: Native Jellyfin package + Tdarr (Quadlet)
-  - Optimizations: NVENC hardware transcoding, RAM disk cache, CPU governor (performance)
-  - Services: Jellyfin, Tdarr (media transcoding automation)
-  - Priority: High (cpu_units: 2048)
-  - Purpose: 4K hardware transcoding with NVENC, automated media optimization
-
-- **Media Services Stack** (VMID 401)
-  - Resources: 4 cores, 10GB RAM, 50GB disk
-  - IP: 192.168.30.13 (Media VLAN 30)
-  - Stack: Rootless Podman with Quadlet
-  - Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Homarr, Byparr, Recyclarr
-  - Priority: Medium (cpu_units: 1024)
-
-- **Download Clients** (VMID 402)
-  - Resources: 4 cores, 6GB RAM, 60GB disk
-  - IP: 192.168.30.14 (Media VLAN 30)
-  - Stack: Rootless Podman with Quadlet
-  - Services: qBittorrent, SABnzbd, Gluetun (VPN), Unpackerr
-  - Priority: Medium (cpu_units: 1024)
-  - Purpose: Isolated download operations with VPN protection
-
-#### Monitoring Infrastructure
-
-- **Monitoring** (VMID 500)
-  - Resources: 2 cores, 4GB RAM, 64GB disk
-  - IP: 192.168.10.16 (Management VLAN 10)
-  - Stack: Rootless Podman with Quadlet
-  - Services: Prometheus, Alertmanager, Grafana, SNMP Exporter, Blackbox Exporter
-  - Priority: Medium (cpu_units: 1024)
-  - Purpose: Internal infrastructure monitoring with Discord alerting
-  - Deployment: Phase 5 (optional, standalone)
-  - Note: Uptime Kuma moved to external monitoring (Oracle Cloud)
-
-#### CI/CD Infrastructure
-
-- **Woodpecker CI** (VMID 600)
-  - Resources: 2 cores, 8GB RAM, 32GB disk
-  - IP: 192.168.10.17 (Management VLAN 10)
-  - Stack: Rootless Podman with Quadlet
-  - Services: Woodpecker Server, Woodpecker Agent
-  - Priority: Low (cpu_units: 512)
-  - Purpose: Automated testing, linting, security scanning, and deployment pipelines
-  - Deployment: Phase 2 (CI infrastructure)
-
-#### Caching Infrastructure
-
-- **Lancache** (VMID 700)
-  - Resources: 2 cores, 4GB RAM, 32GB disk + NFS cache storage
-  - IP: 192.168.40.18 (Games VLAN 40)
-  - Stack: **Rootful Podman** with Quadlet (exception - see [Lancache Rootful Security](#lancache-rootful-security))
-  - Services: lancache/monolithic (nginx-based game download cache)
-  - Priority: Low (cpu_units: 512)
-  - Purpose: LAN cache for Steam, Epic, Battle.net game downloads
-  - Storage: NFS-backed cache at /mnt/lancache (2TB limit, stored on NAS)
-  - Deployment: Phase 3 (services)
-
-#### Network Infrastructure
-
-- **UniFi Controller** (VMID 800)
-  - Resources: 2 cores, 2GB RAM, 32GB disk
-  - IP: 192.168.10.19 (Management VLAN 10)
-  - Stack: Rootless Podman with Quadlet (MongoDB 7.0 + LinuxServer UniFi app)
-  - Services: UniFi Network Application (AP and network device management)
-  - Priority: Low (cpu_units: 512)
-  - Purpose: Self-hosted UniFi Network Controller for managing APs and network devices
-  - Deployment: Phase 3 (services)
-
-#### Reverse Proxy
-
-- **Reverse Proxy** (VMID 900)
-  - Resources: 1 core, 512MB RAM, 32GB disk
-  - IP: 192.168.10.20 (Management VLAN 10)
-  - Stack: Rootless Podman with Quadlet (Traefik v3)
-  - Services: Traefik v3 reverse proxy with TLS termination (file provider, Tailscale certs)
-  - Priority: Low (cpu_units: 512)
-  - Purpose: Centralized HTTPS ingress for all internal services via DNS rewrites
-  - Deployment: Phase 3 (services)
-
-### 3. Application Layer
-
-**Home Assistant**: Podman Quadlet container for home automation and device integration
-
-**Satisfactory**: Dedicated game server via SteamCMD, managed by systemd
-
-**Jellyfin**: Native package with hardware transcoding via GPU passthrough:
-
-- GTX 1080 GPU passthrough for NVENC hardware transcoding
-- 32GB RAM disk for transcoding cache (zero SSD wear)
-- 4 cores for non-GPU tasks
-- CPU governor set to performance mode
-- High scheduling priority (Nice=-10, realtime IO)
-
-**Media Stack**: Rootless Podman with Quadlet systemd services:
-
-- Sonarr/Radarr: Media management with Trash Guides folder structure
-- Prowlarr: Indexer management
-- Jellyseerr: Request management
-- Bazarr: Subtitle automation
-- Homarr: Dashboard for service overview
-- Byparr: Cloudflare bypass
-- Recyclarr: Custom formats and quality profiles
-
-**Download Clients**: Rootless Podman with Quadlet systemd services:
-
-- Gluetun: VPN client (Private Internet Access with automatic port forwarding)
-- qBittorrent: Torrent downloads (routed through VPN)
-- SABnzbd: Usenet downloads with templated configuration (direct connection, no VPN)
-- Unpackerr: Automatic archive extraction
-
-**Tdarr**: Automated media transcoding and optimization:
-
-- Transcodes media to space-efficient formats
-- Runs on Jellyfin VM alongside media server
-- Quadlet-based deployment
-
-**Traefik Reverse Proxy**: Centralized HTTPS ingress (Rootless Podman Quadlet):
-
-- TLS termination with Tailscale certificates for all proxied services
-- File-based routing (no Docker/Podman socket exposure)
-- DNS rewrites in AdGuard redirect service hostnames to proxy VM
-- Backends addressed by direct LAN IP to avoid DNS loops
-- Weekly automated certificate renewal via systemd timer
-
-**Matrix/Synapse (Elysium)**: Pod-based communication server (Rootless Podman Quadlet):
-
-- Synapse homeserver with PostgreSQL 16 backend
-- LiveKit SFU for Element Call voice/video (WebRTC)
-- lk-jwt-service for MatrixRTC authorization bridge
-- coturn TURN/STUN server (host network for NAT traversal)
-- Synapse Admin web UI for user and room management
-- Registration disabled; users onboarded via registration tokens
-- Federation disabled (internal use only)
-
-**NAS Services**: Storage, DNS, and container infrastructure:
-
-- Btrfs RAID1: 3x 6TB disks in RAID1 (~9TB usable)
-- NFS Server: Network file storage for media and downloads
-- AdGuard Home: Network-wide DNS ad blocking and privacy protection
-  - Deployment: Quadlet container on NAS VM
-  - Upstream DNS: Quad9 DoT, Cloudflare DoT (encrypted)
-  - MagicDNS Integration: Forwards `*.ts.net` queries to Tailscale (100.100.100.100)
-  - Features: Ad blocking, query logging, custom filtering, DNSSEC validation
-  - Web UI: http://nas.discus-moth.ts.net:80
-- Nexus Repository: Container registry and artifact proxy
-  - Deployment: Quadlet container on NAS VM
-  - Purpose: Cache container images for CI/CD pipelines, reduce external pulls
-  - Web UI: http://nas.discus-moth.ts.net:8081
-  - Container Registry: nas.discus-moth.ts.net:5001
-
-## Key Design Patterns
-
-### CPU Allocation Strategy
-
-**Total**: 16 physical cores / 32 threads (AMD EPYC 7313P)
-
-The EPYC 7313P has 4 CCDs (Core Complex Dies), each with 4 cores sharing 32 MB L3 cache.
-See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md) for detailed tuning.
-
-**CCD-Aware Core Allocation:**
-
-| CCD | Cores | L3 Cache | Allocation | Purpose |
-|-----|-------|----------|------------|---------|
-| CCD 0 | 0-3 | 32 MB | Reserved | Future Minecraft server |
-| CCD 1 | 4-7 | 32 MB | **Pinned** | Satisfactory game server |
-| CCD 2 | 8-11 | 32 MB | Shared pool | All other VMs |
-| CCD 3 | 12-15 | 32 MB | Shared pool | All other VMs |
-
-**Shared Pool (Cores 8-15)**:
-
-- 8 physical cores shared across ~18 virtual cores (~2.25:1 overcommit)
-- Overprovisioning is safe because workloads are bursty
-
-**Priority Tiers** (cpu_units):
-
-1. **High (2048)**: Satisfactory (pinned), Jellyfin (GPU handles transcoding)
-2. **Medium (1024)**: Media Services, Download Clients, NAS, Monitoring, Home Assistant, Elysium (Matrix)
-3. **Low (512)**: Woodpecker CI, Mumble, Lancache, UniFi Controller, Reverse Proxy
-
-### Storage Architecture
-
-- **VM Disks**: Local-lvm storage on Proxmox
-- **Media/Downloads**: NFS mounted at `/mnt/data` (from NAS export `nas:/mnt/storage/data`)
-- **NAS**: Passthrough disks for Btrfs RAID1 pool with snapshots
-- **Folder Structure**: Trash Guides recommended layout for hardlinks
-
-**virtio-fs RAM Disk (Download Clients)**:
-
-- Purpose: Reduce NFS I/O during active downloads by staging to RAM
-- Flow: Downloads write to RAM disk staging area, then move to NFS on completion
-- Benefits: Less NAS write amplification from incomplete/temporary download chunks, faster processing
-- Implementation: virtio-fs backed tmpfs on Download Clients VM
-
-### Networking
-
-**VLAN Architecture**: Segmented network via VLAN-aware bridge on Proxmox
-
-| VLAN | Subnet | Purpose | Gateway |
-|------|--------|---------|---------|
-| VLAN 10 | 192.168.10.0/24 | Management | 192.168.10.1 |
-| VLAN 20 | 192.168.20.0/24 | IoT | 192.168.20.1 |
-| VLAN 30 | 192.168.30.0/24 | Media | 192.168.30.1 |
-| VLAN 40 | 192.168.40.0/24 | Games | 192.168.40.1 |
-
-- DNS: AdGuard Home on NAS (192.168.30.15) via Tailscale custom nameserver
-- Bridge: vmbr0 (VLAN-aware) on Proxmox
-
-**DNS Architecture**:
-
-- **Primary DNS**: AdGuard Home (NAS VM, 192.168.30.15)
-- **Upstream Resolvers**:
-  1. Tailscale MagicDNS (100.100.100.100) for `*.ts.net` domains
-  2. Quad9 DoT (tls://dns.quad9.net) - encrypted DNS
-  3. Cloudflare DoT (tls://1dot1dot1dot1.cloudflare-dns.com) - encrypted DNS
-  4. Quad9 plaintext fallback (9.9.9.11, 149.112.112.11)
-- **Features**: Network-wide ad blocking, encrypted DNS queries, DNSSEC, query logging
-- **Deployment**: Phase 2 (networking) - see [configuration/adguard-home.md](configuration/adguard-home.md)
-
-**Tailscale Mesh**: 100.64.0.0/10 (CGNAT range)
-
-- Secure remote access to all services
-- Ephemeral auth keys generated via API
-- Auto-approval with ACLs (see [reference/tailscale-auto-approval.md](reference/tailscale-auto-approval.md))
-- MagicDNS enabled for `*.discus-moth.ts.net` hostnames
-
-**Security**:
-
-- UFW firewall on all VMs
-- SSH accessible from Tailscale + Management VLAN 10 (LAN fallback for outages)
-- Services accessible from both Tailscale and local network
-
-### Podman Quadlet Architecture
-
-**Philosophy**: Native systemd integration, rootless containers (with documented exceptions), separation of concerns
-
-**Structure**:
-
-| VM | Quadlet Location | Scope | Notes |
-|----|------------------|-------|-------|
-| Most VMs | `~/.config/containers/systemd/` | User (rootless) | Standard deployment |
-| Lancache | `/etc/containers/systemd/` | System (rootful) | NFS compatibility - see [security docs](#lancache-rootful-security) |
-
-**Standard rootless structure** (per-VM, in `~/.config/containers/systemd/`):
-
-```text
-# Media Services VM (~/.config/containers/systemd/)
-sonarr.container
-radarr.container
-prowlarr.container
-jellyseerr.container
-bazarr.container
-homarr.container
-byparr.container
-recyclarr.container
-
-# Download Clients VM (~/.config/containers/systemd/)
-gluetun.container
-qbittorrent.container
-sabnzbd.container
-unpackerr.container
-
-# Reverse Proxy VM (~/.config/containers/systemd/)
-traefik.container
+# Architecture
+
+## Overview
+
+Jellybuntu is a hybrid Proxmox homelab running on an AMD EPYC 7313P single-node host. Dedicated VMs handle
+stateful or hardware-specific services (NAS, Home Assistant, game servers), while a 5-node k3s cluster managed
+by Flux GitOps runs the media automation and ops workloads. Four VLANs segment traffic by function: management,
+IoT, media, and games.
+
+## System Diagram
+
+```mermaid
+graph TD
+    HOST["Proxmox Host\nAMD EPYC 7313P"]
+
+    HOST --> DEDICATED["Dedicated VMs"]
+    HOST --> K3S["k3s Cluster"]
+
+    DEDICATED --> NAS["nas (300)\n192.168.30.15\nBtrfs RAID1 + NFS"]
+    DEDICATED --> HA["home-assistant (100)\n192.168.20.10\nSmart home hub"]
+    DEDICATED --> SAT["satisfactory-server (200)\n192.168.40.11\nGame server"]
+    DEDICATED --> MON["monitoring (500)\n192.168.10.16\nPrometheus + Grafana"]
+    DEDICATED --> WP["woodpecker-ci (600)\n192.168.10.17\nCI/CD"]
+    DEDICATED --> LC["lancache (700)\n192.168.40.18\nGame download cache"]
+    DEDICATED --> UNI["unifi-controller (800)\n192.168.10.19\nNetwork mgmt"]
+    DEDICATED --> RP["reverse-proxy (900)\n192.168.10.20\nTraefik + Tailscale TLS"]
+
+    K3S --> CTL["k8s-control (410)\n192.168.30.40\nControl plane"]
+    K3S --> GPU["k8s-gpu (411)\n192.168.30.41\nJellyfin + Tdarr"]
+    K3S --> MED["k8s-media (412)\n192.168.30.42\narr stack + download clients"]
+    K3S --> NET["k8s-net (413)\n192.168.30.43\nMetalLB + Traefik ingress"]
+    K3S --> OPS["k8s-ops (414)\n192.168.30.44\nSynapse + monitoring + CI"]
 ```
 
-**Benefits**:
+## k3s Cluster Topology
 
-- Native systemd service management (`systemctl --user`)
-- Automatic dependency ordering via `After=` directives
-- Rootless containers (enhanced security)
-- Standard journald logging (`journalctl --user`)
-- No Docker daemon required
+| Node | VMID | IP | Role | Services |
+|------|------|----|------|----------|
+| k8s-control | 410 | 192.168.30.40 | Control plane | k3s API server, etcd, scheduler |
+| k8s-gpu | 411 | 192.168.30.41 | Worker — GPU | Jellyfin, Tdarr (GTX 1080 passthrough) |
+| k8s-media | 412 | 192.168.30.42 | Worker — media | Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Jellyseerr, Navidrome, qBittorrent, SABnzbd, Byparr |
+| k8s-net | 413 | 192.168.30.43 | Worker — network | MetalLB speaker, Traefik ingress controller |
+| k8s-ops | 414 | 192.168.30.44 | Worker — ops | Synapse, Coturn, LiveKit, PostgreSQL, Woodpecker CI |
 
-### Cloud-Init Template
+MetalLB IP pool: `192.168.30.200/29` (L2 mode). Traefik VIP: `192.168.30.200`.
 
-**Template**: VMID 9000 (Ubuntu cloud-init)
+## Dedicated VMs
 
-- SSH key-only authentication
-- Ansible user with sudo privileges
-- No passwords set (security)
-- All VMs cloned from this template
+| VM | VMID | IP | Purpose | Why Not k3s |
+|----|------|----|---------|-------------|
+| nas | 300 | 192.168.30.15 | Btrfs RAID1 storage, NFS server | Physical disk passthrough; must start first |
+| home-assistant | 100 | 192.168.20.10 | Smart home automation | Needs USB/Zigbee passthrough; IoT VLAN isolation |
+| satisfactory-server | 200 | 192.168.40.11 | Satisfactory dedicated server | CPU pinning (cores 4-7); games VLAN |
+| monitoring | 500 | 192.168.10.16 | Prometheus, Alertmanager, Grafana | Predates k3s; standalone stack |
+| woodpecker-ci | 600 | 192.168.10.17 | Woodpecker CI server | Builds Proxmox infrastructure; needs host access |
+| lancache | 700 | 192.168.40.18 | Game download cache (Steam, Epic) | Games VLAN placement; large NFS cache volume |
+| unifi-controller | 800 | 192.168.10.19 | UniFi network management | Management VLAN; MongoDB + Java stack |
+| reverse-proxy | 900 | 192.168.10.20 | Traefik v3, Tailscale TLS termination | Routes Tailscale traffic to VM services |
+| db | 415 | 192.168.30.16 | Centralized PostgreSQL | Persistent DB for k3s services (external to cluster) |
 
-### Authentication Flow
+## Ingress Flow
 
-1. `setup.sh` generates SSH key pair (`~/.ssh/ansible_homelab`)
-2. Proxmox API uses vault-encrypted password (ansible@pve or root@pam)
-3. Cloud-init template configured with Ansible SSH public key
-4. VMs cloned with SSH key inheritance
-5. Tailscale installed with ephemeral auth keys via API
-6. Password-less SSH + Tailscale mesh access
-
-## Resource Allocation Summary
-
-### CPU Allocation (16 Physical Cores)
-
-| Cores | Allocation | Purpose |
-|-------|------------|---------|
-| 0-3 | Reserved (Pinned) | Future Minecraft server |
-| 4-7 | Satisfactory (Pinned) | Game server - dedicated |
-| 8-15 | Shared Pool | All other VMs (~2:1 overcommit) |
-
-### VM Resources
-
-| VM               | VMID | Cores  | RAM      | Disk    | Priority | CPU Units |
-|------------------|------|--------|----------|---------|----------|-----------|
-| Home Assistant   | 100  | 2      | 2GB      | 40GB    | Medium   | 1024      |
-| Satisfactory     | 200  | 4*     | 8GB      | 60GB    | High     | 2048      |
-| Mumble           | 201  | 1      | 1GB      | 32GB    | Low      | 512       |
-| NAS              | 300  | 2      | 6GB      | 3x6TB** | Medium   | 1024      |
-| Jellyfin         | 400  | 4      | 8GB      | 80GB    | High     | 2048      |
-| Media Services   | 401  | 4      | 10GB     | 50GB    | Medium   | 1024      |
-| Download Clients | 402  | 4      | 6GB      | 60GB    | Medium   | 1024      |
-| Monitoring       | 500  | 2      | 4GB      | 64GB    | Medium   | 1024      |
-| Woodpecker CI    | 600  | 2      | 8GB      | 32GB    | Low      | 512       |
-| Lancache         | 700  | 2      | 4GB      | 32GB*** | Low      | 512       |
-| UniFi Controller | 800  | 2      | 2GB      | 32GB    | Low      | 512       |
-| Elysium (Matrix) | 202  | 4      | 8GB      | 64GB    | Medium   | 1024      |
-| Reverse Proxy    | 900  | 1      | 512MB    | 32GB    | Low      | 512       |
-| **Total**        |      | **34** | **67.5GB** |       |          |           |
-
-*Satisfactory cores are pinned to physical cores 4-7 (was 2-3)
-**NAS has 3x 6TB drives in Btrfs RAID1 (~9TB usable)
-***Lancache uses NFS-backed cache storage (2TB limit on NAS)
-
-### Memory Allocation (128GB Total)
-
-| Allocation | Size | Purpose |
-|------------|------|---------|
-| Proxmox Host | ~8GB | Hypervisor overhead |
-| RAM Disk (tmpfs) | 32GB | Jellyfin/Tdarr transcoding cache |
-| Huge Pages (optional) | 8GB | VM memory optimization (disabled by default) |
-| VMs Total | ~46GB | Allocated to virtual machines |
-| Reserve | ~34GB | Headroom for bursts and future services |
-
-**Note:** Huge pages are disabled by default. Enable in `proxmox_host` role for reduced TLB misses.
-See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md) for configuration.
-
-### GPU Allocation
-
-| Component | Allocation |
-|-----------|------------|
-| GTX 1080 | Passthrough to Jellyfin VM (VMID 400) |
-| Usage | NVENC hardware transcoding for Jellyfin and Tdarr |
-
-**Monitoring VM (Phase 5) and Woodpecker CI (Phase 4) are optional
-
-## Design Decisions
-
-### Why Separate Download Clients VM?
-
-- **Resource Isolation**: Downloads don't impact media management
-- **Priority Control**: Medium priority vs low priority media stack
-- **Fault Isolation**: Download client issues don't affect Sonarr/Radarr
-- **Network Isolation**: Easier to implement VPN if needed in future
-
-### Why Native Jellyfin (Not Containerized)?
-
-- **Direct Hardware Access**: Better transcoding performance
-- **System Integration**: CPU governor, systemd priority settings
-- **Resource Control**: Full control over process scheduling
-- **Easier Updates**: Standard apt package management
-
-### Why Podman Quadlet (Not Docker Compose)?
-
-- **Rootless Security**: Containers run without root privileges
-- **Systemd Integration**: Native service management, journald logging
-- **No Daemon**: No background Docker daemon required
-- **Per-Service Control**: Each container is an independent systemd unit
-- **Declarative**: `.container` files define container configuration
-
-### Why Overprovisioned CPUs?
-
-- **Workload Characteristics**: Bursty, not sustained
-- **Priority System**: cpu_units ensure important VMs get cycles
-- **Cost Efficiency**: Maximize hardware utilization
-- **Real Usage**: Most VMs idle most of the time
-
-## Network Diagram
-
-```text
-┌──────────────────────────────────────────────────────────────────┐
-│ Proxmox Host (discus-moth.ts.net)                                │
-│ EPYC 7313P: 16 cores/32 threads, 128GB RAM                       │
-│ Bridge: vmbr0 (VLAN-aware)                                       │
-│                                                                  │
-│  ┌─ Management VLAN 10 ──────────────────────────────────────┐   │
-│  │ Monitoring (.16) Woodpecker (.17) UniFi (.19) Proxy (.20) │   │
-│  └───────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  ┌─ IoT VLAN 20 ────────┐                                       │
-│  │ Home Assistant (.10)  │                                       │
-│  └───────────────────────┘                                       │
-│                                                                  │
-│  ┌─ Media VLAN 30 ──────────────────────────────────────┐        │
-│  │ NAS (.15)  Jellyfin (.12)  Media Svc (.13)  DL (.14) │        │
-│  └──────────────────────────────────────────────────────┘        │
-│                                                                  │
-│  ┌─ Games VLAN 40 ─────────────────────────────────────────────────┐ │
-│  │ Satisfactory (.11) Mumble (.20) Elysium (.21) Lancache (.18)    │ │
-│  └─────────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-                         │
-                ┌────────┴────────┐
-                │ Gateway/Router  │
-                │ (per-VLAN .1)   │
-                └─────────────────┘
-                         │
-                      Internet
-                         │
-                ┌────────┴────────┐
-                │   Tailscale     │
-                │   Mesh VPN      │
-                │ + MagicDNS      │
-                └────┬────────────┘
-                     │
-                Custom DNS: NAS
-                (AdGuard Home)
+```mermaid
+graph LR
+    CLIENT["Client"] --> CF["Cloudflare DNS\n*.elysium.industries"]
+    CF --> AG["AdGuard Home\nDNS rewrite → 192.168.30.200"]
+    AG --> VIP["MetalLB VIP\n192.168.30.200"]
+    VIP --> TR["Traefik (k8s-net)\nIngress controller"]
+    TR --> POD["Target Pod\n(gpu / media / ops namespace)"]
 ```
 
-## Lancache Rootful Security
+Tailscale-only services (VM-hosted) route through `reverse-proxy` (VMID 900) using
+`*.discus-moth.ts.net` certificates.
 
-Lancache is the **only service** running as rootful Podman rather than the standard rootless deployment.
-This is an intentional exception due to technical requirements with NFS storage.
+## Data Flow
 
-### Why Rootful is Required
-
-1. The lancache container runs its nginx process as `www-data` (UID 33)
-2. Container startup scripts execute `chown("/data/cache/cache", 33)` to claim the cache directory
-3. With rootless Podman, container UID 0 maps to the host's `ansible` user via user namespaces
-4. NFS sees this as a non-root user attempting to chown → **permission denied**
-5. `no_root_squash` doesn't help because rootless "root" is just a mapped user, not actual root
-
-With rootful Podman:
-
-- Container UID 0 = Host UID 0 (actual root)
-- Container UID 33 (www-data) = Host UID 33
-- NFS sees real root doing chown operations
-- Existing `no_root_squash` on NFS export works correctly
-
-### Security Risks and Mitigations
-
-| Risk | Mitigation |
-|------|------------|
-| Container escape = root access | Isolated VM with no sensitive data; lancache only caches game downloads |
-| Host network mode | Required for lancache anyway; ports 80/443 bound only on local network |
-| no_root_squash on NFS | Limited to single client IP (192.168.40.18/32) |
-| NFS privilege escalation | Mount options include `nosuid,nodev` to prevent setuid/device attacks |
-| Running as root | NOT `--privileged`; just runs as host root UID without extra capabilities |
-
-### What Rootful Means
-
-- Container UID 0 = Host UID 0 (actual root)
-- No user namespace isolation between container and host
-- systemd service runs at system level (`/etc/containers/systemd/`)
-- Service managed with `sudo systemctl` (not `systemctl --user`)
-
-### What Rootful Does NOT Mean
-
-- Container is NOT running with `--privileged` flag
-- Container does NOT have elevated capabilities (CAP_SYS_ADMIN, etc.)
-- Container is NOT bypassing SELinux/AppArmor (if configured)
-- Container does NOT have access to host devices
-
-### Alternatives Considered (and rejected)
-
-| Alternative | Why Rejected |
-|-------------|--------------|
-| Pre-create cache with UID 33 | Lancache recreates directory structure on every container start |
-| Bind-mount with `:U` flag | Only works with local storage, not NFS |
-| Use `all_squash` + `anonuid=33` | Would force all NFS operations to UID 33, affecting other services |
-| Local storage instead of NFS | Loses the benefit of centralized cache on NAS |
-| Fork lancache container | Upstream maintenance burden; fragile solution |
-
-### Service Management
-
-```bash
-# System-level service (not --user)
-sudo systemctl status lancache
-sudo systemctl restart lancache
-sudo journalctl -u lancache -f
-
-# Container operations
-sudo podman logs lancache
-sudo podman exec -it lancache /bin/bash
+```mermaid
+graph LR
+    NAS["NAS (VMID 300)\nBtrfs RAID1\n192.168.30.15"] --> NFS["NFS Export\n192.168.30.15:/mnt/storage/data"]
+    NFS --> VMS["Dedicated VMs\n(Jellyfin, monitoring, etc.)"]
+    NFS --> PVC["k8s PVCs\nnfs-client StorageClass"]
+    PVC --> SVC["k3s Workloads\n(Jellyfin, arr stack, Synapse)"]
 ```
 
-## See Also
+NFS subdir provisioner dynamically creates per-PVC subdirectories. All media and config data
+lives on the NAS — nodes are stateless and replaceable.
 
-- [AdGuard Home Configuration](configuration/adguard-home.md) - DNS setup and management
-- [Traefik Reverse Proxy](configuration/traefik-setup.md) - HTTPS proxy and TLS termination
-- [Matrix/Synapse Setup](configuration/matrix-setup.md) - Communication server on Elysium
-- [EPYC 7313P Optimization](reference/epyc-7313p-optimization.md) - CPU tuning and BIOS settings
-- [Resource Allocation Details](configuration/resource-allocation.md)
-- [Networking Configuration](configuration/networking.md)
-- [Playbooks Reference](reference/playbooks.md)
+## Network VLANs
+
+| VLAN | ID | Subnet | Purpose |
+|------|----|--------|---------|
+| management | 10 | 192.168.10.0/24 | Infrastructure VMs (monitoring, CI, proxy) |
+| iot | 20 | 192.168.20.0/24 | Home Assistant, IoT devices |
+| media | 30 | 192.168.30.0/24 | NAS, k3s cluster, Jellyfin |
+| games | 40 | 192.168.40.0/24 | Satisfactory, Lancache |
+
+## Cross-Repository Relationship
+
+[`jellybuntu`](https://github.com/SilverDFlame/jellybuntu) provisions all Proxmox VMs via
+Terraform and configures them via Ansible roles. Once the k3s nodes are up,
+[`jellybuntu-helm`](https://github.com/SilverDFlame/jellybuntu-helm) takes over: Flux CD
+watches the repo's `main` branch and reconciles all workloads automatically. This wiki
+documents both layers and serves as the operational reference.

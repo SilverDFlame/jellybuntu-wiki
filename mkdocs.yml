@@ -1,10 +1,7 @@
 site_name: Jellybuntu Infrastructure Wiki
-site_description: Homelab infrastructure automation documentation - Ansible, Proxmox, and Podman
+site_description: Homelab infrastructure documentation - Proxmox, k3s, Ansible, and Flux
 site_author: Jellybuntu Project
 site_url: http://nas.discus-moth.ts.net:8082
-exclude_docs: |
-  archive/
-
 repo_name: SilverDFlame/jellybuntu-wiki
 repo_url: https://github.com/SilverDFlame/jellybuntu-wiki
 edit_uri: edit/main/docs/
@@ -88,45 +85,41 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Quickstart Guide: quickstart.md
-      - Architecture Overview: architecture.md
-  - Deployment:
-      - Initial Setup: deployment/initial-setup.md
-      - Phase-Based Deployment: deployment/phase-based-deployment.md
-      - Golden Image Workflow: deployment/golden-image-workflow.md
-  - Configuration:
-      - Service Endpoints: configuration/service-endpoints.md
-      - Networking: configuration/networking.md
-      - Traefik Reverse Proxy: configuration/traefik-setup.md
-      - Security: configuration/security.md
-      - Mumble Server: configuration/mumble-setup.md
-      - Traefik Reverse Proxy: configuration/traefik-setup.md
-      - Matrix/Synapse: configuration/matrix-setup.md
-      - UniFi Controller: configuration/unifi-controller-setup.md
-  - Maintenance:
-      - Updates: maintenance/updates.md
-      - Backup & Recovery: maintenance/backup-recovery.md
-      - Power Management: maintenance/power-management.md
-      - SOPS Key Rotation: maintenance/sops-rotation.md
-      - State Encryption Rotation: maintenance/state-encryption-rotation.md
-  - Troubleshooting:
-      - Common Issues: troubleshooting/common-issues.md
-      - Packer Issues: troubleshooting/packer.md
-      - Service-Specific:
-          - Jellyfin: troubleshooting/jellyfin.md
-          - Download Clients: troubleshooting/download-clients.md
-          - Matrix: troubleshooting/matrix.md
-  - Reference:
-      - Playbooks: reference/playbooks.md
-      - Terraform Modules: reference/terraform-modules.md
-      - Container Versioning: reference/container-versioning.md
-      - Proxmox API: reference/proxmox-api-permissions.md
-      - SSH Bastion: reference/ssh-bastion.md
-      - VLAN Migration: reference/vlan-migration.md
-      - Tailscale Auto-Approval: reference/tailscale-auto-approval.md
-  - Development:
-      - Pre-commit Hooks: development/pre-commit.md
+  - Architecture: architecture.md
+  - Infrastructure:
+      - Virtual Machines: infrastructure/vms.md
+      - Networking: infrastructure/networking.md
+      - Storage: infrastructure/storage.md
+      - GPU: infrastructure/gpu.md
+  - Services:
+      - Jellyfin: services/jellyfin.md
+      - Tdarr: services/tdarr.md
+      - Sonarr: services/sonarr.md
+      - Radarr: services/radarr.md
+      - Prowlarr: services/prowlarr.md
+      - Bazarr: services/bazarr.md
+      - Lidarr: services/lidarr.md
+      - Jellyseerr: services/jellyseerr.md
+      - Navidrome: services/navidrome.md
+      - qBittorrent: services/qbittorrent.md
+      - SABnzbd: services/sabnzbd.md
+      - Unpackerr: services/unpackerr.md
+      - Matrix: services/matrix.md
+      - PostgreSQL: services/postgresql.md
+      - AdGuard Home: services/adguard.md
+      - Monitoring: services/monitoring.md
+      - Home Assistant: services/home-assistant.md
+      - Satisfactory: services/satisfactory.md
+      - LanCache: services/lancache.md
+      - Nexus Registry: services/nexus.md
+      - Woodpecker CI: services/woodpecker.md
+  - Operations:
+      - Deployment: operations/deployment.md
+      - k3s Cluster: operations/k3s-cluster.md
+      - Backups: operations/backups.md
+      - Secrets: operations/secrets.md
+      - Updates: operations/updates.md
+  - Troubleshooting: troubleshooting.md
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -141,7 +134,7 @@ copyright: Copyright &copy; 2024-2026 Jellybuntu Project
 # Link validation (MkDocs 1.6+)
 # These settings cause warnings to become errors with --strict flag
 validation:
-  omitted_files: info  # Many files intentionally not in nav (research, plans, etc.)
+  omitted_files: warn  # All docs should be in nav
   absolute_links: warn
   unrecognized_links: warn
   anchors: warn
