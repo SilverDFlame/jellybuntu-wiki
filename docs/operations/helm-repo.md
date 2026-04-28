@@ -1,7 +1,7 @@
 # jellybuntu-helm Repo Layout
 
 **Repo**: [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm)
-**Local mirror**: `~/coding/mirrors/jellybuntu-helm`
+**Local mirror**: `~/coding/jellybuntu-helm`
 **Protected branch**: `main` — always branch + PR, never push direct
 
 ## Directory Structure
