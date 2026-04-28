@@ -183,6 +183,20 @@ Alternatively, run the Ansible playbook which handles this automatically:
 ./bin/runtime/ansible-run.sh playbooks/infrastructure/k3s-cluster.yml
 ```
 
+## Suspend / Resume Reconciliation
+
+Pause Flux during maintenance to prevent it from reverting manual changes:
+
+```bash
+# Suspend a kustomization (e.g. during storage maintenance)
+flux suspend kustomization media
+
+# Resume when done
+flux resume kustomization media
+```
+
+Suspended kustomizations are still visible in `flux get kustomizations` — status shows `Suspended`.
+
 ## NFS Storage
 
 The `nfs-client` StorageClass is the default, backed by the NAS:
@@ -195,3 +209,8 @@ The `nfs-client` StorageClass is the default, backed by the NAS:
 kubectl get storageclass
 kubectl get pvc -A
 ```
+
+## See Also
+
+- [k3s Namespace Reference](k3s-namespaces.md) — service ports, URLs, in-cluster DNS
+- [jellybuntu-helm Repo Layout](helm-repo.md) — chart structure, SOPS secrets, app-template notes
