@@ -33,14 +33,6 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Priority: High (cpu_units: 2048, dedicated cores)
   - Note: Cores 0-3 reserved for future Minecraft server
 
-- **Mumble** (VMID 201)
-  - Resources: 1 core, 1GB RAM, 32GB disk
-  - IP: 192.168.40.20 (Games VLAN 40)
-  - Stack: Rootless Podman with Quadlet
-  - Services: Mumble voice chat server (mumblevoip/mumble-server)
-  - Priority: Low (cpu_units: 512)
-  - Deployment: Phase 4 (optional)
-
 #### Storage Infrastructure
 
 - **NAS** (VMID 300)
@@ -240,7 +232,7 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 
 1. **High (2048)**: Satisfactory (pinned)
 2. **Medium (1024)**: NAS, Monitoring, Home Assistant, DB
-3. **Low (512)**: Woodpecker CI, Mumble, Lancache, UniFi Controller
+3. **Low (512)**: Woodpecker CI, Lancache, UniFi Controller
 
 ### Storage Architecture
 
@@ -344,7 +336,6 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 |------------------|------|--------|----------|---------|----------|-----------|
 | Home Assistant   | 100  | 2      | 2GB      | 40GB    | Medium   | 1024      |
 | Satisfactory     | 200  | 4*     | 8GB      | 60GB    | High     | 2048      |
-| Mumble           | 201  | 1      | 1GB      | 32GB    | Low      | 512       |
 | NAS              | 300  | 2      | 6GB      | 3x6TB** | Medium   | 1024      |
 | DB               | 301  | 2      | 4GB      | 64GB    | Medium   | 1024      |
 | Monitoring       | 500  | 2      | 4GB      | 64GB    | Medium   | 1024      |
@@ -445,7 +436,7 @@ Download clients now run in k3s media namespace. The separate VM approach (isola
 │  └─────────────────────────────────────────────────────────────────┘ │
 │                                                                      │
 │  ┌─ Games VLAN 40 ─────────────────────────────────────────────────┐ │
-│  │ Satisfactory (.11)  Mumble (.20)  Lancache (.18)                │ │
+│  │ Satisfactory (.11)  Lancache (.18)                              │ │
 │  └─────────────────────────────────────────────────────────────────┘ │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
