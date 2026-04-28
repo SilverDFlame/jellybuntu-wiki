@@ -145,7 +145,17 @@ Edit [`playbooks/vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main
 
 # Phase 3: Deploy Services (8 min)
 ./bin/runtime/ansible-run.sh playbooks/phases/phase3-services.yml
+
+# Deploy k3s cluster (run after Phase 3)
+./bin/runtime/ansible-run.sh playbooks/infrastructure/k3s-cluster.yml
+
+# Flux bootstraps automatically. Force reconcile after jellybuntu-helm PR merges:
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization infrastructure -n flux-system
 ```
+
+**k3s service changes go through `jellybuntu-helm` PRs, not Ansible.**
+Helm charts repo: https://github.com/SilverDFlame/jellybuntu-helm
 
 This deployment will:
 

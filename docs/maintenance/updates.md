@@ -2,6 +2,46 @@
 
 Guide to updating services, managing Docker containers, and maintaining system security through automated and manual updates.
 
+## k3s Services (Flux GitOps)
+
+k3s service updates go through the jellybuntu-helm repo, not Ansible.
+
+```bash
+cd ~/coding/mirrors/jellybuntu-helm
+git checkout main && git pull
+git checkout -b fix/update-<service>-image
+
+# Edit image tag in HelmRelease
+# File: clusters/jellybuntu/<namespace>/<service>.yaml
+
+git add . && git commit -m "chore: bump <service> to <version>"
+git push -u origin HEAD
+# PR → merge → Flux auto-reconciles within 1 min
+# Or force: flux reconcile kustomization <namespace> -n flux-system
+```
+
+### Verify Update
+
+```bash
+kubectl rollout status deployment/<service> -n <namespace>
+kubectl get pods -n <namespace>
+flux get helmreleases -n <namespace>
+```
+
+### Check Current Deployed Image
+
+```bash
+kubectl get pod -n <namespace> -l app.kubernetes.io/name=<service> \
+  -o jsonpath='{.items[0].spec.containers[0].image}'
+```
+
+### Image Tag Notes
+
+- LinuxServer.io (`lscr.io/linuxserver/*`): rolling `latest` tag — update by restarting pod after upstream changes
+- Explicit versions (Tdarr `2.68.01`, Synapse `v1.147.1`, etc.): pin for stability, bump via PR
+
+---
+
 ## Overview
 
 The Jellybuntu infrastructure uses a hybrid update strategy:

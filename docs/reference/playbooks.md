@@ -167,6 +167,26 @@ Run all phases at once (skips Phase 4):
 
 ## Individual Playbooks
 
+### k3s Cluster
+
+**File:** `playbooks/infrastructure/k3s-cluster.yml`
+**Targets:** `k8s_cluster` (k8s-control + k8s-workers)
+**Run:** `./bin/runtime/ansible-run.sh playbooks/infrastructure/k3s-cluster.yml`
+
+What it does:
+
+- GPU passthrough config on k8s-gpu (GTX 1080 PCIe)
+- k3s control plane on k8s-control (192.168.30.40)
+- Worker join: k8s-gpu (.41), k8s-media (.42), k8s-net (.43), k8s-ops (.44)
+- NVIDIA drivers + GPU node setup
+- Node labels: `jellybuntu.io/role: gpu|media|net|ops`
+- Flux CD bootstrap → jellybuntu-helm repo
+
+**Run after:** Phase 3 (DB at .16 and NAS at .15 must be running)
+**Idempotent:** Yes
+
+---
+
 ### infrastructure/provision-vms.yml
 
 **Target**: Proxmox host

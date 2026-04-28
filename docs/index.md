@@ -18,7 +18,7 @@ Step-by-step deployment guides for the infrastructure:
 - **[Phase-Based Deployment](deployment/phase-based-deployment.md)** - Complete deployment workflow guide
 - **[Phase 1: Infrastructure](deployment/phase1-infrastructure.md)** - VM provisioning on Proxmox
 - **[Phase 2: Bootstrap](deployment/phase2-bootstrap.md)** - NAS + Tailscale configuration
-- **[Phase 3: Services](deployment/phase3-services.md)** - Media services and download clients
+- **[Phase 3: Services](deployment/phase3-services.md)** - Standalone VM services
 - **[Phase 4: Post-Deployment](deployment/phase4-post-deployment.md)** - Firewall and auto-updates
 - **[Phase 5: Monitoring](deployment/phase5-monitoring.md)** - Prometheus/Grafana/Uptime Kuma (optional)
 - **[Golden Image Workflow](deployment/golden-image-workflow.md)** - Packer golden image builds and VM templates
@@ -122,31 +122,46 @@ Detailed reference documentation:
 
 ## Infrastructure Overview
 
-### VMs
+### Repositories
 
-- **Home Assistant** (VMID 100, 192.168.20.10) - Home automation (IoT VLAN)
-- **Satisfactory** (VMID 200, 192.168.40.11) - Game server with CPU pinning (Games VLAN)
-- **Mumble** (VMID 201, 192.168.40.20) - Voice chat server (Games VLAN)
-- **NAS** (VMID 300, 192.168.30.15) - Btrfs RAID1 NFS storage, DNS (Media VLAN)
-- **Jellyfin** (VMID 400, 192.168.30.12) - Media server with GPU passthrough (Media VLAN)
-- **Media Services** (VMID 401, 192.168.30.13) - Sonarr, Radarr, Prowlarr, Jellyseerr (Media VLAN)
-- **Download Clients** (VMID 402, 192.168.30.14) - qBittorrent, SABnzbd (Media VLAN)
-- **Monitoring** (VMID 500, 192.168.10.16) - Prometheus, Grafana (Management VLAN, optional)
-- **Woodpecker CI** (VMID 600, 192.168.10.17) - CI/CD pipelines (Management VLAN)
-- **Lancache** (VMID 700, 192.168.40.18) - Game download cache (Games VLAN)
-- **UniFi Controller** (VMID 800, 192.168.10.19) - Network management (Management VLAN)
-- **Elysium (Matrix)** (VMID 202, 192.168.40.21) — Matrix/Synapse communication server (Games VLAN)
-- **Reverse Proxy** (VMID 900, 192.168.10.20) — Traefik v3 HTTPS proxy (Management VLAN)
+- **[SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu)** - Ansible, Terraform/OpenTofu, Packer (this repo)
+- **[SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm)** - Flux/Helm charts for k3s cluster (`main` protected, always PR)
+
+### Standalone VMs (Ansible-managed)
+
+| VM | VMID | IP | Services |
+|----|------|----|---------|
+| Home Assistant | 100 | 192.168.20.10 | Home automation (IoT VLAN) |
+| Satisfactory | 200 | 192.168.40.11 | Game server, CPU pinned (Games VLAN) |
+| Mumble | 201 | 192.168.40.20 | Voice chat server (Games VLAN) |
+| NAS | 300 | 192.168.30.15 | Btrfs RAID1 NFS storage, DNS (Media VLAN) |
+| DB | 301 | 192.168.30.16 | PostgreSQL 16 for k3s services (Media VLAN) |
+| Monitoring | 500 | 192.168.10.16 | Prometheus, Grafana (Management VLAN, optional) |
+| Woodpecker CI | 600 | 192.168.10.17 | CI/CD pipelines (Management VLAN) |
+| Lancache | 700 | 192.168.40.18 | Game download cache (Games VLAN) |
+| UniFi Controller | 800 | 192.168.10.19 | Network management (Management VLAN) |
+
+### k3s Cluster (Flux/GitOps-managed via jellybuntu-helm)
+
+| Node | IP | Workloads |
+|------|----|-----------|
+| k8s-control | 192.168.30.40 | Control plane |
+| k8s-gpu | 192.168.30.41 | Jellyfin, Tdarr (GTX 1080 passthrough) |
+| k8s-media | 192.168.30.42 | *arr stack, download clients, Navidrome, Jellyseerr |
+| k8s-net | 192.168.30.43 | Traefik ingress (MetalLB VIP: 192.168.30.200/29) |
+| k8s-ops | 192.168.30.44 | Synapse, LiveKit, Coturn, TeamSpeak |
+
+All k3s services: `*.elysium.industries` (Let's Encrypt + Cloudflare DNS-01)
 
 ### Key Features
 
 - **Phase-Based Deployment** - Infrastructure → Networking → Services (or deploy all at once)
 - **VLAN Segmentation** - Network isolation by function (Management, IoT, Media, Games)
-- **Podman Quadlet Architecture** - Rootless containers with native systemd integration
-- **Isolated Download Clients** - Dedicated VM for better resource management
+- **k3s + Flux GitOps** - Declarative Helm-based workload management for cluster services
+- **Podman Quadlet Architecture** - Rootless containers with native systemd integration (standalone VMs)
 - **Btrfs RAID1 NAS** - Reliable storage with snapshots and NFS exports
 - **Tailscale Integration** - Secure remote access to all services
-- **Automated Deployment** - Full infrastructure-as-code with Ansible
+- **Automated Deployment** - Full infrastructure-as-code with Ansible + Flux
 - **UFW Firewall** - VLAN-aware firewall rules and access control
 - **Unattended Upgrades** - Automatic security updates
 
@@ -172,16 +187,15 @@ Detailed reference documentation:
 │   │   ├── phase3-services.yml
 │   │   ├── phase4-post-deployment.yml
 │   │   └── phase5-monitoring.yml
+│   ├── infrastructure/               # Provisioning, storage, k3s cluster
 │   ├── system/                       # Cross-cutting VM configuration
-│   ├── infrastructure/               # Provisioning and storage
 │   ├── networking/                   # VPN, DNS, storage mounts
-│   ├── services/                     # Application deployments
+│   ├── services/                     # Standalone VM application deployments
 │   ├── monitoring/                   # Observability stack
 │   └── utility/                      # One-off utilities
 ├── roles/                            # Ansible roles (reusable)
 │   ├── podman_app/                   # Quadlet container deployment
 │   ├── tailscale/
-│   ├── jellyfin/
 │   └── ...
 ├── services/                         # Service configurations (legacy)
 │   └── configs/                      # Configuration templates
@@ -191,6 +205,8 @@ Detailed reference documentation:
 └── setup.sh                          # Bootstrap script
 ```
 
+k3s cluster workloads (Helm charts + Flux manifests): [`jellybuntu-helm`](https://github.com/SilverDFlame/jellybuntu-helm)
+
 ## Support and Contribution
 
 This is a personal homelab project. Documentation is maintained for reference and to assist Claude Code in understanding
@@ -199,7 +215,8 @@ the infrastructure.
 **Key Technologies:**
 
 - Proxmox VE - Virtualization
-- Ansible - Infrastructure automation
-- Podman Quadlet - Rootless container orchestration with systemd
+- Ansible - Infrastructure automation (standalone VMs)
+- Flux + Helm - GitOps for k3s cluster workloads
+- Podman Quadlet - Rootless container orchestration with systemd (standalone VMs)
 - Tailscale - VPN/mesh networking
 - Btrfs RAID1 NAS - Network storage with snapshots

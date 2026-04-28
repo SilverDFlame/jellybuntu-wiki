@@ -1,172 +1,154 @@
 # Jellyfin Configuration
 
-Jellyfin is an open-source media server that organizes and streams your media collection. It provides a clean
-interface for managing movies, TV shows, music, and photos.
+Jellyfin is an open-source media server that organizes and streams your media collection.
 
-> **IMPORTANT**: Jellyfin runs as a **native systemd service** on the Jellyfin VM (192.168.30.12).
-> Use `sudo systemctl` commands, NOT `systemctl --user`. Jellyfin is NOT containerized.
+> **Deployment**: HelmRelease `jellyfin` in the `gpu` namespace, pinned to k8s-gpu node (192.168.30.41).
+> Managed via Flux GitOps — edit `clusters/jellybuntu/gpu/jellyfin.yaml` in `jellybuntu-helm`.
 
 ## Overview
 
-- **VM**: jellyfin (VMID 400, 192.168.30.12)
-- **Ports**: 8096 (HTTP), 8920 (HTTPS), 7359 (Discovery)
-- **Deployment**: Native systemd service (not containerized)
-- **Config Path**: `/etc/jellyfin/` and `/var/lib/jellyfin/`
-- **Media Path**: `/mnt/data/media/` (NFS mount)
-- **Playbook**: [`playbooks/services/jellyfin.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin.yml)
+| Field | Value |
+|-------|-------|
+| Namespace | `gpu` |
+| Node | k8s-gpu (192.168.30.41) |
+| Image | `lscr.io/linuxserver/jellyfin:latest` |
+| Port | 8096 |
+| URL | https://jellyfin.elysium.industries (public, no IP restriction) |
+| GPU | GTX 1080, time-sliced (1 virtual GPU shared with Tdarr via NVIDIA device plugin) |
 
-## Access
+## Storage
 
-- **Tailscale**: http://jellyfin.discus-moth.ts.net:8096
-- **Local Network**: http://192.168.30.12:8096
+| Volume | Type | Host Path / Claim | Container Path |
+|--------|------|-------------------|----------------|
+| config | PVC 5 Gi (nfs-client) | — | `/config` |
+| media | PVC `nfs-media-gpu` (1 Ti) | — | `/data` |
+| transcode-cache | hostPath | `/mnt/transcode-cache/jellyfin` on k8s-gpu | `/config/data/transcodes` |
 
-## Deployment
+Media libraries reference paths under `/data` (e.g., `/data/media/movies`, `/data/media/tv`).
 
-### Via Ansible Playbook (Recommended)
+## Environment
 
-```bash
-# Deploy Jellyfin
-./bin/runtime/ansible-run.sh playbooks/services/jellyfin.yml
-```
+| Variable | Value |
+|----------|-------|
+| PUID | 1000 |
+| PGID | 1000 |
+| TZ | America/Los_Angeles |
+| JELLYFIN_PublishedServerUrl | jellyfin.elysium.industries |
 
-The playbook:
+## Resources
 
-1. Installs Jellyfin from official repository
-2. Configures hardware transcoding (Intel QSV if available)
-3. Sets up NFS mount for media storage
-4. Configures firewall rules
-5. Enables and starts the service
+| | Memory | GPU |
+|-|--------|-----|
+| Requests | 2 Gi | 1 |
+| Limits | 6 Gi | 1 |
 
-## Initial Setup
+Node selector: `jellybuntu.io/role: gpu`
 
-### First-Time Configuration
-
-1. **Access Jellyfin**: http://jellyfin.discus-moth.ts.net:8096
-2. **Select Language**: Choose preferred language
-3. **Create Admin Account**: Set username and password
-4. **Add Media Libraries**:
-   - Movies: `/mnt/data/media/movies`
-   - TV Shows: `/mnt/data/media/tv`
-   - Music: `/mnt/data/media/music` (optional)
-5. **Configure Metadata**: Select preferred metadata providers
-6. **Complete Setup**: Finish the wizard
-
-## Automated API Configuration
-
-After completing the initial setup wizard and creating an admin account, the
-[`jellyfin_config`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin_config)
-Ansible role can automate the remaining Jellyfin configuration via the API.
-
-### Prerequisites
-
-- Manual initial setup **must** be completed first (admin account + wizard)
-- Jellyfin must be running and accessible
-
-### What It Configures
-
-- **System settings**: Server name, language, encoding preferences
-- **NVENC hardware encoding**: GPU-accelerated transcoding via GTX 1080
-- **Media libraries**: Movies, TV Shows, and Anime with metadata fetchers
-  (TMDb, AniDB, OMDb)
-- **Scheduled tasks**: Optimize task timing for off-peak hours
-- **Plugins**: AniDB, Intro Skipper, Chapter Segments Provider
-
-### Running the Configuration
+## Operations
 
 ```bash
-./bin/runtime/ansible-run.sh playbooks/services/jellyfin-config.yml
+# Logs
+kubectl logs -n gpu deployment/jellyfin -f
+
+# Restart
+kubectl rollout restart deployment/jellyfin -n gpu
+
+# Shell into container
+kubectl exec -it -n gpu deployment/jellyfin -- /bin/bash
+
+# Verify GPU access from inside container
+kubectl exec -it -n gpu deployment/jellyfin -- nvidia-smi
+
+# Force Flux reconcile
+flux reconcile helmrelease jellyfin -n gpu
 ```
 
-> **Note**: This playbook is idempotent and safe to re-run. It will skip
-> configuration that already matches the desired state.
+## Config Changes
 
-### Version Pinning
-
-Jellyfin is pinned to the **10.10.x** release series via the
-`jellyfin_version_pin` variable. Version 10.11.x has known performance
-regressions tracked in
-[Issue #58](https://github.com/SilverDFlame/jellybuntu/issues/58).
-
-### Reference
-
-- **Role**: [`roles/jellyfin_config/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin_config)
-- **Playbook**: [`playbooks/services/jellyfin-config.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/playbooks/services/jellyfin-config.yml)
-
-### Library Configuration
-
-#### Movies Library
-
-1. Dashboard → Libraries → Add Media Library
-2. Content type: **Movies**
-3. Display name: **Movies**
-4. Folders: `/mnt/data/media/movies`
-5. Metadata settings:
-   - Language: English
-   - Country: United States
-   - Enable **TheMovieDb** for metadata
-
-#### TV Shows Library
-
-1. Dashboard → Libraries → Add Media Library
-2. Content type: **Shows**
-3. Display name: **TV Shows**
-4. Folders: `/mnt/data/media/tv`
-5. Metadata settings:
-   - Language: English
-   - Enable **TheMovieDb** and **TheTVDB**
+1. Edit `clusters/jellybuntu/gpu/jellyfin.yaml` in `jellybuntu-helm`
+2. Open PR → merge to `main`
+3. Flux reconciles automatically (or force with `flux reconcile helmrelease jellyfin -n gpu`)
 
 ## Hardware Transcoding
 
-### Intel Quick Sync Video (QSV)
+Jellyfin has access to 1 virtual GPU (time-sliced GTX 1080, shared with Tdarr).
 
-If the VM has Intel GPU passthrough configured:
+### Configure NVENC in Dashboard
 
 1. Dashboard → Playback → Transcoding
-2. Hardware acceleration: **Intel QuickSync (QSV)**
-3. Enable hardware decoding for:
-   - H264
-   - HEVC
-   - MPEG2
-   - VC1
-   - VP8/VP9
+2. Hardware acceleration: **NVIDIA NVENC**
+3. Enable hardware decoding for: H264, HEVC, MPEG2, VC1, VP8/VP9
 4. Enable **hardware encoding**
 5. Enable **tone mapping** for HDR content
 
-### Verify Hardware Transcoding
+### Verify GPU
 
 ```bash
-# SSH to Jellyfin VM
-ssh -i ~/.ssh/ansible_homelab ansible@jellyfin.discus-moth.ts.net
-
-# Check for Intel GPU
-ls -la /dev/dri/
-
-# Check Jellyfin can access GPU
-sudo -u jellyfin ls -la /dev/dri/
-
-# Check transcoding logs during playback
-sudo journalctl -u jellyfin -f | grep -i transcode
+kubectl exec -it -n gpu deployment/jellyfin -- nvidia-smi
 ```
 
-### Software Transcoding
+### Transcode Cache
 
-If hardware acceleration is unavailable:
+The transcode cache is a hostPath mount to `/mnt/transcode-cache/jellyfin` on k8s-gpu — a RAM disk
+(tmpfs) on the node. In the Jellyfin UI this appears as `/config/data/transcodes`. No configuration
+needed; it is set automatically via the HelmRelease.
 
-1. Dashboard → Playback → Transcoding
-2. Hardware acceleration: **None**
-3. Adjust thread count based on CPU cores
-4. Consider limiting concurrent transcodes
+### NVENC Stream Limit
+
+GTX 1080 consumer cards have an artificial 2-stream NVENC encode limit. To remove:
+
+```bash
+# Run on k8s-gpu node
+ssh -i ~/.ssh/ansible_homelab ansible@192.168.30.41 \
+  "sudo bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/keylase/nvidia-patch/master/patch.sh)\""
+```
+
+After patching, increase concurrent transcodes to 3-4 in Dashboard → Playback → Transcoding.
+
+## Initial Setup
+
+1. Navigate to https://jellyfin.elysium.industries
+2. Select language
+3. Create admin account
+4. Add media libraries:
+   - Movies: `/data/media/movies`
+   - TV Shows: `/data/media/tv`
+   - Music: `/data/media/music` (optional)
+5. Complete setup wizard
+
+## Library Configuration
+
+### Movies Library
+
+1. Dashboard → Libraries → Add Media Library
+2. Content type: **Movies** | Display name: **Movies**
+3. Folder: `/data/media/movies`
+4. Metadata: Language English, Country US, enable TheMovieDb
+
+### TV Shows Library
+
+1. Dashboard → Libraries → Add Media Library
+2. Content type: **Shows** | Display name: **TV Shows**
+3. Folder: `/data/media/tv`
+4. Metadata: enable TheMovieDb and TheTVDB
+
+### Automatic Library Refresh
+
+Dashboard → Libraries → (library) → Edit → Enable **real time monitoring**
+
+Or trigger via API:
+
+```bash
+# From inside cluster — use in-cluster service DNS
+curl -X POST "http://jellyfin.gpu.svc.cluster.local:8096/Library/Refresh" \
+  -H "X-Emby-Token: YOUR_API_KEY"
+```
 
 ## User Management
 
 ### Creating Users
 
-1. Dashboard → Users → Add User
-2. Configure:
-   - Username
-   - Password (or no password for local users)
-   - Library access
-   - Playback permissions
+Dashboard → Users → Add User. Configure username, password, library access, playback permissions.
 
 ### User Permissions
 
@@ -175,40 +157,17 @@ If hardware acceleration is unavailable:
 | Administrator | Admin only |
 | Allow media playback | All users |
 | Allow media deletion | Admin only |
-| Allow remote connections | Tailscale users |
+| Allow remote connections | All users (behind Traefik) |
 | Allow transcoding | All users (with limits) |
 
-### Integration with Jellyseerr
+### Jellyseerr Integration
 
-Jellyfin users automatically sync with Jellyseerr for media requests:
+Jellyseerr connects to Jellyfin for user sync and library state. In Jellyseerr Settings → Jellyfin:
 
-1. Create users in Jellyfin first
-2. Users can log into Jellyseerr with Jellyfin credentials
-3. Request permissions managed in Jellyseerr
-
-## Network Configuration
-
-### Remote Access
-
-For access via Tailscale (recommended):
-
-1. Dashboard → Networking
-2. Known proxies: Leave empty
-3. Public HTTPS port: 8920 (optional)
-4. Allow remote connections: **Enabled**
-5. LAN networks: `192.168.30.0/24,100.64.0.0/10` (local + Tailscale)
-
-### DLNA/UPnP (Optional)
-
-For local network discovery:
-
-1. Dashboard → DLNA
-2. Enable DLNA server: **Yes** (if desired)
-3. DLNA client discovery: Automatic
+- Hostname: `http://jellyfin.gpu.svc.cluster.local:8096` (in-cluster)
+- API Key: generate in Jellyfin Dashboard → API Keys
 
 ## Playback Settings
-
-### Streaming Quality
 
 Dashboard → Playback → Streaming:
 
@@ -219,207 +178,78 @@ Dashboard → Playback → Streaming:
 | Direct play | Preferred |
 | Allow subtitle extraction | Enabled |
 
-### Subtitle Configuration
+Subtitles (Dashboard → Playback → Subtitles):
 
-Dashboard → Playback → Subtitles:
-
-1. Preferred subtitle language: English
-2. Subtitle mode: Default (or Always Show)
-3. Prefer forced subtitles: Yes
-4. Burn in subtitles when transcoding: Only when necessary
-
-## Integration with Arr Stack
-
-### Connecting to Sonarr/Radarr
-
-Jellyfin doesn't directly connect to Sonarr/Radarr. Instead:
-
-1. **Sonarr/Radarr** manage downloads and organization
-2. **Files are saved** to NFS mount (`/mnt/data/media/`)
-3. **Jellyfin scans** the library to detect new content
-
-### Automatic Library Refresh
-
-Configure library monitoring:
-
-1. Dashboard → Libraries → (Select Library) → Edit
-2. Enable: **Enable real time monitoring**
-3. Scan interval: 12 hours (or manual)
-
-Or trigger via API from Sonarr/Radarr webhooks:
-
-```bash
-# Trigger library scan via API
-curl -X POST "http://localhost:8096/Library/Refresh" \
-  -H "X-Emby-Token: YOUR_API_KEY"
-```
-
-### Jellyseerr Integration
-
-1. In Jellyseerr Settings → Jellyfin:
-   - Hostname: `http://192.168.30.12:8096`
-   - API Key: (Generate in Jellyfin Dashboard → API Keys)
-2. Enable library sync
-3. Import users from Jellyfin
-
-## API Configuration
-
-### Generate API Key
-
-1. Dashboard → API Keys
-2. Click **+** to create new key
-3. Name it (e.g., "Jellyseerr", "Scripts")
-4. Copy the key securely
-
-### Common API Endpoints
-
-```bash
-# Base URL
-http://192.168.30.12:8096
-
-# Get system info
-curl "http://localhost:8096/System/Info" \
-  -H "X-Emby-Token: API_KEY"
-
-# Trigger library scan
-curl -X POST "http://localhost:8096/Library/Refresh" \
-  -H "X-Emby-Token: API_KEY"
-
-# Get active sessions
-curl "http://localhost:8096/Sessions" \
-  -H "X-Emby-Token: API_KEY"
-```
+- Preferred language: English
+- Mode: Default
+- Prefer forced subtitles: Yes
+- Burn in: Only when necessary
 
 ## Plugin Management
 
-### Installing Plugins
-
-1. Dashboard → Plugins → Catalog
-2. Browse available plugins
-3. Click to install
-4. Restart Jellyfin to activate
-
-### Recommended Plugins
+Dashboard → Plugins → Catalog. Recommended plugins:
 
 | Plugin | Purpose |
 |--------|---------|
 | Open Subtitles | Automatic subtitle downloads |
 | Playback Reporting | Track viewing statistics |
-| Trakt | Sync watch history with Trakt.tv |
+| Trakt | Sync watch history |
 | TMDb Box Sets | Automatic collection creation |
+| AniDB | Anime metadata |
+| Intro Skipper | Skip intros automatically |
 
-## Service Management
-
-### Check Status
-
-```bash
-# Native systemd service (requires sudo)
-sudo systemctl status jellyfin
-```
-
-### View Logs
+Restart Jellyfin pod to activate after install:
 
 ```bash
-# Follow logs in real-time
-sudo journalctl -u jellyfin -f
-
-# View recent logs
-sudo journalctl -u jellyfin -n 100
-
-# Search for errors
-sudo journalctl -u jellyfin | grep -i error
+kubectl rollout restart deployment/jellyfin -n gpu
 ```
 
-### Restart Service
+## API
 
 ```bash
-sudo systemctl restart jellyfin
+# Base URL (public)
+https://jellyfin.elysium.industries
+
+# In-cluster
+http://jellyfin.gpu.svc.cluster.local:8096
+
+# Get system info
+curl "https://jellyfin.elysium.industries/System/Info" -H "X-Emby-Token: API_KEY"
+
+# Trigger library scan
+curl -X POST "https://jellyfin.elysium.industries/Library/Refresh" -H "X-Emby-Token: API_KEY"
+
+# Get active sessions
+curl "https://jellyfin.elysium.industries/Sessions" -H "X-Emby-Token: API_KEY"
 ```
 
-### Update Jellyfin
+## Integration with Arr Stack
 
-```bash
-# Update via package manager
-sudo apt update
-sudo apt upgrade jellyfin
+Sonarr/Radarr manage downloads and organize to NFS storage. Jellyfin scans `/data` and picks up new content.
+No direct connection between Arr apps and Jellyfin is required, but Sonarr/Radarr can send webhooks
+to trigger library scans via the API endpoint above.
 
-# Or via Ansible
-./bin/runtime/ansible-run.sh playbooks/services/jellyfin.yml
-```
+## Concurrent Transcodes
 
-## Backup and Restore
+Dashboard → Playback → Transcoding → Concurrent transcodes:
 
-### Backup Configuration
+- Start at 2 (NVENC limit on unpatched driver)
+- After NVENC patch: increase to 3-4
+- Monitor GPU utilization via `nvidia-smi` in the pod
 
-```bash
-# Stop Jellyfin
-sudo systemctl stop jellyfin
-
-# Backup config and data
-sudo tar -czf ~/jellyfin-backup-$(date +%Y%m%d).tar.gz \
-  /etc/jellyfin \
-  /var/lib/jellyfin
-
-# Copy to safe location
-cp ~/jellyfin-backup-*.tar.gz /mnt/data/backups/
-
-# Restart Jellyfin
-sudo systemctl start jellyfin
-```
-
-### Restore Configuration
-
-```bash
-# Stop Jellyfin
-sudo systemctl stop jellyfin
-
-# Restore from backup
-sudo tar -xzf ~/jellyfin-backup-YYYYMMDD.tar.gz -C /
-
-# Fix permissions
-sudo chown -R jellyfin:jellyfin /var/lib/jellyfin
-sudo chown -R jellyfin:jellyfin /etc/jellyfin
-
-# Start Jellyfin
-sudo systemctl start jellyfin
-```
-
-## Performance Tuning
-
-### Memory Configuration
-
-Edit `/etc/jellyfin/encoding.xml` for transcoding memory limits.
-
-### Concurrent Streams
-
-Dashboard → Playback → Transcoding:
-
-- Limit concurrent transcodes based on CPU/GPU capability
-- Recommended: 2-4 for software, 4-8 for hardware transcoding
-
-### Database Optimization
-
-```bash
-# Vacuum the database (run during low usage)
-sudo systemctl stop jellyfin
-sudo sqlite3 /var/lib/jellyfin/data/library.db "VACUUM;"
-sudo systemctl start jellyfin
-```
-
-## Troubleshooting Quick Reference
+## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| Can't access web UI | Check service: `sudo systemctl status jellyfin` |
-| Transcoding failing | Check GPU permissions and logs |
-| Library not updating | Trigger manual scan or check NFS mount |
-| Slow playback | Check network and transcoding settings |
-| Users can't log in | Verify user accounts in Dashboard → Users |
+| Pod not running | `kubectl get pods -n gpu` → `kubectl describe pod -n gpu <pod>` |
+| GPU not available | `kubectl exec -n gpu deployment/jellyfin -- nvidia-smi` |
+| Transcoding failing | Check logs: `kubectl logs -n gpu deployment/jellyfin -f` |
+| Library not updating | Trigger manual scan via API or check NFS PVC mount |
+| Can't access UI | Verify Traefik IngressRoute: `kubectl get ingressroute -n gpu` |
 
 ## See Also
 
 - [Jellyfin Troubleshooting](../troubleshooting/jellyfin.md)
 - [Tdarr Configuration](tdarr-setup.md) - Automatic transcoding
 - [Jellyseerr Setup](jellyseerr-setup.md) - Media requests
-- [GPU Passthrough](gpu-passthrough.md) - Hardware acceleration
 - [Service Endpoints](service-endpoints.md)

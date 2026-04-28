@@ -41,14 +41,6 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Priority: Low (cpu_units: 512)
   - Deployment: Phase 4 (optional)
 
-- **Elysium (Matrix)** (VMID 202)
-  - Resources: 4 cores, 8GB RAM, 64GB disk
-  - IP: 192.168.40.21 (Games VLAN 40)
-  - Stack: Rootless Podman with Quadlet (pod-based)
-  - Services: Synapse homeserver, PostgreSQL 16, LiveKit SFU, lk-jwt-service, coturn, Synapse Admin
-  - Priority: Medium (cpu_units: 1024)
-  - Deployment: Phase 3 (services)
-
 #### Storage Infrastructure
 
 - **NAS** (VMID 300)
@@ -59,31 +51,13 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Priority: Medium (cpu_units: 1024)
   - Purpose: Network storage, internal DNS with ad blocking, container image caching
 
-#### Media Services
-
-- **Jellyfin** (VMID 400)
-  - Resources: 4 cores, 8GB RAM, 80GB disk + GTX 1080 GPU passthrough
-  - IP: 192.168.30.12 (Media VLAN 30)
-  - Stack: Native Jellyfin package + Tdarr (Quadlet)
-  - Optimizations: NVENC hardware transcoding, RAM disk cache, CPU governor (performance)
-  - Services: Jellyfin, Tdarr (media transcoding automation)
-  - Priority: High (cpu_units: 2048)
-  - Purpose: 4K hardware transcoding with NVENC, automated media optimization
-
-- **Media Services Stack** (VMID 401)
-  - Resources: 4 cores, 10GB RAM, 50GB disk
-  - IP: 192.168.30.13 (Media VLAN 30)
-  - Stack: Rootless Podman with Quadlet
-  - Services: Sonarr, Radarr, Prowlarr, Jellyseerr, Bazarr, Homarr, Byparr, Recyclarr
-  - Priority: Medium (cpu_units: 1024)
-
-- **Download Clients** (VMID 402)
-  - Resources: 4 cores, 6GB RAM, 60GB disk
-  - IP: 192.168.30.14 (Media VLAN 30)
-  - Stack: Rootless Podman with Quadlet
-  - Services: qBittorrent, SABnzbd, Gluetun (VPN), Unpackerr
-  - Priority: Medium (cpu_units: 1024)
-  - Purpose: Isolated download operations with VPN protection
+- **DB** (VMID 301)
+  - Resources: 2 cores, 4GB RAM, 64GB disk
+  - IP: 192.168.30.16 (Media VLAN 30)
+  - Stack: Native Ubuntu PostgreSQL 16 (not containerized)
+  - Databases: sonarr_main/log, radarr_main/log, lidarr_main/log, prowlarr_main/log, bazarr_main, synapse
+  - Per-service DB users; shared password from SOPS vault
+  - Purpose: Centralized database for all k3s media/matrix services
 
 #### Monitoring Infrastructure
 
@@ -131,69 +105,95 @@ All VMs defined in [`infrastructure/terraform/vms.tf`](https://github.com/Silver
   - Purpose: Self-hosted UniFi Network Controller for managing APs and network devices
   - Deployment: Phase 3 (services)
 
-#### Reverse Proxy
+### 3. k3s Cluster
 
-- **Reverse Proxy** (VMID 900)
-  - Resources: 1 core, 512MB RAM, 32GB disk
-  - IP: 192.168.10.20 (Management VLAN 10)
-  - Stack: Rootless Podman with Quadlet (Traefik v3)
-  - Services: Traefik v3 reverse proxy with TLS termination (file provider, Tailscale certs)
-  - Priority: Low (cpu_units: 512)
-  - Purpose: Centralized HTTPS ingress for all internal services via DNS rewrites
-  - Deployment: Phase 3 (services)
+5-node k3s cluster on Media VLAN (192.168.30.x). Flux GitOps manages all workloads via `jellybuntu-helm` repo.
 
-### 3. Application Layer
+#### Cluster Nodes
+
+| Node | IP | Role label | Workloads |
+|------|----|------------|-----------|
+| k8s-control | 192.168.30.40 | — | Control plane only |
+| k8s-gpu | 192.168.30.41 | gpu | Jellyfin, Tdarr |
+| k8s-media | 192.168.30.42 | media | *arr stack, download clients, Navidrome, Jellyseerr, Byparr, Recyclarr, Unpackerr |
+| k8s-net | 192.168.30.43 | net | Traefik ingress |
+| k8s-ops | 192.168.30.44 | ops | Synapse, LiveKit, Coturn, lk-jwt, synapse-admin, TeamSpeak |
+
+Node selector label key: `jellybuntu.io/role`
+
+#### Namespaces
+
+| Namespace | Node label | Services |
+|-----------|------------|---------|
+| media | media | sonarr, radarr, lidarr, prowlarr, bazarr, navidrome, jellyseerr, byparr, qbittorrent, sabnzbd, recyclarr, unpackerr |
+| gpu | gpu | jellyfin, tdarr |
+| matrix | ops | synapse, livekit, coturn, lk-jwt, synapse-admin |
+| teamspeak | ops | teamspeak |
+| traefik-system | net | traefik |
+| metallb-system | — | metallb |
+| nfs-system | — | nfs-subdir-provisioner |
+
+#### GitOps
+
+- Helm charts: [`SilverDFlame/jellybuntu-helm`](https://github.com/SilverDFlame/jellybuntu-helm) (`main` branch, protected)
+- Flux polls every 1 min, reconciles every 10 min
+- Kustomization chain: `infrastructure` → `media`, `gpu`, `net`, `ops`
+- All workloads use `bjw-s/app-template` 4.6.x OCI chart
+- Secrets: SOPS + age (same vault as Ansible)
+
+Force reconcile after helm PR merges:
+
+```bash
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization infrastructure -n flux-system
+```
+
+#### Networking
+
+- MetalLB pool: `192.168.30.200/29` (L2 mode, .200–.207)
+- Traefik on k8s-net, `LoadBalancer` service, `externalTrafficPolicy: Local`
+- All services: `*.elysium.industries` (Let's Encrypt + Cloudflare DNS-01)
+- IP allowlist middleware (admin tools): `192.168.30.0/24`, `100.64.0.0/10`
+
+#### Storage
+
+| Type | Details |
+|------|---------|
+| Config PVCs | `nfs-client` storage class — NFS subdir dynamic provisioner |
+| Media library | Static PV `nfs-media` → `192.168.30.15:/mnt/storage/data` (1Ti, RWMany) |
+| Media library (gpu ns) | Static PV `nfs-media-gpu` → same path (namespace isolation) |
+| Transcode cache | hostPath on k8s-gpu: `/mnt/transcode-cache/{jellyfin,tdarr}` |
+
+#### GPU
+
+- k8s-gpu: GTX 1080 PCIe passthrough
+- NVIDIA device plugin time-slices 1 GPU → 2 virtual (Jellyfin + Tdarr co-schedule)
+
+### 4. Application Layer
 
 **Home Assistant**: Podman Quadlet container for home automation and device integration
 
 **Satisfactory**: Dedicated game server via SteamCMD, managed by systemd
 
-**Jellyfin**: Native package with hardware transcoding via GPU passthrough:
+**Jellyfin** (k3s, gpu namespace):
 
-- GTX 1080 GPU passthrough for NVENC hardware transcoding
-- 32GB RAM disk for transcoding cache (zero SSD wear)
-- 4 cores for non-GPU tasks
-- CPU governor set to performance mode
-- High scheduling priority (Nice=-10, realtime IO)
+- GTX 1080 GPU passthrough via NVIDIA device plugin
+- hostPath transcode cache on k8s-gpu
+- Hardware NVENC transcoding
 
-**Media Stack**: Rootless Podman with Quadlet systemd services:
+**Media Stack** (k3s, media namespace): Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Navidrome, Jellyseerr, Byparr, Recyclarr
 
-- Sonarr/Radarr: Media management with Trash Guides folder structure
-- Prowlarr: Indexer management
-- Jellyseerr: Request management
-- Bazarr: Subtitle automation
-- Homarr: Dashboard for service overview
-- Byparr: Cloudflare bypass
-- Recyclarr: Custom formats and quality profiles
+**Download Clients** (k3s, media namespace): qBittorrent, SABnzbd, Unpackerr
 
-**Download Clients**: Rootless Podman with Quadlet systemd services:
+**Tdarr** (k3s, gpu namespace): Automated media transcoding; shares GPU time-slice with Jellyfin
 
-- Gluetun: VPN client (Private Internet Access with automatic port forwarding)
-- qBittorrent: Torrent downloads (routed through VPN)
-- SABnzbd: Usenet downloads with templated configuration (direct connection, no VPN)
-- Unpackerr: Automatic archive extraction
+**Matrix/Synapse** (k3s, matrix namespace):
 
-**Tdarr**: Automated media transcoding and optimization:
-
-- Transcodes media to space-efficient formats
-- Runs on Jellyfin VM alongside media server
-- Quadlet-based deployment
-
-**Traefik Reverse Proxy**: Centralized HTTPS ingress (Rootless Podman Quadlet):
-
-- TLS termination with Tailscale certificates for all proxied services
-- File-based routing (no Docker/Podman socket exposure)
-- DNS rewrites in AdGuard redirect service hostnames to proxy VM
-- Backends addressed by direct LAN IP to avoid DNS loops
-- Weekly automated certificate renewal via systemd timer
-
-**Matrix/Synapse (Elysium)**: Pod-based communication server (Rootless Podman Quadlet):
-
-- Synapse homeserver with PostgreSQL 16 backend
+- Synapse homeserver with PostgreSQL 16 backend (db VM)
 - LiveKit SFU for Element Call voice/video (WebRTC)
 - lk-jwt-service for MatrixRTC authorization bridge
-- coturn TURN/STUN server (host network for NAT traversal)
-- Synapse Admin web UI for user and room management
+- coturn TURN/STUN server
+- Synapse Admin web UI
 - Registration disabled; users onboarded via registration tokens
 - Federation disabled (internal use only)
 
@@ -238,23 +238,17 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 
 **Priority Tiers** (cpu_units):
 
-1. **High (2048)**: Satisfactory (pinned), Jellyfin (GPU handles transcoding)
-2. **Medium (1024)**: Media Services, Download Clients, NAS, Monitoring, Home Assistant, Elysium (Matrix)
-3. **Low (512)**: Woodpecker CI, Mumble, Lancache, UniFi Controller, Reverse Proxy
+1. **High (2048)**: Satisfactory (pinned)
+2. **Medium (1024)**: NAS, Monitoring, Home Assistant, DB
+3. **Low (512)**: Woodpecker CI, Mumble, Lancache, UniFi Controller
 
 ### Storage Architecture
 
 - **VM Disks**: Local-lvm storage on Proxmox
-- **Media/Downloads**: NFS mounted at `/mnt/data` (from NAS export `nas:/mnt/storage/data`)
+- **Media/Downloads**: NFS mounted from NAS (`192.168.30.15:/mnt/storage/data`)
+- **k3s config PVCs**: NFS subdir dynamic provisioner (`nfs-client` storage class)
 - **NAS**: Passthrough disks for Btrfs RAID1 pool with snapshots
 - **Folder Structure**: Trash Guides recommended layout for hardlinks
-
-**virtio-fs RAM Disk (Download Clients)**:
-
-- Purpose: Reduce NFS I/O during active downloads by staging to RAM
-- Flow: Downloads write to RAM disk staging area, then move to NFS on completion
-- Benefits: Less NAS write amplification from incomplete/temporary download chunks, faster processing
-- Implementation: virtio-fs backed tmpfs on Download Clients VM
 
 ### Networking
 
@@ -264,7 +258,7 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 |------|--------|---------|---------|
 | VLAN 10 | 192.168.10.0/24 | Management | 192.168.10.1 |
 | VLAN 20 | 192.168.20.0/24 | IoT | 192.168.20.1 |
-| VLAN 30 | 192.168.30.0/24 | Media | 192.168.30.1 |
+| VLAN 30 | 192.168.30.0/24 | Media + k3s cluster | 192.168.30.1 |
 | VLAN 40 | 192.168.40.0/24 | Games | 192.168.40.1 |
 
 - DNS: AdGuard Home on NAS (192.168.30.15) via Tailscale custom nameserver
@@ -281,18 +275,21 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 - **Features**: Network-wide ad blocking, encrypted DNS queries, DNSSEC, query logging
 - **Deployment**: Phase 2 (networking) - see [configuration/adguard-home.md](configuration/adguard-home.md)
 
+**k3s Ingress**: Traefik on k8s-net, MetalLB VIP from `192.168.30.200/29`. All `*.elysium.industries` routes via Let's Encrypt + Cloudflare DNS-01.
+
 **Tailscale Mesh**: 100.64.0.0/10 (CGNAT range)
 
 - Secure remote access to all services
 - Ephemeral auth keys generated via API
 - Auto-approval with ACLs (see [reference/tailscale-auto-approval.md](reference/tailscale-auto-approval.md))
 - MagicDNS enabled for `*.discus-moth.ts.net` hostnames
+- k8s-net advertises `192.168.30.200/29` as Tailscale subnet route
 
 **Security**:
 
-- UFW firewall on all VMs
+- UFW firewall on all standalone VMs
 - SSH accessible from Tailscale + Management VLAN 10 (LAN fallback for outages)
-- Services accessible from both Tailscale and local network
+- k3s admin tools restricted by IP allowlist middleware: `192.168.30.0/24`, `100.64.0.0/10`
 
 ### Podman Quadlet Architecture
 
@@ -304,29 +301,6 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 |----|------------------|-------|-------|
 | Most VMs | `~/.config/containers/systemd/` | User (rootless) | Standard deployment |
 | Lancache | `/etc/containers/systemd/` | System (rootful) | NFS compatibility - see [security docs](#lancache-rootful-security) |
-
-**Standard rootless structure** (per-VM, in `~/.config/containers/systemd/`):
-
-```text
-# Media Services VM (~/.config/containers/systemd/)
-sonarr.container
-radarr.container
-prowlarr.container
-jellyseerr.container
-bazarr.container
-homarr.container
-byparr.container
-recyclarr.container
-
-# Download Clients VM (~/.config/containers/systemd/)
-gluetun.container
-qbittorrent.container
-sabnzbd.container
-unpackerr.container
-
-# Reverse Proxy VM (~/.config/containers/systemd/)
-traefik.container
-```
 
 **Benefits**:
 
@@ -364,7 +338,7 @@ traefik.container
 | 4-7 | Satisfactory (Pinned) | Game server - dedicated |
 | 8-15 | Shared Pool | All other VMs (~2:1 overcommit) |
 
-### VM Resources
+### VM Resources (Standalone)
 
 | VM               | VMID | Cores  | RAM      | Disk    | Priority | CPU Units |
 |------------------|------|--------|----------|---------|----------|-----------|
@@ -372,30 +346,36 @@ traefik.container
 | Satisfactory     | 200  | 4*     | 8GB      | 60GB    | High     | 2048      |
 | Mumble           | 201  | 1      | 1GB      | 32GB    | Low      | 512       |
 | NAS              | 300  | 2      | 6GB      | 3x6TB** | Medium   | 1024      |
-| Jellyfin         | 400  | 4      | 8GB      | 80GB    | High     | 2048      |
-| Media Services   | 401  | 4      | 10GB     | 50GB    | Medium   | 1024      |
-| Download Clients | 402  | 4      | 6GB      | 60GB    | Medium   | 1024      |
+| DB               | 301  | 2      | 4GB      | 64GB    | Medium   | 1024      |
 | Monitoring       | 500  | 2      | 4GB      | 64GB    | Medium   | 1024      |
 | Woodpecker CI    | 600  | 2      | 8GB      | 32GB    | Low      | 512       |
 | Lancache         | 700  | 2      | 4GB      | 32GB*** | Low      | 512       |
 | UniFi Controller | 800  | 2      | 2GB      | 32GB    | Low      | 512       |
-| Elysium (Matrix) | 202  | 4      | 8GB      | 64GB    | Medium   | 1024      |
-| Reverse Proxy    | 900  | 1      | 512MB    | 32GB    | Low      | 512       |
-| **Total**        |      | **34** | **67.5GB** |       |          |           |
 
-*Satisfactory cores are pinned to physical cores 4-7 (was 2-3)
+*Satisfactory cores are pinned to physical cores 4-7
 **NAS has 3x 6TB drives in Btrfs RAID1 (~9TB usable)
 ***Lancache uses NFS-backed cache storage (2TB limit on NAS)
+
+### k3s Cluster Nodes
+
+| Node | IP | vCPUs | RAM | Disk |
+|------|----|-------|-----|------|
+| k8s-control | 192.168.30.40 | 2 | 4GB | 32GB |
+| k8s-gpu | 192.168.30.41 | 4 | 16GB | 80GB + GTX 1080 |
+| k8s-media | 192.168.30.42 | 4 | 10GB | 50GB |
+| k8s-net | 192.168.30.43 | 2 | 2GB | 32GB |
+| k8s-ops | 192.168.30.44 | 4 | 8GB | 64GB |
 
 ### Memory Allocation (128GB Total)
 
 | Allocation | Size | Purpose |
 |------------|------|---------|
 | Proxmox Host | ~8GB | Hypervisor overhead |
-| RAM Disk (tmpfs) | 32GB | Jellyfin/Tdarr transcoding cache |
+| RAM Disk (tmpfs) | 32GB | Transcoding cache (k8s-gpu hostPath) |
 | Huge Pages (optional) | 8GB | VM memory optimization (disabled by default) |
-| VMs Total | ~46GB | Allocated to virtual machines |
-| Reserve | ~34GB | Headroom for bursts and future services |
+| Standalone VMs | ~37GB | Allocated to standalone virtual machines |
+| k3s Nodes | ~40GB | Allocated to k3s cluster nodes |
+| Reserve | ~3GB | Headroom for bursts |
 
 **Note:** Huge pages are disabled by default. Enable in `proxmox_host` role for reduced TLB misses.
 See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md) for configuration.
@@ -404,26 +384,27 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 
 | Component | Allocation |
 |-----------|------------|
-| GTX 1080 | Passthrough to Jellyfin VM (VMID 400) |
-| Usage | NVENC hardware transcoding for Jellyfin and Tdarr |
-
-**Monitoring VM (Phase 5) and Woodpecker CI (Phase 4) are optional
+| GTX 1080 | PCIe passthrough to k8s-gpu node |
+| Usage | NVENC hardware transcoding — time-sliced 1 GPU → 2 virtual (Jellyfin + Tdarr) |
 
 ## Design Decisions
 
-### Why Separate Download Clients VM?
+### Why k3s Instead of Standalone VMs for Media Stack?
 
-- **Resource Isolation**: Downloads don't impact media management
-- **Priority Control**: Medium priority vs low priority media stack
-- **Fault Isolation**: Download client issues don't affect Sonarr/Radarr
-- **Network Isolation**: Easier to implement VPN if needed in future
+- **Resource Efficiency**: Shared cluster overhead vs per-VM OS costs
+- **Scheduling**: Kubernetes node selectors pin workloads to appropriate hardware
+- **GitOps**: Flux + Helm provides declarative, auditable service management
+- **Scalability**: Add nodes without reprovisioning all services
 
-### Why Native Jellyfin (Not Containerized)?
+### Why Separate Download Clients VM? (historical)
 
-- **Direct Hardware Access**: Better transcoding performance
-- **System Integration**: CPU governor, systemd priority settings
-- **Resource Control**: Full control over process scheduling
-- **Easier Updates**: Standard apt package management
+Download clients now run in k3s media namespace. The separate VM approach (isolation, VPN routing) is preserved via Kubernetes NetworkPolicy and Gluetun sidecar pattern.
+
+### Why Native PostgreSQL (DB VM)?
+
+- **Stability**: Single PostgreSQL 16 instance for all services
+- **Performance**: Direct disk access, no container overhead
+- **Simplicity**: One backup target, one connection string pattern
 
 ### Why Podman Quadlet (Not Docker Compose)?
 
@@ -443,28 +424,31 @@ See [reference/epyc-7313p-optimization.md](reference/epyc-7313p-optimization.md)
 ## Network Diagram
 
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│ Proxmox Host (discus-moth.ts.net)                                │
-│ EPYC 7313P: 16 cores/32 threads, 128GB RAM                       │
-│ Bridge: vmbr0 (VLAN-aware)                                       │
-│                                                                  │
-│  ┌─ Management VLAN 10 ──────────────────────────────────────┐   │
-│  │ Monitoring (.16) Woodpecker (.17) UniFi (.19) Proxy (.20) │   │
-│  └───────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  ┌─ IoT VLAN 20 ────────┐                                       │
-│  │ Home Assistant (.10)  │                                       │
-│  └───────────────────────┘                                       │
-│                                                                  │
-│  ┌─ Media VLAN 30 ──────────────────────────────────────┐        │
-│  │ NAS (.15)  Jellyfin (.12)  Media Svc (.13)  DL (.14) │        │
-│  └──────────────────────────────────────────────────────┘        │
-│                                                                  │
-│  ┌─ Games VLAN 40 ─────────────────────────────────────────────────┐ │
-│  │ Satisfactory (.11) Mumble (.20) Elysium (.21) Lancache (.18)    │ │
+┌──────────────────────────────────────────────────────────────────────┐
+│ Proxmox Host (discus-moth.ts.net)                                    │
+│ EPYC 7313P: 16 cores/32 threads, 128GB RAM                           │
+│ Bridge: vmbr0 (VLAN-aware)                                           │
+│                                                                      │
+│  ┌─ Management VLAN 10 ────────────────────────────────────────────┐ │
+│  │ Monitoring (.16)  Woodpecker (.17)  UniFi (.19)                 │ │
 │  └─────────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+│                                                                      │
+│  ┌─ IoT VLAN 20 ──────────┐                                         │
+│  │ Home Assistant (.10)    │                                         │
+│  └─────────────────────────┘                                         │
+│                                                                      │
+│  ┌─ Media VLAN 30 ─────────────────────────────────────────────────┐ │
+│  │ NAS (.15)  DB (.16)                                             │ │
+│  │ k8s-control (.40)  k8s-gpu (.41)  k8s-media (.42)              │ │
+│  │ k8s-net (.43)  k8s-ops (.44)                                    │ │
+│  │ MetalLB VIP pool: .200-.207                                     │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+│                                                                      │
+│  ┌─ Games VLAN 40 ─────────────────────────────────────────────────┐ │
+│  │ Satisfactory (.11)  Mumble (.20)  Lancache (.18)                │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
                          │
                 ┌────────┴────────┐
                 │ Gateway/Router  │
@@ -553,8 +537,6 @@ sudo podman exec -it lancache /bin/bash
 ## See Also
 
 - [AdGuard Home Configuration](configuration/adguard-home.md) - DNS setup and management
-- [Traefik Reverse Proxy](configuration/traefik-setup.md) - HTTPS proxy and TLS termination
-- [Matrix/Synapse Setup](configuration/matrix-setup.md) - Communication server on Elysium
 - [EPYC 7313P Optimization](reference/epyc-7313p-optimization.md) - CPU tuning and BIOS settings
 - [Resource Allocation Details](configuration/resource-allocation.md)
 - [Networking Configuration](configuration/networking.md)
