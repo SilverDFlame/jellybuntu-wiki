@@ -1,6 +1,6 @@
 # jellybuntu-helm Repo Layout
 
-**Repo**: SilverDFlame/jellybuntu-helm
+**Repo**: [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm)
 **Local mirror**: `~/coding/mirrors/jellybuntu-helm`
 **Protected branch**: `main` — always branch + PR, never push direct
 
@@ -53,7 +53,8 @@ All workload HelmReleases use `app-template`. Infrastructure controllers use ded
 | nvidia-device-plugin | HelmRepository | nvidia.github.io/k8s-device-plugin | v0.18.2 |
 | app-template | OCIRepository | ghcr.io/bjw-s-labs/helm/app-template | 4.6.x |
 
-> Versions from training data — verify before bumping: `flux get sources helm -A`
+!!! warning "Version drift"
+    Versions above are from documentation — verify before bumping: `flux get sources helm -A`
 
 ## SOPS Encryption
 

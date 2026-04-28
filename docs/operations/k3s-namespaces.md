@@ -25,7 +25,7 @@ Complete service inventory for the k3s cluster, organized by namespace.
 | byparr | 8191 | byparr.elysium.industries | IP restricted |
 | qbittorrent | 8080 | qbittorrent.elysium.industries | IP restricted |
 | sabnzbd | 8080 | sabnzbd.elysium.industries | IP restricted |
-| recyclarr | CronJob 04:00 UTC | — | No ingress |
+| recyclarr | — | — | No ingress; CronJob runs 04:00 UTC |
 | unpackerr | — | — | No ingress |
 
 ## gpu Namespace (k8s-gpu, `.41`)
@@ -42,7 +42,7 @@ Complete service inventory for the k3s cluster, organized by namespace.
 | synapse | 8008 | chat.elysium.industries | Public (federation) |
 | livekit | 7880 | livekit.elysium.industries | Public |
 | lk-jwt | 8080 | lk-jwt.elysium.industries | IP restricted |
-| coturn | hostNetwork | — | STUN/TURN; no ingress |
+| coturn | 3478 | — | STUN/TURN; hostNetwork; no HTTP ingress |
 | synapse-admin | 8080 | synapse-admin.elysium.industries | IP restricted |
 
 ## teamspeak Namespace (k8s-ops, `.44`)
@@ -83,7 +83,7 @@ Short form works within the same namespace (e.g. `http://sonarr:8989` from anoth
 | `192.168.30.0/24` | Media VLAN (local network) |
 | `100.64.0.0/10` | Tailscale CGNAT range |
 
-Middleware defined in `clusters/jellybuntu/media/middleware.yaml`.
+Middleware defined in [`clusters/jellybuntu/media/middleware.yaml`](https://github.com/SilverDFlame/jellybuntu-helm/blob/main/clusters/jellybuntu/media/middleware.yaml).
 
 ## See Also
 
