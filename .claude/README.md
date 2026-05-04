@@ -26,8 +26,9 @@ of what `jellybuntu` and `jellybuntu-helm` ship:
 - **Dropped hooks**: `block-secret-commands.sh` — its rules target SOPS,
   ansible-vault, and kubectl secret dumps, none of which run against this repo.
   Adding it would be a no-op cargo-cult.
-- **Kept hook**: `block-secret-files.sh`, narrowed to `.credentials.json` and
-  age private keys (defense in depth for Claude Code's own credential file).
+- **Kept hook**: `block-secret-files.sh`, blocking by basename: `.credentials.json`,
+  `credentials.json`, `keys.txt`, `age-key.txt`, and any `*.age` file (defense
+  in depth for Claude Code's own credential file and age private keys).
 
 ## Hook Portability
 

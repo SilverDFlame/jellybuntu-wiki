@@ -5,7 +5,7 @@
 set -euo pipefail
 
 input=$(cat)
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+file_path=$(printf '%s\n' "$input" | jq -r '.tool_input.file_path // empty')
 
 if [[ -z "$file_path" ]]; then
   exit 0
@@ -19,7 +19,7 @@ case "$file_basename" in
     exit 2
     ;;
   keys.txt|age-key.txt|*.age)
-    if ! echo "$file_basename" | grep -q '\.example'; then
+    if ! printf '%s\n' "$file_basename" | grep -q '\.example'; then
       echo "BLOCKED: Age private key file must not be read into the session." >&2
       exit 2
     fi
