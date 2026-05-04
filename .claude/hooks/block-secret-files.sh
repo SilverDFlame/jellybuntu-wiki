@@ -11,15 +11,15 @@ if [[ -z "$file_path" ]]; then
   exit 0
 fi
 
-basename=$(basename "$file_path")
+file_basename=$(basename "$file_path")
 
-case "$basename" in
+case "$file_basename" in
   .credentials.json|credentials.json)
     echo "BLOCKED: Credentials file must not be read into the session transcript." >&2
     exit 2
     ;;
   keys.txt|age-key.txt|*.age)
-    if echo "$file_path" | grep -qv '\.example'; then
+    if ! echo "$file_path" | grep -q '\.example'; then
       echo "BLOCKED: Age private key file must not be read into the session." >&2
       exit 2
     fi
