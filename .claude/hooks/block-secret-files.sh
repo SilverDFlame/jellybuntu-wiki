@@ -19,7 +19,7 @@ case "$file_basename" in
     exit 2
     ;;
   keys.txt|age-key.txt|*.age)
-    if ! echo "$file_path" | grep -q '\.example'; then
+    if ! echo "$file_basename" | grep -q '\.example'; then
       echo "BLOCKED: Age private key file must not be read into the session." >&2
       exit 2
     fi
