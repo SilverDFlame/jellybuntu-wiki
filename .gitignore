@@ -48,6 +48,12 @@ superpowers/
 *.pfx
 *.crt
 *.cer
+id_rsa*
+id_ed25519*
+id_ecdsa*
+ansible_homelab*
+ansible_ci*
+**/.ssh/
 secrets/
 .secrets/
 *.age
