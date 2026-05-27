@@ -36,8 +36,9 @@ site/
 # Node (if using npm-based tools)
 node_modules/
 
-# Claude Code local files
-.claude/
+# Claude Code: track shared settings.json + hooks/, ignore per-user/per-machine files
+.claude/settings.local.json
+.claude/.credentials.json
 superpowers/
 
 # Security: Prevent accidental commit of sensitive files

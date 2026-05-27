@@ -116,6 +116,8 @@ nav:
   - Operations:
       - Deployment: operations/deployment.md
       - k3s Cluster: operations/k3s-cluster.md
+      - k3s Namespaces: operations/k3s-namespaces.md
+      - Helm Repo Layout: operations/helm-repo.md
       - Backups: operations/backups.md
       - Secrets: operations/secrets.md
       - Updates: operations/updates.md

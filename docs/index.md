@@ -44,3 +44,5 @@
 - [Architecture](architecture.md) — system design and topology
 - [Deployment](operations/deployment.md) — phase-based deployment
 - [k3s Cluster](operations/k3s-cluster.md) — Flux GitOps workflow
+- [k3s Namespaces](operations/k3s-namespaces.md) — service ports, URLs, access policy
+- [Helm Repo Layout](operations/helm-repo.md) — jellybuntu-helm structure and SOPS

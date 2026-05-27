@@ -25,6 +25,10 @@ config:
   # First line doesn't need to be top-level heading
   MD041: false
 
+  # Table column style - enforce leading_and_trailing pipes to match existing style
+  MD060:
+    style: "leading_and_trailing"
+
 # Files to ignore
 ignores:
   - node_modules/
