@@ -118,6 +118,7 @@ nav:
       - k3s Cluster: operations/k3s-cluster.md
       - k3s Namespaces: operations/k3s-namespaces.md
       - Helm Repo Layout: operations/helm-repo.md
+      - Flux Image Automation: operations/flux-image-automation.md
       - Backups: operations/backups.md
       - Secrets: operations/secrets.md
       - Updates: operations/updates.md
