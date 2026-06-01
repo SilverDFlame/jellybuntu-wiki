@@ -60,7 +60,7 @@ The VM Traefik rewrite list is currently empty — all services have migrated to
 | sonarr.elysium.industries | 192.168.30.200 | k8s-media |
 | radarr.elysium.industries | 192.168.30.200 | k8s-media |
 | prowlarr.elysium.industries | 192.168.30.200 | k8s-media |
-| jellyseerr.elysium.industries | 192.168.30.200 | k8s-media |
+| seerr.elysium.industries | 192.168.30.200 | k8s-media |
 | bazarr.elysium.industries | 192.168.30.200 | k8s-media |
 | lidarr.elysium.industries | 192.168.30.200 | k8s-media |
 | navidrome.elysium.industries | 192.168.30.200 | k8s-media |

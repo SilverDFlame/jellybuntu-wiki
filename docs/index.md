@@ -13,7 +13,7 @@
 | Lidarr | [lidarr.elysium.industries](https://lidarr.elysium.industries) | k3s `media` namespace |
 | Prowlarr | [prowlarr.elysium.industries](https://prowlarr.elysium.industries) | k3s `media` namespace |
 | Bazarr | [bazarr.elysium.industries](https://bazarr.elysium.industries) | k3s `media` namespace |
-| Jellyseerr | [jellyseerr.elysium.industries](https://jellyseerr.elysium.industries) | k3s `media` namespace |
+| Jellyseerr | [seerr.elysium.industries](https://seerr.elysium.industries) | k3s `media` namespace |
 | Navidrome | [navidrome.elysium.industries](https://navidrome.elysium.industries) | k3s `media` namespace |
 | qBittorrent | [qbittorrent.elysium.industries](https://qbittorrent.elysium.industries) | k3s `media` namespace |
 | SABnzbd | [sabnzbd.elysium.industries](https://sabnzbd.elysium.industries) | k3s `media` namespace |

@@ -33,7 +33,8 @@ clusters/jellybuntu/
 │   └── tdarr.yaml
 ├── net.yaml
 ├── net/
-│   └── kustomization.yaml
+│   ├── kustomization.yaml
+│   └── cilium-lb-config.yaml  # CiliumLoadBalancerIPPool + CiliumL2AnnouncementPolicy
 ├── ops.yaml
 └── ops/
     ├── kustomization.yaml
