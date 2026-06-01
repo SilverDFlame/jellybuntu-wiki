@@ -154,8 +154,8 @@ UDP/8472. Cilium also provides LoadBalancer support, replacing MetalLB.
 - **L2 announcement:** `CiliumL2AnnouncementPolicy` pinned to nodes labelled
   `jellybuntu.io/role=net` (k8s-net) so ARP replies stay on the node that holds the
   Traefik backend (`externalTrafficPolicy: Local`)
-- **Hubble:** enabled; default 4095-flow buffer (~6 min @ 11.4 flows/s); bump
-  `hubble.eventBufferCapacity` in the HelmRelease for deeper retention
+- **Hubble:** enabled; see [networking.md § Hubble](../infrastructure/networking.md#hubble)
+  for buffer size and retention tuning
 
 ```bash
 # Check Cilium agent + operator status

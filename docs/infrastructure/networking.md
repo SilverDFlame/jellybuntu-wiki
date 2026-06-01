@@ -103,14 +103,11 @@ The k3s cluster runs **Cilium 1.19.4** as the sole CNI (migrated from flannel on
 Kube-proxy is fully replaced by Cilium kpr — there is no `kube-proxy` DaemonSet. Pod-to-pod
 traffic is encapsulated in a **VXLAN overlay on UDP/8472**.
 
-LoadBalancer services are handled in-cluster:
-
-- **LB-IPAM** allocates VIPs from `CiliumLoadBalancerIPPool/jellybuntu-pool`
-  (`192.168.30.200/29`).
-- **L2 announcer** (`CiliumL2AnnouncementPolicy`) replies to ARP for assigned VIPs.
-  The policy pins announcements to nodes labelled `jellybuntu.io/role=net` so leases
-  for `externalTrafficPolicy: Local` services (Traefik) stay on the
-  node that actually hosts the backend pod.
+LoadBalancer services are handled in-cluster by Cilium LB-IPAM, which allocates VIPs from
+`jellybuntu-pool` (`192.168.30.200/29`) and announces them via ARP from nodes labelled
+`jellybuntu.io/role=net` — see
+[k3s-cluster.md § Cilium](../operations/k3s-cluster.md#cilium-cni-loadbalancer) for the pool,
+L2 announcement policy, and inspection commands.
 
 ### Hubble
 
