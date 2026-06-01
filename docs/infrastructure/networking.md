@@ -109,7 +109,7 @@ LoadBalancer services are handled in-cluster:
   (`192.168.30.200/29`).
 - **L2 announcer** (`CiliumL2AnnouncementPolicy`) replies to ARP for assigned VIPs.
   The policy pins announcements to nodes labelled `jellybuntu.io/role=net` so leases
-  for `externalTrafficPolicy: Local` services (Traefik, deluge-daemon-lb) stay on the
+  for `externalTrafficPolicy: Local` services (Traefik) stay on the
   node that actually hosts the backend pod.
 
 ### Hubble

@@ -128,7 +128,7 @@ kubectl apply --dry-run=client -f <file>
 
 1. Commit and push to `main` — Flux reconciles within 10 minutes
 
-**Namespace naming convention:** `{service}-system` (e.g., `traefik-system`, `nfs-system`)
+**Namespace naming convention:** `{service}-system` (e.g., `traefik-system`, `nfs-system`). Exception: CNI-level components that integrate with k3s internals (Cilium) use `kube-system`.
 
 **Labels:** All resources use `app.kubernetes.io/part-of: jellybuntu`
 
@@ -160,6 +160,7 @@ UDP/8472. Cilium also provides LoadBalancer support, replacing MetalLB.
 ```bash
 # Check Cilium agent + operator status
 kubectl get pods -n kube-system -l k8s-app=cilium
+kubectl get pods -n kube-system -l app=cilium-operator
 cilium status      # if the cilium CLI is installed locally
 
 # Check LB-IPAM pool + L2 announcement policy
@@ -178,12 +179,7 @@ kubectl exec -n kube-system ds/cilium -- hubble observe --last 100
 
 ### Cilium firewall ports (inter-node, media VLAN 30)
 
-| Proto | Port | Purpose |
-|-------|------|---------|
-| UDP | 8472 | VXLAN overlay |
-| TCP | 4240 | Cilium agent health check |
-| TCP | 4244 | Hubble server |
-| TCP | 4245 | Hubble Relay |
+See the authoritative reference in [networking.md § Firewall ports](../infrastructure/networking.md#firewall-ports).
 
 ## Flux Bootstrap (from scratch)
 

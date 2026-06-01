@@ -8,8 +8,8 @@ Complete service inventory for the k3s cluster, organized by namespace.
 |---|---|---|---|
 | `traefik-system` | Traefik | v39.0.5 | LoadBalancer VIP on k8s-net; all ingress routes here |
 | `kube-system` | Cilium | 1.19.4 | CNI + kpr + LB-IPAM + L2 announcer + Hubble; pool `jellybuntu-pool` 192.168.30.200/29 |
-| `nfs-system` | nfs-subdir-external-provisioner | v4.0.18 | StorageClass: `nfs-client`; NAS at `192.168.30.15` |
 | `kube-system` | nvidia-device-plugin | v0.18.2 | GPU time-slicing: 1 physical → 2 virtual on k8s-gpu |
+| `nfs-system` | nfs-subdir-external-provisioner | v4.0.18 | StorageClass: `nfs-client`; NAS at `192.168.30.15` |
 
 ## media Namespace (k8s-media, `.42`)
 
