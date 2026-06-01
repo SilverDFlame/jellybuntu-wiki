@@ -148,15 +148,21 @@ ssh k8s-media.discus-moth.ts.net showmount -e 192.168.30.15
 
 ### Service Unreachable by Hostname
 
-**Cause:** AdGuard DNS rewrite missing, MetalLB VIP not assigned, or Traefik ingress not
-configured.
+**Cause:** AdGuard DNS rewrite missing, Cilium LB-IPAM VIP not assigned, L2 announcement
+lease on the wrong node, or Traefik ingress not configured.
 
 ```bash
 # Test DNS resolution
 dig jellyfin.discus-moth.ts.net @<adguard-ip>
 
-# Check MetalLB VIP assignment
+# Check LoadBalancer VIP assignment (External-IP should be 192.168.30.200)
 kubectl get svc -n traefik-system
+
+# Confirm the L2 announcement lease is held by k8s-net (the role=net node)
+kubectl get leases -n kube-system | grep cilium-l2announce
+
+# Check Cilium LB-IPAM pool status
+kubectl get ciliumloadbalancerippool
 
 # Check Traefik ingress routes
 kubectl get ingressroute -A

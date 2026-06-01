@@ -28,7 +28,7 @@ graph TD
     K3S --> CTL["k8s-control (410)\n192.168.30.40\nControl plane"]
     K3S --> GPU["k8s-gpu (411)\n192.168.30.41\nJellyfin + Tdarr"]
     K3S --> MED["k8s-media (412)\n192.168.30.42\narr stack + download clients"]
-    K3S --> NET["k8s-net (413)\n192.168.30.43\nMetalLB + Traefik ingress"]
+    K3S --> NET["k8s-net (413)\n192.168.30.43\nCilium LB-IPAM + Traefik ingress"]
     K3S --> OPS["k8s-ops (414)\n192.168.30.44\nSynapse + monitoring + CI"]
 ```
 
@@ -39,10 +39,13 @@ graph TD
 | k8s-control | 410 | 192.168.30.40 | Control plane | k3s API server, etcd, scheduler |
 | k8s-gpu | 411 | 192.168.30.41 | Worker — GPU | Jellyfin, Tdarr (GTX 1080 passthrough) |
 | k8s-media | 412 | 192.168.30.42 | Worker — media | Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Jellyseerr, Navidrome, qBittorrent, SABnzbd, Byparr |
-| k8s-net | 413 | 192.168.30.43 | Worker — network | MetalLB speaker, Traefik ingress controller |
+| k8s-net | 413 | 192.168.30.43 | Worker — network | Cilium L2 announcer, Traefik ingress controller |
 | k8s-ops | 414 | 192.168.30.44 | Worker — ops | Synapse, Coturn, LiveKit, PostgreSQL, Woodpecker CI |
 
-MetalLB IP pool: `192.168.30.200/29` (L2 mode). Traefik VIP: `192.168.30.200`.
+Cilium LB-IPAM pool `jellybuntu-pool`: `192.168.30.200/29`, advertised via
+`CiliumL2AnnouncementPolicy` pinned to nodes labelled `jellybuntu.io/role=net`.
+Traefik VIP: `192.168.30.200`. CNI: Cilium 1.19.4 with kube-proxy replacement (kpr)
+and VXLAN overlay on UDP/8472.
 
 ## Dedicated VMs
 
@@ -64,7 +67,7 @@ MetalLB IP pool: `192.168.30.200/29` (L2 mode). Traefik VIP: `192.168.30.200`.
 graph LR
     CLIENT["Client"] --> CF["Cloudflare DNS\n*.elysium.industries"]
     CF --> AG["AdGuard Home\nDNS rewrite → 192.168.30.200"]
-    AG --> VIP["MetalLB VIP\n192.168.30.200"]
+    AG --> VIP["Cilium LB-IPAM VIP\n192.168.30.200"]
     VIP --> TR["Traefik (k8s-net)\nIngress controller"]
     TR --> POD["Target Pod\n(gpu / media / ops namespace)"]
 ```

@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | **Runs on** | k3s `media` namespace on `k8s-media` |
-| **Access** | `https://jellyseerr.elysium.industries` |
+| **Access** | `https://seerr.elysium.industries` |
 | **Port** | 5055 |
 | **Repo** | `jellybuntu-helm` -> `clusters/jellybuntu/media/jellyseerr.yaml` |
 

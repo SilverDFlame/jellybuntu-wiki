@@ -17,7 +17,7 @@
 | k8s-control | 410 | 192.168.30.40 | media (30) | 2 | 4 GB | 40 GB | k3s control plane | 15 |
 | k8s-gpu | 411 | 192.168.30.41 | media (30) | 4 | 16 GB | 60 GB | k3s GPU worker — Jellyfin + Tdarr (GTX 1080 passthrough) | 16 |
 | k8s-media | 412 | 192.168.30.42 | media (30) | 4 | 8 GB | 60 GB | k3s media worker — arr stack | 16 |
-| k8s-net | 413 | 192.168.30.43 | media (30) | 2 | 4 GB | 40 GB | k3s network worker — MetalLB speaker + Traefik ingress | 16 |
+| k8s-net | 413 | 192.168.30.43 | media (30) | 2 | 4 GB | 40 GB | k3s network worker — Cilium L2 announcer + Traefik ingress | 16 |
 | k8s-ops | 414 | 192.168.30.44 | media (30) | 4 | 16 GB | 80 GB | k3s ops worker — Synapse, PostgreSQL, Prometheus, Grafana, Woodpecker | 16 |
 | db | 415 | 192.168.30.16 | media (30) | 2 | 4 GB | 40 GB | Centralized PostgreSQL for k3s services | 2 |
 | reverse-proxy | 900 | 192.168.10.20 | management (10) | 1 | 512 MB | 32 GB | Traefik v3 — Tailscale TLS termination for VM services | 5 |
