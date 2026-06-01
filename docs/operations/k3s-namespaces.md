@@ -7,7 +7,7 @@ Complete service inventory for the k3s cluster, organized by namespace.
 | Namespace | Component | Version | Notes |
 |---|---|---|---|
 | `traefik-system` | Traefik | v39.0.5 | LoadBalancer VIP on k8s-net; all ingress routes here |
-| `metallb-system` | MetalLB | v0.15.3 | L2 mode; pool `192.168.30.200/29` |
+| `kube-system` | Cilium | 1.19.4 | CNI + kpr + LB-IPAM + L2 announcer + Hubble; pool `jellybuntu-pool` 192.168.30.200/29 |
 | `nfs-system` | nfs-subdir-external-provisioner | v4.0.18 | StorageClass: `nfs-client`; NAS at `192.168.30.15` |
 | `kube-system` | nvidia-device-plugin | v0.18.2 | GPU time-slicing: 1 physical → 2 virtual on k8s-gpu |
 
@@ -53,7 +53,7 @@ Complete service inventory for the k3s cluster, organized by namespace.
 | TCP | 30033 | File transfer |
 | TCP | 10011 | ServerQuery |
 
-No HTTP ingress — clients connect directly to MetalLB VIP.
+No HTTP ingress — clients connect directly to the Cilium LB-IPAM VIP.
 
 ## In-Cluster DNS
 

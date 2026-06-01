@@ -29,8 +29,8 @@ reconciliation within 10 minutes (root sync interval). Layer reconciliation inte
 ```text
 clusters/jellybuntu/
 ├── flux-system/          # Flux bootstrap — do not edit manually
-├── infrastructure.yaml   # HelmRepositories + controllers (Traefik, MetalLB, NFS provisioner)
-├── net.yaml              # MetalLB IP pool
+├── infrastructure.yaml   # HelmRepositories + controllers (Traefik, Cilium, NFS provisioner)
+├── net.yaml              # Cilium LB-IPAM pool + L2 announcement policy
 ├── media.yaml            # Media apps
 ├── gpu.yaml              # GPU workloads
 └── ops.yaml              # Observability
@@ -128,7 +128,7 @@ kubectl apply --dry-run=client -f <file>
 
 1. Commit and push to `main` — Flux reconciles within 10 minutes
 
-**Namespace naming convention:** `{service}-system` (e.g., `traefik-system`, `metallb-system`)
+**Namespace naming convention:** `{service}-system` (e.g., `traefik-system`, `nfs-system`)
 
 **Labels:** All resources use `app.kubernetes.io/part-of: jellybuntu`
 
@@ -143,26 +143,47 @@ kubectl kustomize clusters/jellybuntu/infrastructure/sources/
 kubectl kustomize clusters/jellybuntu/infrastructure/controllers/
 ```
 
-## MetalLB
+## Cilium (CNI + LoadBalancer)
 
-MetalLB operates in L2 mode, providing bare-metal load balancer support for `LoadBalancer`
-type services.
+The cluster runs **Cilium 1.19.4** as the sole CNI with **kube-proxy replacement (kpr)**
+enabled — there is no kube-proxy DaemonSet. Pod-to-pod traffic uses a VXLAN overlay on
+UDP/8472. Cilium also provides LoadBalancer support, replacing MetalLB.
 
-- **VIP / service IP pool:** `192.168.30.200/29` (addresses `.200`–`.207`)
+- **LB-IPAM pool:** `jellybuntu-pool` = `192.168.30.200/29` (`.200`–`.207`)
 - **Primary VIP in use:** `192.168.30.200` (Traefik ingress)
-- **Mode:** L2 advertisement
+- **L2 announcement:** `CiliumL2AnnouncementPolicy` pinned to nodes labelled
+  `jellybuntu.io/role=net` (k8s-net) so ARP replies stay on the node that holds the
+  Traefik backend (`externalTrafficPolicy: Local`)
+- **Hubble:** enabled; default 4095-flow buffer (~6 min @ 11.4 flows/s); bump
+  `hubble.eventBufferCapacity` in the HelmRelease for deeper retention
 
 ```bash
-# Check MetalLB speaker status
-kubectl get pods -n metallb-system
+# Check Cilium agent + operator status
+kubectl get pods -n kube-system -l k8s-app=cilium
+cilium status      # if the cilium CLI is installed locally
 
-# Check IPAddressPool and L2Advertisement
-kubectl get ipaddresspools -n metallb-system
-kubectl get l2advertisements -n metallb-system
+# Check LB-IPAM pool + L2 announcement policy
+kubectl get ciliumloadbalancerippool
+kubectl get ciliuml2announcementpolicy
+
+# See which node currently holds each L2 announcement lease
+kubectl get leases -n kube-system | grep cilium-l2announce
 
 # Check which services have assigned IPs
 kubectl get svc -A | grep LoadBalancer
+
+# Quick Hubble flow tail (in-cluster, no port-forward needed)
+kubectl exec -n kube-system ds/cilium -- hubble observe --last 100
 ```
+
+### Cilium firewall ports (inter-node, media VLAN 30)
+
+| Proto | Port | Purpose |
+|-------|------|---------|
+| UDP | 8472 | VXLAN overlay |
+| TCP | 4240 | Cilium agent health check |
+| TCP | 4244 | Hubble server |
+| TCP | 4245 | Hubble Relay |
 
 ## Flux Bootstrap (from scratch)
 

@@ -40,8 +40,9 @@ Client query
 - Block List Project (Porn, Malware)
 - DandelionSprout Anti-Malware
 
-**DNS rewrites** — all k3s services resolve to the MetalLB VIP `192.168.30.200` (k3s Traefik).
-See [infrastructure/networking.md](../infrastructure/networking.md) for the full rewrite table.
+**DNS rewrites** — all k3s services resolve to the Cilium LB-IPAM VIP `192.168.30.200`
+(k3s Traefik, L2 announced by k8s-net). See
+[infrastructure/networking.md](../infrastructure/networking.md) for the full rewrite table.
 
 ## Common Operations
 

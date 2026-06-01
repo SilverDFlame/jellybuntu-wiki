@@ -15,7 +15,7 @@ clusters/jellybuntu/
 │   └── controllers/
 │       ├── namespaces.yaml
 │       ├── traefik/
-│       ├── metallb/
+│       ├── cilium/
 │       ├── nfs-provisioner/
 │       └── nvidia-device-plugin/
 ├── media.yaml                # Flux Kustomization CRD (layer 2)
@@ -48,7 +48,7 @@ All workload HelmReleases use `app-template`. Infrastructure controllers use ded
 | Chart | Source Type | Repository | Version |
 |---|---|---|---|
 | traefik | HelmRepository | traefik.github.io/charts | v39.0.5 |
-| metallb | HelmRepository | metallb.github.io/metallb | v0.15.3 |
+| cilium | HelmRepository | helm.cilium.io | 1.19.4 |
 | nfs-subdir-external-provisioner | HelmRepository | kubernetes-sigs.github.io/nfs-subdir-external-provisioner | v4.0.18 |
 | nvidia-device-plugin | HelmRepository | nvidia.github.io/k8s-device-plugin | v0.18.2 |
 | app-template | OCIRepository | ghcr.io/bjw-s-labs/helm/app-template | 4.6.x |
