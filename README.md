@@ -14,7 +14,7 @@ deployed via Woodpecker CI to the NAS.
 
 ## Reading the docs
 
-- **Hosted:** <http://nas.discus-moth.ts.net:8082> (Tailscale)
+- **Hosted:** <https://docs.elysium.industries> (k3s Traefik → NAS nginx; direct fallback <http://nas.discus-moth.ts.net:8082>)
 - **Local:** `mkdocs serve` → <http://localhost:8000>
 
 ## Documentation tree
@@ -26,7 +26,7 @@ docs/
 ├── troubleshooting.md      # Common-issue catalog (single page)
 ├── infrastructure/         # Platform-level
 │   ├── vms.md              # VM inventory + resource sizing
-│   ├── networking.md       # VLANs, Tailscale, MetalLB, ingress
+│   ├── networking.md       # VLANs, Tailscale, Cilium, ingress
 │   ├── storage.md          # Btrfs NAS, NFS exports, k3s PV/PVC
 │   └── gpu.md              # NVIDIA device plugin, taints, Jellyfin/Tdarr GPU sharing
 ├── operations/             # Day-2
@@ -34,6 +34,7 @@ docs/
 │   ├── k3s-cluster.md      # Cluster topology, node roles
 │   ├── k3s-namespaces.md   # Namespace-by-namespace breakdown
 │   ├── helm-repo.md        # Flux GitOps workflow (sibling jellybuntu-helm)
+│   ├── flux-image-automation.md # Flux image automation (ImagePolicy + auto-pin)
 │   ├── secrets.md          # SOPS + age workflow
 │   ├── backups.md          # Snapshot + restore procedures
 │   └── updates.md          # OS, k3s, Flux, app upgrades
@@ -84,7 +85,7 @@ pre-commit run --all-files
 
 | Rule | Constraint |
 |------|------------|
-| MD013 | Max 120 chars/line (code blocks + tables excluded) |
+| MD013 | Max 200 chars/line (code blocks + tables excluded) |
 | MD031 | Blank lines around fenced code blocks |
 | MD032 | Blank lines around lists |
 | MD040 | Code fences need language tags (`bash`, `yaml`, `text`) |
