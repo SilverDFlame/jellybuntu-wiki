@@ -7,14 +7,15 @@ Quick reference for Claude Code working with the Jellybuntu Wiki repository.
 ## About This Repository
 
 This is the **documentation wiki** for the Jellybuntu infrastructure project. It contains
-operator-facing documentation, built with MkDocs and deployed to
-`http://nas.discus-moth.ts.net:8082`.
+operator-facing documentation, built with MkDocs and served at
+`https://docs.elysium.industries` (k3s Traefik → NAS nginx; direct fallback
+`http://nas.discus-moth.ts.net:8082`).
 
 **Related Repositories:**
 
 | Repo | Local Path | Purpose |
 |------|-----------|---------|
-| [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu) | `~/coding/jellybuntu` | Ansible/Terraform IaC (use `feature/k3s-service-migration` branch) |
+| [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu) | `~/coding/jellybuntu` | Ansible/Terraform IaC (`main`; k3s/Cilium migration done) |
 | [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) | `~/coding/jellybuntu-helm` | Flux GitOps k3s manifests |
 | [SilverDFlame/jellybuntu-wiki](https://github.com/SilverDFlame/jellybuntu-wiki) | `~/coding/jellybuntu-wiki` | This wiki (MkDocs) |
 
@@ -28,7 +29,7 @@ docs/
 ├── architecture.md          # Hybrid VM+k3s design, diagrams
 ├── infrastructure/          # VMs, networking, storage, GPU
 ├── services/                # One page per service (~21 pages)
-├── operations/              # Deployment, k3s cluster, backups, secrets, updates
+├── operations/              # Deployment, k3s cluster, k3s namespaces, helm repo, flux image automation, backups, secrets, updates
 └── troubleshooting.md       # Common issues (single page)
 ```
 
@@ -114,10 +115,11 @@ pre-commit run --all-files
 
 | Rule | Constraint |
 |------|------------|
-| **MD013** | Line length max 120 chars (code blocks/tables excluded) |
-| **MD031** | Blank lines around fenced code blocks |
-| **MD032** | Blank lines around lists |
-| **MD040** | Code blocks need language tags |
+| **MD013** | Line length max 200 chars (code blocks/tables excluded) |
+| **MD060** | Tables need leading + trailing pipes |
+| **MD031** | Blank lines around fenced code blocks (markdownlint default) |
+| **MD032** | Blank lines around lists (markdownlint default) |
+| **MD040** | Code blocks need language tags (markdownlint default) |
 
 **Language tags**: Use `bash` for commands, `yaml` for config, `text` for generic output.
 
@@ -169,4 +171,4 @@ Branch prefixes: `docs/`, `fix/`, `feature/`
 | Run linting | `pre-commit run --all-files` |
 | Main repo | [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu) |
 | Helm repo | [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) |
-| Hosted docs | http://nas.discus-moth.ts.net:8082 |
+| Hosted docs | https://docs.elysium.industries (fallback http://nas.discus-moth.ts.net:8082) |
