@@ -28,7 +28,7 @@
   `roles/monitoring_stack/templates/prometheus.yml.j2`; rendered on deploy
 - Alertmanager sends alerts to Discord via a webhook URL stored in vault
 - SNMP Exporter scrapes MikroTik router (`192.168.0.1`) and switch (`192.168.0.2`)
-- Uptime Kuma runs externally (Oracle Cloud) for independent uptime checks
+- Uptime Kuma runs externally (Vultr) for independent uptime checks
 
 ## Common Operations
 
