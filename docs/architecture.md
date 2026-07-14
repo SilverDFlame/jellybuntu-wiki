@@ -37,8 +37,8 @@ graph TD
 | Node | VMID | IP | Role | Services |
 |------|------|----|------|----------|
 | k8s-control | 410 | 192.168.30.40 | Control plane | k3s API server, etcd, scheduler |
-| k8s-gpu | 411 | 192.168.30.41 | Worker — GPU | Jellyfin, Tdarr (GTX 1080 passthrough) |
-| k8s-media | 412 | 192.168.30.42 | Worker — media | Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Jellyseerr, Navidrome, qBittorrent, SABnzbd, Byparr |
+| k8s-gpu | 411 | 192.168.30.41 | Worker — GPU | Jellyfin, Tdarr (GTX 1080 passthrough), Ollama |
+| k8s-media | 412 | 192.168.30.42 | Worker — media | Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Jellyseerr, Navidrome, Deluge, autobrr, Byparr, Recyclarr, jellyhunt |
 | k8s-net | 413 | 192.168.30.43 | Worker — network | Cilium L2 announcer, Traefik ingress controller |
 | k8s-ops | 414 | 192.168.30.44 | Worker — ops | Synapse, Coturn, LiveKit, PostgreSQL, Woodpecker CI |
 

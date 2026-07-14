@@ -23,10 +23,11 @@ Complete service inventory for the k3s cluster, organized by namespace.
 | bazarr | 6767 | bazarr.elysium.industries | IP restricted |
 | navidrome | 4533 | navidrome.elysium.industries | Public |
 | byparr | 8191 | byparr.elysium.industries | IP restricted |
-| qbittorrent | 8080 | qbittorrent.elysium.industries | IP restricted |
-| sabnzbd | 8080 | sabnzbd.elysium.industries | IP restricted |
-| recyclarr | — | — | No ingress; CronJob runs 04:00 UTC |
-| unpackerr | — | — | No ingress |
+| deluge | 8112 | deluge.elysium.industries | IP restricted |
+| autobrr | 7474 | autobrr.elysium.industries | IP restricted |
+| recyclarr | — | — | No ingress; CronJob runs 04:00 |
+| jellyhunt | — | — | No ingress; CronJob every 2 h |
+| unrar-cronjob | — | — | No ingress; CronJob every 5 min |
 
 ## gpu Namespace (k8s-gpu, `.41`)
 
@@ -34,6 +35,7 @@ Complete service inventory for the k3s cluster, organized by namespace.
 |---|---|---|---|
 | jellyfin | 8096 | jellyfin.elysium.industries | Public |
 | tdarr | 8265 / 8266 | tdarr.elysium.industries | IP restricted |
+| ollama | 11434 | ollama.elysium.industries | IP restricted |
 
 ## matrix Namespace (k8s-ops, `.44`)
 

@@ -69,6 +69,12 @@ All secrets are prefixed `vault_` and referenced in playbooks as `{{ vault_<name
 | `vault_giganews_username` | Giganews Usenet username |
 | `vault_giganews_password` | Giganews Usenet password |
 | `vault_giganews_connections` | Giganews connection count |
+| `vault_seedbox_panel_user` | Ultra.cc seedbox panel username (orchestrator) |
+| `vault_seedbox_panel_password` | Ultra.cc seedbox panel password |
+| `vault_seedbox_deluge_rpc_user` | Seedbox Deluge RPC username |
+| `vault_seedbox_deluge_rpc_password` | Seedbox Deluge RPC password |
+| `vault_k3s_deluge_daemon_password` | In-cluster Deluge daemon password |
+| `vault_seedbox_orch_postgres_password` | Seedbox-orchestrator Postgres password |
 | `vault_matrix_synapse_shared_secret` | Matrix Synapse registration secret |
 | `vault_matrix_registration_shared_secret` | Matrix registration shared secret |
 | `vault_matrix_postgres_password` | Matrix PostgreSQL password |
