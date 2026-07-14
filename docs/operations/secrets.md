@@ -45,14 +45,11 @@ All secrets are prefixed `vault_` and referenced in playbooks as `{{ vault_<name
 | `vault_nfs_gid` | NFS/container GID for file ownership (GID 3000) |
 | `vault_sonarr_api_key` | Sonarr API key |
 | `vault_radarr_api_key` | Radarr API key |
-| `vault_sabnzbd_api_key` | SABnzbd API key |
 | `vault_jellyfin_api_key` | Jellyfin API key |
 | `vault_lidarr_api_key` | Lidarr API key |
 | `vault_services_admin_username` | Admin username for media services |
 | `vault_services_admin_password` | Admin password for media services |
 | `vault_smm_ansible_password` | Satisfactory Mod Manager SFTP password |
-| `vault_pia_username` | PIA VPN username |
-| `vault_pia_password` | PIA VPN password |
 | `vault_snmp_auth_password` | SNMP v3 auth password |
 | `vault_snmp_priv_password` | SNMP v3 privacy password |
 | `vault_state_encryption_passphrase` | OpenTofu state encryption passphrase |

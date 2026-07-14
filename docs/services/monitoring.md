@@ -37,7 +37,7 @@ k3s for deep Kubernetes + workload metrics:
   grant, DSN in a SOPS secret). It only touches the `postgres` DB — its cluster-wide
   collectors work via the grant, so no per-DB `CONNECT` is needed. Metrics on `:9187`,
   scraped by a `ServiceMonitor`. This is what sized the per-role connection limits (see
-  jellybuntu#275).
+  [jellybuntu#275](https://github.com/SilverDFlame/jellybuntu/issues/275)).
 
 ```bash
 # In-cluster components
