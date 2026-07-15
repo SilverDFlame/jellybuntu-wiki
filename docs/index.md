@@ -15,9 +15,11 @@
 | Bazarr | [bazarr.elysium.industries](https://bazarr.elysium.industries) | k3s `media` namespace |
 | Jellyseerr | [seerr.elysium.industries](https://seerr.elysium.industries) | k3s `media` namespace |
 | Navidrome | [navidrome.elysium.industries](https://navidrome.elysium.industries) | k3s `media` namespace |
-| qBittorrent | [qbittorrent.elysium.industries](https://qbittorrent.elysium.industries) | k3s `media` namespace |
-| SABnzbd | [sabnzbd.elysium.industries](https://sabnzbd.elysium.industries) | k3s `media` namespace |
+| Deluge | [deluge.elysium.industries](https://deluge.elysium.industries) | k3s `media` namespace |
+| autobrr | [autobrr.elysium.industries](https://autobrr.elysium.industries) | k3s `media` namespace |
 | Byparr | [byparr.elysium.industries](https://byparr.elysium.industries) | k3s `media` namespace |
+| Ollama | [ollama.elysium.industries](https://ollama.elysium.industries) | k3s `gpu` namespace |
+| Seedbox Orchestrator | Tailscale only | nas VM (usenet/torrent transport) |
 | Matrix (Element) | [chat.elysium.industries](https://chat.elysium.industries) | k3s `ops` namespace |
 | Synapse Admin | [synapse-admin.elysium.industries](https://synapse-admin.elysium.industries) | k3s `ops` namespace |
 | LiveKit | [livekit.elysium.industries](https://livekit.elysium.industries) | k3s `ops` namespace |

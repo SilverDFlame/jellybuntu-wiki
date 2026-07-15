@@ -65,10 +65,11 @@ The VM Traefik rewrite list is currently empty — all services have migrated to
 | lidarr.elysium.industries | 192.168.30.200 | k8s-media |
 | navidrome.elysium.industries | 192.168.30.200 | k8s-media |
 | byparr.elysium.industries | 192.168.30.200 | k8s-media |
-| qbittorrent.elysium.industries | 192.168.30.200 | k8s-media |
-| sabnzbd.elysium.industries | 192.168.30.200 | k8s-media |
+| deluge.elysium.industries | 192.168.30.200 | k8s-media |
+| autobrr.elysium.industries | 192.168.30.200 | k8s-media |
 | jellyfin.elysium.industries | 192.168.30.200 | k8s-gpu |
 | tdarr.elysium.industries | 192.168.30.200 | k8s-gpu |
+| ollama.elysium.industries | 192.168.30.200 | k8s-gpu |
 
 Source:
 [`services/configs/adguard-vars.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/services/configs/adguard-vars.yml)

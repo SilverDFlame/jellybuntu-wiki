@@ -101,9 +101,14 @@ nav:
       - Lidarr: services/lidarr.md
       - Jellyseerr: services/jellyseerr.md
       - Navidrome: services/navidrome.md
-      - qBittorrent: services/qbittorrent.md
-      - SABnzbd: services/sabnzbd.md
-      - Unpackerr: services/unpackerr.md
+      - Deluge: services/deluge.md
+      - autobrr: services/autobrr.md
+      - Byparr: services/byparr.md
+      - Recyclarr: services/recyclarr.md
+      - jellyhunt: services/jellyhunt.md
+      - unrar-cronjob: services/unrar-cronjob.md
+      - Seedbox Orchestrator: services/seedbox-orchestrator.md
+      - Ollama: services/ollama.md
       - Matrix: services/matrix.md
       - PostgreSQL: services/postgresql.md
       - AdGuard Home: services/adguard.md
