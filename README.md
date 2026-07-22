@@ -38,13 +38,13 @@ docs/
 │   ├── secrets.md          # SOPS + age workflow
 │   ├── backups.md          # Snapshot + restore procedures
 │   └── updates.md          # OS, k3s, Flux, app upgrades
-└── services/               # One page per workload (~21 pages)
-    ├── jellyfin.md, tdarr.md
+└── services/               # One page per workload (26 pages)
+    ├── jellyfin.md, tdarr.md, navidrome.md
     ├── sonarr.md, radarr.md, lidarr.md, prowlarr.md, bazarr.md
-    ├── sabnzbd.md, qbittorrent.md, jellyseerr.md, navidrome.md
-    ├── unpackerr.md, matrix.md
-    ├── home-assistant.md, satisfactory.md
-    ├── adguard.md, postgresql.md, nexus.md
+    ├── deluge.md, autobrr.md, byparr.md, recyclarr.md
+    ├── jellyhunt.md, unrar-cronjob.md, seedbox-orchestrator.md
+    ├── jellyseerr.md, matrix.md, home-assistant.md, satisfactory.md
+    ├── adguard.md, postgresql.md, nexus.md, ollama.md
     ├── monitoring.md, lancache.md, woodpecker.md
     └── ...
 ```
@@ -64,7 +64,7 @@ Every service page follows the same skeleton:
 | **Access** | `https://<service>.elysium.industries` |
 | **Port** | `<port>` |
 | **Database** | PostgreSQL `<db>` on `db` VM (if applicable) |
-| **Manifest** | `jellybuntu-helm` → `clusters/jellybuntu/<layer>/<file>.yaml` |
+| **Repo** | `jellybuntu-helm` → `clusters/jellybuntu/<layer>/<file>.yaml` |
 
 ## Key Config
 ## Common Operations
@@ -89,6 +89,7 @@ pre-commit run --all-files
 | MD031 | Blank lines around fenced code blocks |
 | MD032 | Blank lines around lists |
 | MD040 | Code fences need language tags (`bash`, `yaml`, `text`) |
+| MD060 | Tables need leading + trailing pipes (`leading_and_trailing`) |
 
 Relaxed: MD024 (`siblings_only`), MD033/MD034/MD041 disabled.
 
