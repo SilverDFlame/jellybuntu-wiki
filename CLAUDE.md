@@ -28,7 +28,7 @@ docs/
 ├── index.md                 # Service dashboard, quick links, repo map
 ├── architecture.md          # Hybrid VM+k3s design, diagrams
 ├── infrastructure/          # VMs, networking, storage, GPU
-├── services/                # One page per service (~21 pages)
+├── services/                # One page per service (26 pages)
 ├── operations/              # Deployment, k3s cluster, k3s namespaces, helm repo, flux image automation, backups, secrets, updates
 └── troubleshooting.md       # Common issues (single page)
 ```
