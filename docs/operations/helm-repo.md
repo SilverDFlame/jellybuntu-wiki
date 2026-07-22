@@ -66,7 +66,7 @@ sops clusters/jellybuntu/<namespace>/secrets.yaml
 ```
 
 Flux decrypts using the `sops-age` secret in `flux-system`. Age pubkey:
-`age1qt6zwvjzpvz8sed88tf3wj96t7694nnprnqdjls0w9vkxzzm6d8qag8snq`
+`age1w9zd7jzj63x9ulpc4nf4vs45wp5zmkey9y379xmlax297hx87yjqnqzwva`
 
 ## app-template Notes
 
