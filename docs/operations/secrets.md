@@ -3,6 +3,12 @@
 > All secrets are encrypted with [SOPS](https://github.com/getsops/sops) using an
 > [age](https://github.com/FiloSottile/age) key. The encrypted vault file is safe to commit.
 
+> OpenBao + External Secrets Operator is the target replacement for this
+> SOPS vault (gh#290). See
+> [OpenBao + ESO Setup](openbao-eso-setup.md) for the one-time backend
+> configuration; this page still covers the current SOPS-based flow,
+> which remains authoritative until credentials are actually migrated.
+
 ## Overview
 
 Secrets live in
