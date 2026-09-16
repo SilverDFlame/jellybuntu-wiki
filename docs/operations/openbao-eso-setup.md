@@ -16,7 +16,7 @@ CLI that this runbook works around explicitly (see callouts below).
 ## Prerequisites
 
 - OpenBao is unsealed (`bao status` on the VM shows `Sealed: false`).
-- The cross-VLAN firewall rule (gh#290 sub-project 1) is live — k3s can
+- The cross-VLAN firewall rule ([gh#290](https://github.com/SilverDFlame/jellybuntu/issues/290) sub-project 1) is live — k3s can
   reach `192.168.10.18:8200`.
 - You have the root token from `bao operator init`, from your password
   manager. Never write it to a file on the VM or paste it into a chat
@@ -68,10 +68,10 @@ head -1 /tmp/k3s-ca.pem  # confirm: -----BEGIN CERTIFICATE-----
 kubectl create token default --duration=8760h -n kube-system
 ```
 
-> **Cluster name in kubeconfig may not be `default`.** If `[0]` isn't the
-> right entry (multiple clusters in your kubeconfig), run
-> `kubectl config get-clusters` first and target it explicitly:
-> `.clusters[?(@.name=="<real-name>")].cluster.certificate-authority-data`.
+!!! warning "Cluster name in kubeconfig may not be `default`"
+    If `[0]` isn't the right entry (multiple clusters in your kubeconfig),
+    run `kubectl config get-clusters` first and target it explicitly:
+    `.clusters[?(@.name=="<real-name>")].cluster.certificate-authority-data`.
 
 Copy `/tmp/k3s-ca.pem`'s contents to the OpenBao VM (scp, or paste). Keep
 the printed reviewer token in your terminal only — do not save it to a
@@ -91,22 +91,22 @@ bao write auth/kubernetes/config @/tmp/k8s-auth-config.json
 rm /tmp/k8s-auth-config.json /tmp/k3s-ca.pem
 ```
 
-> **Why a JSON payload, not `field=@file` or `field=value` flags.** Two
-> `bao` CLI quirks, both hit live during this setup:
->
-> 1. `kubernetes_ca_cert=@/tmp/k3s-ca.pem` does **not** read the file —
->    it silently sends an empty value, and the plugin falls back to the
->    in-pod default path (`/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`),
->    which doesn't exist on a VM. The `@file` shorthand only works for
->    whole-request JSON bodies (`bao write path @file.json`), not
->    per-field values.
-> 2. Passing the PEM directly as `kubernetes_ca_cert="$(cat file)"` on
->    the command line breaks the CLI's flag parser: the multiline value
->    starts with `-----BEGIN CERTIFICATE-----`, and a leading `-` inside
->    an unquoted-by-the-parser positional argument gets misread as a
->    flag, dropping the field entirely.
->
-> The JSON-file form sidesteps both.
+!!! warning "Why a JSON payload, not `field=@file` or `field=value` flags"
+    Two `bao` CLI quirks, both hit live during this setup:
+
+    1. `kubernetes_ca_cert=@/tmp/k3s-ca.pem` does **not** read the file —
+       it silently sends an empty value, and the plugin falls back to the
+       in-pod default path (`/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`),
+       which doesn't exist on a VM. The `@file` shorthand only works for
+       whole-request JSON bodies (`bao write path @file.json`), not
+       per-field values.
+    2. Passing the PEM directly as `kubernetes_ca_cert="$(cat file)"` on
+       the command line breaks the CLI's flag parser: the multiline value
+       starts with `-----BEGIN CERTIFICATE-----`, and a leading `-` inside
+       an unquoted-by-the-parser positional argument gets misread as a
+       flag, dropping the field entirely.
+
+    The JSON-file form sidesteps both.
 
 ## 3. Write the ESO read policy
 
@@ -166,7 +166,7 @@ kubectl get clustersecretstore openbao -o jsonpath='{.status.conditions[0].reaso
 Expect `Valid`. If it instead shows a permission-denied or connection
 error, re-check the role's `bound_service_account_namespaces` against
 ESO's actual deployed namespace, and confirm the firewall rule from
-gh#290 sub-project 1 is live.
+[gh#290](https://github.com/SilverDFlame/jellybuntu/issues/290) sub-project 1 is live.
 
 ## KV path convention
 
