@@ -59,13 +59,26 @@ bao auth enable kubernetes
 If it's already enabled: `path is already in use at kubernetes/` — safe
 to ignore.
 
+!!! warning "The reviewer token's ServiceAccount needs TokenReview permission"
+    OpenBao calls the k8s API's TokenReview endpoint using
+    `token_reviewer_jwt` to validate every token ESO presents at login.
+    `TokenReview` is cluster-scoped and requires the `system:auth-delegator`
+    ClusterRole. `kube-system`'s `default` SA does **not** have this by
+    default — using it here causes every ESO login to fail with
+    `403 permission denied`, indistinguishable at the ESO side from a bad
+    role/policy config. `jellybuntu-helm`'s
+    [`openbao-token-reviewer.yaml`](https://github.com/SilverDFlame/jellybuntu-helm/blob/main/clusters/jellybuntu/infrastructure/controllers/openbao-token-reviewer.yaml)
+    creates a dedicated `openbao-token-reviewer` SA in `kube-system` with
+    exactly this binding and nothing else — use that SA below, not
+    `default`.
+
 Get the k3s CA cert and a reviewer token from a machine with `kubectl`
 access to the cluster (not from the OpenBao VM):
 
 ```bash
 kubectl config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > /tmp/k3s-ca.pem
 head -1 /tmp/k3s-ca.pem  # confirm: -----BEGIN CERTIFICATE-----
-kubectl create token default --duration=8760h -n kube-system
+kubectl create token openbao-token-reviewer --duration=8760h -n kube-system
 ```
 
 !!! warning "Cluster name in kubeconfig may not be `default`"
@@ -181,3 +194,8 @@ see that issue for the full migration plan.
 If the k3s API's CA cert or reviewer token ever changes (cluster rebuild,
 cert rotation), re-run step 2's `bao write auth/kubernetes/config` with
 fresh values. Nothing else in this runbook needs to change.
+
+The reviewer token from `openbao-token-reviewer` has a 1-year
+(`--duration=8760h`) lifetime — track its issue date and rotate before
+expiry, since an expired reviewer JWT reproduces the same
+`403 permission denied` failure on every ESO login.
