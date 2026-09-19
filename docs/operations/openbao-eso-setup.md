@@ -86,26 +86,25 @@ kubectl create token openbao-token-reviewer --duration=8760h -n kube-system
     run `kubectl config get-clusters` first and target it explicitly:
     `.clusters[?(@.name=="<real-name>")].cluster.certificate-authority-data`.
 
-Copy `/tmp/k3s-ca.pem`'s contents to the OpenBao VM (scp, or paste). Keep
-the printed reviewer token in your terminal only — do not save it to a
-file.
+Save the printed reviewer token to a file too (`/tmp/reviewer.jwt`) — do
+**not** paste it directly into a heredoc in your terminal. Copy both
+`/tmp/k3s-ca.pem` and `/tmp/reviewer.jwt` to the OpenBao VM via `scp`.
 
-Write the config as a JSON payload, not individual `key=value` flags:
+Write the config as a JSON payload, built with `jq`, not individual
+`key=value` flags and not a hand-typed heredoc:
 
 ```bash
-cat > /tmp/k8s-auth-config.json <<EOF
-{
-  "kubernetes_host": "https://k8s-control.discus-moth.ts.net:6443",
-  "kubernetes_ca_cert": "$(awk '{printf "%s\\n", $0}' /tmp/k3s-ca.pem)",
-  "token_reviewer_jwt": "<paste the kubectl create token output here>"
-}
-EOF
+jq -n --arg host 'https://k8s-control.discus-moth.ts.net:6443' \
+  --rawfile ca /tmp/k3s-ca.pem \
+  --arg jwt "$(cat /tmp/reviewer.jwt)" \
+  '{kubernetes_host:$host, kubernetes_ca_cert:$ca, token_reviewer_jwt:$jwt}' \
+  > /tmp/k8s-auth-config.json
 bao write auth/kubernetes/config @/tmp/k8s-auth-config.json
-rm /tmp/k8s-auth-config.json /tmp/k3s-ca.pem
+rm /tmp/k8s-auth-config.json /tmp/k3s-ca.pem /tmp/reviewer.jwt
 ```
 
-!!! warning "Why a JSON payload, not `field=@file` or `field=value` flags"
-    Two `bao` CLI quirks, both hit live during this setup:
+!!! warning "Why `jq`, not `field=@file`, `field=value` flags, or a pasted heredoc"
+    Three `bao`/shell pitfalls, all hit live during this setup:
 
     1. `kubernetes_ca_cert=@/tmp/k3s-ca.pem` does **not** read the file —
        it silently sends an empty value, and the plugin falls back to the
@@ -118,8 +117,17 @@ rm /tmp/k8s-auth-config.json /tmp/k3s-ca.pem
        starts with `-----BEGIN CERTIFICATE-----`, and a leading `-` inside
        an unquoted-by-the-parser positional argument gets misread as a
        flag, dropping the field entirely.
-
-    The JSON-file form sidesteps both.
+    3. Hand-pasting the ~1000-character reviewer JWT into a heredoc risks
+       the terminal or SSH client line-wrapping the paste, silently
+       corrupting the token. The corrupted value still satisfies
+       `token_reviewer_jwt_set: true` on read-back (it only reports
+       presence, never content), so this failure mode is invisible until
+       login is tested — it reproduces the exact same bare
+       `403 permission denied` as the wrong-SA case above, and cost real
+       debugging time on 2026-09-19 chasing config-caching and reviewer-JWT-expiry
+       theories before the corruption was found via `bao monitor -log-level=debug`.
+       `jq --arg`/`--rawfile` reads both values from files, no paste, no
+       corruption risk.
 
 ## 3. Write the ESO read policy
 
@@ -128,8 +136,20 @@ bao policy write eso-read - <<'EOF'
 path "secret/data/jellybuntu/*" {
   capabilities = ["read"]
 }
+path "sys/mounts/secret" {
+  capabilities = ["read"]
+}
 EOF
 ```
+
+!!! warning "The `sys/mounts/secret` path is required, not optional"
+    ESO's OpenBao provider calls `GET sys/mounts/secret` to detect the KV
+    mount version before it ever reads a secret, even with `version: v2`
+    set explicitly in the `ClusterSecretStore` spec. Without this
+    capability, ESO's kubernetes-auth login itself succeeds, but the
+    `ClusterSecretStore` still fails validation with `403 permission
+    denied` on that mounts call — a second, distinct 403 from the
+    login one, easy to mistake for the same root cause.
 
 ## 4. Bind a Kubernetes auth role to ESO's ServiceAccount
 
@@ -180,6 +200,25 @@ Expect `Valid`. If it instead shows a permission-denied or connection
 error, re-check the role's `bound_service_account_namespaces` against
 ESO's actual deployed namespace, and confirm the firewall rule from
 [gh#290](https://github.com/SilverDFlame/jellybuntu/issues/290) sub-project 1 is live.
+
+!!! tip "Debugging a bare `403 permission denied`"
+    OpenBao's kubernetes-auth plugin swallows the real failure reason into
+    a Debug-level log line, not the API error. Run `bao monitor
+    -log-level=debug` (command below) to see it without restarting the
+    server. This also distinguishes a kubernetes-auth login failure from
+    a policy-capability failure (like the missing `sys/mounts/secret`
+    capability above) — the login one shows up here, the policy one only
+    shows up in the ESO controller's own logs (`kubectl logs -n
+    external-secrets -l app.kubernetes.io/name=external-secrets`).
+
+```bash
+export BAO_ADDR='https://127.0.0.1:8200'
+export BAO_SKIP_VERIFY=true
+sudo -E bao monitor -log-level=debug
+```
+
+Trigger one login attempt in a second terminal and read the
+`login unauthorized` line's `err=` field.
 
 ## KV path convention
 
