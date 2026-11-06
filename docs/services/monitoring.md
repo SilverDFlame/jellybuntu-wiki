@@ -53,7 +53,7 @@ kubectl logs -f deployment/postgres-exporter -n monitoring
 - Prometheus config is a Jinja2 template at
   `roles/monitoring_stack/templates/prometheus.yml.j2`; rendered on deploy
 - Alertmanager sends alerts to Discord via a webhook URL stored in vault
-- SNMP Exporter scrapes MikroTik router (`192.168.0.1`) and switch (`192.168.0.2`)
+- SNMP Exporter scrapes the MikroTik router (`192.168.10.1`, CCR1009) and switch (`192.168.10.2`, CRS326) on the management VLAN; see [MikroTik RouterOS](../operations/routeros.md)
 - Uptime Kuma runs externally (Vultr) for independent uptime checks
 
 ## Common Operations

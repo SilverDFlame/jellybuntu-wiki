@@ -168,3 +168,9 @@ Tailscale provides the remote-access overlay network. All VMs join the `discus-m
   reachable after a reboot or network outage — ephemeral nodes are auto-removed when offline
 - The VM Traefik (reverse-proxy) uses Tailscale TLS certificates (`*.discus-moth.ts.net`) for its
   own dashboard and any remaining VM services
+
+## MikroTik Router and Switch
+
+The CCR1009 router (`192.168.10.1`) routes between the VLANs and serves DHCP; the CRS326 switch (`192.168.10.2`)
+aggregates them. Both are managed by Ansible over the RouterOS API. How to run it, who may run it, and how to
+recover a device: [MikroTik RouterOS](../operations/routeros.md).
