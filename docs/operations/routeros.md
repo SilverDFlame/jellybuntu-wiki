@@ -23,7 +23,7 @@ The live devices differ from the repo in exactly two hand-made changes, both own
 in PR 5:
 
 | Device | Change | Why |
-| --- | --- | --- |
+|---|---|---|
 | `ccr1009` | Input accept `protocol=tcp dst-port=8729 src-mac-address=72:1D:5D:5D:0E:31 in-interface=!WAN`, above the flood rules (applied 2026-10-29) | Stops the controller banning itself ([gh#417](https://github.com/SilverDFlame/jellybuntu/issues/417), open until PR 5) |
 | `crs326` | Default route gateway changed from the stale, inactive `192.168.0.1` to `192.168.10.1` (2026-11-05) | The switch had no route off VLAN 10, so its DNS to 9.9.9.9 could not work |
 
@@ -32,7 +32,7 @@ in PR 5:
 All paths are in [jellybuntu](https://github.com/SilverDFlame/jellybuntu):
 
 | Path | Owns |
-| --- | --- |
+|---|---|
 | [`inventory-routeros.ini`](https://github.com/SilverDFlame/jellybuntu/blob/main/inventory-routeros.ini) | The two devices. Separate from `inventory.ini` so they never join a `hosts: all` play |
 | [`group_vars/routeros.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/group_vars/routeros.yml) | Group-wide settings and `routeros_not_owned_paths` (export sections deliberately not owned, with reasons) |
 | [`host_vars/ccr1009.yml`](https://github.com/SilverDFlame/jellybuntu/blob/main/host_vars/ccr1009.yml) | CCR data: `routeros_controller_macs`, post-apply probes |
@@ -47,21 +47,24 @@ Any run that includes `ccr1009` must come from a controller whose MAC is listed 
 limit: the Arch box and `automation` can be added (see [Adding a controller](#adding-a-controller)). A controller that
 reaches the CCR through a router, not on-link, needs a guard fix first: its route lookup must honour `routing-table`.
 
-Why: the CCR input chain runs DoS and SynFlood detection above its LAN accept, with no WAN scoping. The binding rule
-is `DoS Attack Detection` (`protocol=tcp connection-limit=10,32`): more than 10 tracked TCP connections from one
-source address puts it on the `BlackList` address list for 1 day. A finished connection stays tracked for 10 to 20s
-in its close states, and the role opens one TLS connection per API task, so an unlisted controller
-bans itself ([gh#417](https://github.com/SilverDFlame/jellybuntu/issues/417)). The accept rule in
-[Known drift](#known-drift-from-iac) lets api-ssl from the listed MAC skip the flood rules.
+!!! warning "An unlisted controller bans itself from the CCR for a day"
+    The CCR input chain runs DoS and SynFlood detection above its LAN accept, with no WAN scoping. The binding rule
+    is `DoS Attack Detection` (`protocol=tcp connection-limit=10,32`): more than 10 tracked TCP connections from one
+    source address puts it on the `BlackList` address list for 1 day. A finished connection stays tracked for 10 to
+    20s in its close states, and the role opens one TLS connection per API task, so an unlisted controller bans
+    itself ([gh#417](https://github.com/SilverDFlame/jellybuntu/issues/417)). The accept rule in
+    [Known drift](#known-drift-from-iac) lets api-ssl from the listed MAC skip the flood rules.
 
 The controller guard enforces this. Preflight (check and apply runs) and import read the device's view of the
 current API session (`/user active`, `/ip arp`, `/ip route`) and refuse unless every session of the run's user
 resolves to a listed MAC. The guard runs only where `routeros_controller_macs` is non-empty. The CRS326 has no
 filter rules, so it has no list and no guard.
 
-Never run these playbooks through `bin/runtime/ansible-run.sh`: it reads `inventory.ini`, which has no RouterOS
-hosts. Use the mise runner, which also unsets the `ANSIBLE_CONFIG`, `ANSIBLE_INVENTORY` and `ANSIBLE_ROLES_PATH`
-pins so it works from a worktree:
+!!! warning "Never use `bin/runtime/ansible-run.sh` for these playbooks"
+    It reads `inventory.ini`, which has no RouterOS hosts.
+
+Use the mise runner, which also unsets the `ANSIBLE_CONFIG`, `ANSIBLE_INVENTORY` and `ANSIBLE_ROLES_PATH` pins so it
+works from a worktree:
 
 ```bash
 mise run routeros-play -- playbooks/networking/<playbook> [args]
@@ -70,7 +73,7 @@ mise run routeros-play -- playbooks/networking/<playbook> [args]
 ## Playbooks
 
 | Playbook | What | Credentials |
-| --- | --- | --- |
+|---|---|---|
 | `routeros-bootstrap.yml --limit <host>` | One time per device over SSH 663: `ansible` and `ansible-ro` users and groups, CA and api-ssl cert, plain `api` off, CA fetched to `files/routeros/` | SSH key for the session; D1 age key (apply file) plus OpenBao for the RO password. `-e routeros_bootstrap_ro=false` skips the RO user and OpenBao, for a rebuild with OpenBao unreachable (wired, never run yet) |
 | `routeros-import.yml` | Read-only dump to `/tmp/routeros-iac/import/<host>/`, 28 paths per device, files mode 0600, secret fields and `.id` dropped | OpenBao |
 | `routeros.yml` | Check run: read-only, ends with the ownership boundary check | OpenBao |
@@ -105,7 +108,7 @@ Keep a Winbox or terminal session open on the device while it runs. If it fails 
 ## Credentials
 
 | Credential | User and policy | Where | Used by |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | Apply password | `ansible`: `read,write,api,policy,reboot,test,sensitive` | `secrets/routeros-apply.sops.yaml` (D1 key) | Apply, disarm, rehearsal, bootstrap |
 | Backup password | Encrypts `pre-ansible.backup` | `secrets/routeros-apply.sops.yaml` (D1 key) | Apply, rehearsal |
 | Read-only password | `ansible-ro`: `read,api,ssh` (cannot write) | OpenBao `secret/jellybuntu/network/routeros_ro_password`, looked up in `group_vars/all.yml` | Check runs, import, CI drift checks, bootstrap |
