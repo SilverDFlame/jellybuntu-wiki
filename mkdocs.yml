@@ -127,6 +127,7 @@ nav:
       - Backups: operations/backups.md
       - Secrets: operations/secrets.md
       - OpenBao + ESO Setup: operations/openbao-eso-setup.md
+      - MikroTik RouterOS: operations/routeros.md
       - Updates: operations/updates.md
   - Troubleshooting: troubleshooting.md
 extra:
