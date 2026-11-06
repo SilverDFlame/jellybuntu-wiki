@@ -38,6 +38,11 @@ repos:
     hooks:
       - id: markdownlint-cli2
         name: Lint Markdown files
+        # Use the node on PATH (the global mise node). pre-commit's own
+        # detection treats any node under $HOME or a /shims/ dir as not
+        # installed and falls back to nodeenv's newest upstream release,
+        # which broke on 27.0.0-alpha (nodeenv cannot parse the version).
+        language_version: system
 
 # Global configuration
 default_install_hook_types: [pre-commit]

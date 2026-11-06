@@ -103,6 +103,8 @@ bao write auth/kubernetes/config @/tmp/k8s-auth-config.json
 rm /tmp/k8s-auth-config.json /tmp/k3s-ca.pem /tmp/reviewer.jwt
 ```
 
+<!-- markdownlint-disable MD046 -- the indented list below is admonition content, not an indented code block -->
+
 !!! warning "Why `jq`, not `field=@file`, `field=value` flags, or a pasted heredoc"
     Three `bao`/shell pitfalls, all hit live during this setup:
 
@@ -128,6 +130,8 @@ rm /tmp/k8s-auth-config.json /tmp/k3s-ca.pem /tmp/reviewer.jwt
        theories before the corruption was found via `bao monitor -log-level=debug`.
        `jq --arg`/`--rawfile` reads both values from files, no paste, no
        corruption risk.
+
+<!-- markdownlint-enable MD046 -->
 
 ## 3. Write the ESO read policy
 
