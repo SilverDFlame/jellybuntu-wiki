@@ -15,9 +15,9 @@ operator-facing documentation, built with MkDocs and served at
 
 | Repo | Local Path | Purpose |
 |------|-----------|---------|
-| [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu) | `~/coding/jellybuntu` | Ansible/Terraform IaC (`main`; k3s/Cilium migration done) |
-| [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) | `~/coding/jellybuntu-helm` | Flux GitOps k3s manifests |
-| [SilverDFlame/jellybuntu-wiki](https://github.com/SilverDFlame/jellybuntu-wiki) | `~/coding/jellybuntu-wiki` | This wiki (MkDocs) |
+| [SilverDFlame/jellybuntu](https://forgejo.discus-moth.ts.net/SilverDFlame/jellybuntu) (Forgejo) | `~/coding/jellybuntu` | Ansible/Terraform IaC (`main`; k3s/Cilium migration done) |
+| [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) (GitHub until Forgejo P3) | `~/coding/jellybuntu-helm` | Flux GitOps k3s manifests |
+| [SilverDFlame/jellybuntu-wiki](https://forgejo.discus-moth.ts.net/SilverDFlame/jellybuntu-wiki) (Forgejo) | `~/coding/jellybuntu-wiki` | This wiki (MkDocs) |
 
 ---
 
@@ -38,6 +38,12 @@ docs/
 ## Cross-Repository References
 
 **External code links** use absolute GitHub URLs:
+
+> Forgejo migration: the existing `github.com/SilverDFlame/jellybuntu` links still resolve, because
+> the frozen GitHub copy is a push-mirror target of Forgejo `main` until Forgejo P4. P4 rewrites
+> every such link (and this convention) to the Forgejo form
+> `https://forgejo.discus-moth.ts.net/SilverDFlame/jellybuntu/src/branch/main/{path}` in one pass.
+> Until then keep new links in the GitHub form so the pages stay consistent.
 
 ```markdown
 Good: [`roles/jellyfin/`](https://github.com/SilverDFlame/jellybuntu/tree/main/roles/jellyfin)
@@ -136,7 +142,9 @@ pre-commit run --all-files
 
 ## CI/CD Pipeline
 
-Documentation is automatically built and deployed via Woodpecker CI.
+Documentation is automatically built and deployed via Woodpecker CI
+(`https://automation.discus-moth.ts.net`), driven by **Forgejo** webhooks since 2026-11-26.
+PRs opened on Forgejo run `build-docs` only; GitHub no longer triggers anything.
 
 **Trigger:** Push to `main` branch (changes to `docs/`, `mkdocs.yml`, or `requirements.txt`)
 
@@ -151,11 +159,24 @@ Documentation is automatically built and deployed via Woodpecker CI.
 
 ## Git Workflow
 
+The repo lives on **Forgejo**: `origin` is
+`ssh://git@forgejo.discus-moth.ts.net:2222/SilverDFlame/jellybuntu-wiki.git`
+(web: `https://forgejo.discus-moth.ts.net/SilverDFlame/jellybuntu-wiki`). `main` is
+protected there: direct push only for `SilverDFlame`, everything else through PRs, and only
+Andrew merges (default merge style squash).
+
+**GitHub (`SilverDFlame/jellybuntu-wiki`) is a frozen push-mirror target until Forgejo P4.**
+Never push, merge or open PRs there: the Forgejo push mirror force-pushes `main` (silently
+overwriting anything landed on GitHub) and deletes every non-`main` branch on GitHub.
+
 ```bash
 git checkout -b docs/your-improvement
 # Make changes
 git commit -m "docs: Description of changes"
-git push -u origin docs/your-improvement
+git push -u origin docs/your-improvement   # prints the Forgejo PR-create URL
+# Agents open the PR as the agent user:
+tea pulls create --login forgejo-agent --repo SilverDFlame/jellybuntu-wiki \
+  --head docs/your-improvement --base main --title "docs: Description of changes"
 ```
 
 Branch prefixes: `docs/`, `fix/`, `feature/`
@@ -169,6 +190,6 @@ Branch prefixes: `docs/`, `fix/`, `feature/`
 | Preview docs | `mkdocs serve` |
 | Build docs | `mkdocs build --strict` |
 | Run linting | `pre-commit run --all-files` |
-| Main repo | [SilverDFlame/jellybuntu](https://github.com/SilverDFlame/jellybuntu) |
-| Helm repo | [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) |
+| Main repo | [SilverDFlame/jellybuntu](https://forgejo.discus-moth.ts.net/SilverDFlame/jellybuntu) (Forgejo) |
+| Helm repo | [SilverDFlame/jellybuntu-helm](https://github.com/SilverDFlame/jellybuntu-helm) (GitHub until Forgejo P3) |
 | Hosted docs | https://docs.elysium.industries (fallback http://nas.discus-moth.ts.net:8082) |
