@@ -224,8 +224,11 @@ section is the reference; this is the operator order.
         - path 1, from the Mac: `ssh-keyscan -p 663 -t ed25519 <ip>`;
         - path 2, from the Proxmox host over the tailnet:
           `ssh root@jellybuntu.discus-moth.ts.net "ssh-keyscan -p 663 -t ed25519 <ip>"`. During a CCR outage the
-          tailnet may be down (no WAN); use any second host with an interface on 192.168.10.0/24 instead (with the CCR down
-          nothing routes between VLANs; unverified which hosts qualify);
+          tailnet is down (no WAN), so use the Proxmox host's VLAN 10 address instead:
+          `ssh root@192.168.10.4 "ssh-keyscan -p 663 -t ed25519 <ip>"`. Proxmox sits on VLAN 10 through CRS
+          `sfp-sfpplus1`, and the CRS switches VLAN 10 without the CCR. After a CRS re-flash, the seed brings back
+          the VLAN 10 ports (`ether1`, `ether2`, `ether3`, `ether9`, both SFP+ trunks), so the same path works once
+          step 4 is done. This LAN path is inferred from inventory and host data and has not been run;
         - a third check: the device log line for the key generation, if it is still in RAM.
     - From that branch's worktree, run
       `mise run routeros-play -- playbooks/networking/routeros-bootstrap.yml --limit <host> -e openbao_ca_local_path=<main checkout>/files/generated/openbao-ca.pem`.
