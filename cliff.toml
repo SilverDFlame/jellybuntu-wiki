@@ -1,0 +1,74 @@
+# git-cliff configuration: the changelog is generated from conventional
+# commit subjects (squash-merged PR titles), never edited by hand.
+#
+#   mise run changelog           # last 30 days
+#   mise run changelog -- 90     # last 90 days
+#
+# The window lives in the template, not in a commit range: CHANGELOG_DAYS
+# (default 30) against each commit's committer timestamp, which for a
+# squash merge is the merge time. Dates print in UTC. Output goes to
+# stdout only.
+#
+# Shared file: keep it identical in every repo that uses it, except the PR
+# URL line in [git].commit_preprocessors.
+# https://git-cliff.org/docs/configuration
+
+[changelog]
+header = ""
+body = """
+{%- set days = get_env(name="CHANGELOG_DAYS", default="30") | int -%}
+{%- set cutoff = now(timestamp=true) - days * 86400 -%}
+{%- set_global recent = [] -%}
+{%- for commit in commits -%}
+  {%- if commit.committer.timestamp >= cutoff -%}
+    {%- set_global recent = recent | concat(with=commit) -%}
+  {%- endif -%}
+{%- endfor -%}
+# Changelog: last {{ days }} days (since {{ cutoff | date(format="%Y-%m-%d") }})
+{% if recent | length == 0 %}
+No changes in this window.
+{% endif -%}
+{% for group, group_commits in recent | group_by(attribute="group") %}
+## {{ group | striptags | trim }}
+{% for commit in group_commits %}
+- {{ commit.committer.timestamp | date(format="%Y-%m-%d") }} \
+{% if commit.breaking %}**BREAKING** {% endif %}\
+{% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
+{{ commit.message | split(pat="\n") | first | trim | upper_first }}\
+{% endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+# Merge commits and other non-conventional subjects never reach the output.
+filter_unconventional = true
+split_commits = false
+# Tags are not releases here (no versioned releases are cut). Match none,
+# so the output is one flat window with no release sections.
+tag_pattern = "^$"
+sort_commits = "newest"
+commit_preprocessors = [
+  # GitHub's default revert title, Revert "feat: x (#1)" (#2), is not
+  # conventional; rewrite it so the revert is listed, not dropped.
+  { pattern = '^Revert "(.+)"', replace = "revert: ${1}" },
+  # Squash titles end in "(#N)": link that PR. Only the trailing ref on a
+  # line, so an issue ref earlier in the title stays plain. The one per-repo
+  # line.
+  { pattern = '(?m)\(#(\d+)\)$', replace = "([#${1}](https://github.com/SilverDFlame/jellybuntu-wiki/pull/${1}))" },
+]
+# The HTML comment sets section order; striptags removes it on render.
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Features" },
+  { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
+  { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = "^refactor", group = "<!-- 3 -->Refactor" },
+  { message = "^docs", group = "<!-- 4 -->Documentation" },
+  { message = "^test", group = "<!-- 5 -->Tests" },
+  { message = "^(ci|build)", group = "<!-- 6 -->CI and Build" },
+  { message = "^(chore|style)", group = "<!-- 7 -->Chores" },
+  { message = "^revert", group = "<!-- 8 -->Reverts" },
+  { message = ".*", group = "<!-- 9 -->Other" },
+]

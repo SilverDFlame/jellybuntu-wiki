@@ -1,0 +1,36 @@
+# mise configuration for the Jellybuntu wiki
+# https://mise.jdx.dev/
+#
+# Repo tooling only. The wiki itself builds with MkDocs (requirements.txt);
+# nothing here is part of the published site.
+
+[tools]
+# Shell script tests (tests/bats/). Pinned, unlike linters: a test runner
+# bump can change assertion semantics. Matches jellybuntu and jellybuntu-helm.
+"aqua:bats-core/bats-core" = "1.14.0"
+
+# Changelog generator (cliff.toml, `mise run changelog`). Pinned: a bump can
+# change template functions and commit parsing, so the output would shift.
+"aqua:orhun/git-cliff" = "2.14.2"
+
+# Generated from conventional commit subjects; never edit a changelog by hand.
+# Prints to stdout and writes nothing.
+# RUST_LOG=error hides git-cliff's per-run warning about old non-conventional
+# commits; set RUST_LOG=warn to see it.
+# quiet = true stops mise echoing the script ("[changelog] $ ...") first.
+[tasks.changelog]
+description = "Print the changelog generated from conventional commits: mise run changelog -- [days] (default 30)"
+dir = "{{ config_root }}"
+quiet = true
+usage = '''
+arg "[days]" default="30" help="Window in days, counted back from now"
+'''
+run = '''
+case "${usage_days}" in ''|*[!0-9]*|??????*) echo "changelog: days must be a whole number up to 99999, got '${usage_days}'" >&2; exit 2 ;; esac
+CHANGELOG_DAYS="${usage_days}" RUST_LOG="${RUST_LOG:-error}" git-cliff --offline --config cliff.toml
+'''
+
+[tasks."test:bats"]
+description = "Run the bats-core shell script test suite (tests/bats/)"
+dir = "{{ config_root }}"
+run = "bats --recursive tests/bats"
