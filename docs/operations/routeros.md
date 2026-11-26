@@ -181,17 +181,17 @@ section is the reference; this is the operator order.
   `10G-LAN`, so MAC-telnet from the Mac over Wi-Fi probably cannot reach a reset CCR (unverified).
 - Give the Mac a static `192.168.10.x` address before you start. Bootstrap users and api-ssl accept only
   192.168.10.0/24, and during a CCR outage nothing hands out DHCP.
-- Steps 5 to 7 run from **one jellybuntu worktree** (the branch holding the new trust anchors). The main checkout
+- Steps 4 to 6 run from **one jellybuntu worktree** (the branch holding the new trust anchors). The main checkout
   still holds the old host key and CA, so a check or apply from there fails the TLS and SSH logins until the PR
   merges. Every OpenBao run from that worktree needs
   `-e openbao_ca_local_path=<main checkout>/files/generated/openbao-ca.pem` (see [Playbooks](#playbooks)).
 - A reset keeps the installed RouterOS. For a replacement unit or a broken install, netinstall RouterOS 7.25.2 first
   (the `tile` package for the CCR, `arm` for the CRS) with no configuration, upgrade the firmware
-  (`/system routerboard upgrade`, then reboot) so RouterBOOT is 7.25.2 too, and continue at step 3. The netinstall
+  (`/system routerboard upgrade`, then reboot) so RouterBOOT is 7.25.2 too, and continue at step 3 (with the seed from step 1). The netinstall
   path has not been exercised here.
-- CCR outage: no routing, NAT or DHCP for the household until step 6 finishes.
-- CRS outage: after the reset, no switching at all. The seed (step 4) brings back only the VLAN 10 management ports
-  and trunks. Every other port and VLAN returns in step 6.
+- CCR outage: no routing, NAT or DHCP for the household until step 5 finishes.
+- CRS outage: after the reset, no switching at all. The seed (step 3) brings back only the VLAN 10 management ports
+  and trunks. Every other port and VLAN returns in step 5.
 
 ### Steps
 
@@ -201,22 +201,18 @@ section is the reference; this is the operator order.
       rebuild.
     - The file contains no secret. The bootstrap user (`routeros_bootstrap_user`) gets your public key and a random
       password generated on the device, and the seed disables `admin`.
+    - The seed also moves SSH to port 663 (`routeros_ssh_port`), where bootstrap connects
+      ([#488](https://github.com/SilverDFlame/jellybuntu/issues/488),
+      [#489](https://github.com/SilverDFlame/jellybuntu/pull/489)).
 2. **Reset the device.**
     - Run `/system reset-configuration no-defaults=yes skip-backup=yes`.
     - The seed refuses to run if any bridge exists, which catches a reset that left the vendor defaults in place.
-3. **Move SSH to port 663.**
-    - On the console, as `admin`, before the seed: `/ip service set ssh port=663`.
-    - The seed does not set the SSH port, and bootstrap connects on 663 (`routeros_bootstrap_port`). A reset device
-      listens on 22. The apply in step 6 owns `ip service` and would set 663 too, but bootstrap needs it first.
-    - This step works around a known gap,
-      [#488](https://github.com/SilverDFlame/jellybuntu/issues/488): the seed should set port 663 itself. Once #488
-      merges, the seed emits this line and the step goes away.
-4. **Paste the seed** over MAC-telnet or the serial console, as one block. Afterwards the device answers on VLAN 10
+3. **Paste the seed** over MAC-telnet or the serial console, as one block. Afterwards the device answers on VLAN 10
     at its management address:
     - CCR: `192.168.10.1` on `vlan10-mgmt` over `10G-LAN` (the renamed `sfp-sfpplus1`).
     - CRS: `192.168.10.2` on `vlan10-mgmt` over the VLAN-filtering `bridge`, with a default route via the CCR.
-5. **Re-pin the host key, then bootstrap.** The order is fixed: port 663 (step 3), then the scan (it needs 663),
-    then bootstrap (it fails its first login on a missing or mismatched key).
+4. **Re-pin the host key, then bootstrap.** The order is fixed: the seed (step 3, it moves SSH to 663), then the
+    scan (it needs 663), then bootstrap (it fails its first login on a missing or mismatched key).
     - The reset device has a new SSH host key. Bootstrap merges `files/routeros/known_hosts` into `~/.ssh/known_hosts`,
       and a device whose key differs from the pinned line fails the SSH login. Read the new ED25519 key from two
       network paths, check they match, and replace the `[<ip>]:663` line in `files/routeros/known_hosts` on a branch.
@@ -228,7 +224,7 @@ section is the reference; this is the operator order.
           `ssh root@192.168.10.4 "ssh-keyscan -p 663 -t ed25519 <ip>"`. Proxmox sits on VLAN 10 through CRS
           `sfp-sfpplus1`, and the CRS switches VLAN 10 without the CCR. After a CRS re-flash, the seed brings back
           the VLAN 10 ports (`ether1`, `ether2`, `ether3`, `ether9`, both SFP+ trunks), so the same path works once
-          step 4 is done. This LAN path is inferred from inventory and host data and has not been run;
+          step 3 is done. This LAN path is inferred from inventory and host data and has not been run;
         - a third check: the device log line for the key generation, if it is still in RAM.
     - From that branch's worktree, run
       `mise run routeros-play -- playbooks/networking/routeros-bootstrap.yml --limit <host> -e openbao_ca_local_path=<main checkout>/files/generated/openbao-ca.pem`.
@@ -236,9 +232,9 @@ section is the reference; this is the operator order.
       turns plain `api` off, restricts api-ssl to the management subnet, and fetches the new CA cert to
       `files/routeros/<host>-ca.pem` (retried 12 x 5s, [#484](https://github.com/SilverDFlame/jellybuntu/pull/484)).
     - It needs the D1 age key plus OpenBao. If OpenBao is down, swap the `openbao_ca_local_path` var for
-      `-e routeros_bootstrap_ro=false` and rerun it later without that flag; the check run in step 6 needs the RO user.
-    - Commit the new `known_hosts` line and `<host>-ca.pem` together and open the PR. It merges after step 7.
-6. **Check, then apply**, from the same worktree.
+      `-e routeros_bootstrap_ro=false` and rerun it later without that flag; the check run in step 5 needs the RO user.
+    - Commit the new `known_hosts` line and `<host>-ca.pem` together and open the PR. It merges after step 6.
+5. **Check, then apply**, from the same worktree.
     - Run the check:
       `mise run routeros-play -- playbooks/networking/routeros.yml --limit <host> -e openbao_ca_local_path=<main checkout>/files/generated/openbao-ca.pem`.
       It is read-only and needs OpenBao. On a re-flashed device it reports most paths as changed; that is expected. Among them is
@@ -247,19 +243,16 @@ section is the reference; this is the operator order.
       `mise run routeros-play -- playbooks/networking/routeros.yml --limit <host> -e routeros_apply=true`. It needs
       the D1 and main age keys.
     - The dead-man restores the pre-apply backup if the API is lost mid-run. On a re-flashed device that backup is the
-      post-bootstrap state, so a restore lands you back at the start of step 6, not at the old config.
-7. **Confirm.**
-    - A second check run (the step 6 check command, same worktree) reports `changed=0` and the boundary check passes.
+      post-bootstrap state, so a restore lands you back at the start of step 5, not at the old config.
+6. **Confirm.**
+    - A second check run (the step 5 check command, same worktree) reports `changed=0` and the boundary check passes.
     - Monitoring shows `up{job="snmp-mikrotik"} == 1` for the device.
-    - Merge the trust-anchor PR from step 5, then pull the main checkout so later runs from there see the new key
+    - Merge the trust-anchor PR from step 4, then pull the main checkout so later runs from there see the new key
       and CA.
 
 ### Re-flash known gaps
 
 - **Not yet done on hardware.** See the warning above.
-- **Seed SSH port.** The seed leaves SSH on 22, hence the manual step 3
-  ([#488](https://github.com/SilverDFlame/jellybuntu/issues/488)). Molecule cannot catch this: the harness
-  reaches CHR SSH through port 22 on purpose.
 - **Console paste.** Molecule sends the seed as one line over SSH. Pasting the multi-line file into an interactive
   console is unverified on a device. If the paste errors part-way, reset again and repeat from step 2.
 - **CRS switch paths.** CHR has no switch chip, so `prod_crs326` excludes `interface ethernet`, `interface bridge
@@ -270,7 +263,10 @@ section is the reference; this is the operator order.
 
 Settled since PR 5: the CCR `NAT` rule no longer carries `realm: ''`, which RouterOS rejected on create
 ([#469](https://github.com/SilverDFlame/jellybuntu/pull/469)), and the CCR DHCP servers' `address-lists: ''` is
-accepted on create ([#471](https://github.com/SilverDFlame/jellybuntu/pull/471)).
+accepted on create ([#471](https://github.com/SilverDFlame/jellybuntu/pull/471)). The seed moves SSH to
+port 663 itself, so bootstrap can connect to a reset device
+([#488](https://github.com/SilverDFlame/jellybuntu/issues/488),
+[#489](https://github.com/SilverDFlame/jellybuntu/pull/489)).
 
 ## Recovery
 
